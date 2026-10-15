@@ -6,6 +6,7 @@ import {
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
 } from './library.js';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -335,6 +336,10 @@ async function dashboard(view, _p, ctx) {
               <div class="item-meta"><b>${S[s.student_id]?.name}</b> · сдано ${fmtDT(s.submitted_at)}</div></div>
               <span class="badge info">Проверить</span></a>`)}</div>` : empty('Все работы проверены', I.check)}
         </section>
+        ${backupOverdue() ? h`<section class="card stack backup-remind"><div class="card-head"><h2>Резервная копия</h2>
+          <span class="badge warn">${lastBackup() ? `последняя ${fmtD(lastBackup())}` : 'ещё не делали'}</span></div>
+          <p class="muted small">Скачайте копию всех данных на компьютер — на бесплатном тарифе база сама копии не делает.</p>
+          <button class="btn btn-soft" data-backup>${I.folder} Скачать всё</button><p class="hint backup-step"></p></section>` : ''}
         ${lowBal.length ? h`<section class="card"><div class="card-head"><h2>Заканчиваются оплаченные занятия</h2></div>
           <div class="list">${lowBal.map((b) => h`<a class="item item-link" href="#/student/${b.student_id}/payments">
             <div class="item-main"><div class="item-title">${S[b.student_id].name}</div></div>
@@ -342,6 +347,7 @@ async function dashboard(view, _p, ctx) {
       </div>
     </div>`);
   $('#add-lesson').addEventListener('click', () => lessonForm(ctx, { students }));
+  bindBackup(view, ctx.api, () => ctx.refresh());
   bindLessons(view, ctx, upcoming, students);
 }
 

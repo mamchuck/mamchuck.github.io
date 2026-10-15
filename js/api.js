@@ -41,6 +41,15 @@ export function createApi(cfg) {
       if (limit) q = q.limit(limit);
       return ok(await q);
     },
+    // Все строки таблицы, порциями по 1000 (для резервной копии)
+    async dumpAll(table) {
+      const out = [];
+      for (let from = 0; ; from += 1000) {
+        const d = ok(await sb.from(table).select('*').range(from, from + 999));
+        out.push(...d);
+        if (d.length < 1000) return out;
+      }
+    },
     async insert(table, row) { return ok(await sb.from(table).insert(row).select().single()); },
     async update(table, id, patch) { return ok(await sb.from(table).update(patch).eq('id', id).select().single()); },
     async remove(table, id) { ok(await sb.from(table).delete().eq('id', id)); },

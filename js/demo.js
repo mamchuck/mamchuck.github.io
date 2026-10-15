@@ -134,6 +134,7 @@ export function createDemoApi() {
       if (limit) rows = rows.slice(0, limit);
       return clone(rows);
     },
+    async dumpAll(table) { return clone(visible(table)); },
     async insert(table, row) {
       await tick();
       if (me.role !== 'tutor' && table !== 'submissions') throw new Error('Нет доступа');

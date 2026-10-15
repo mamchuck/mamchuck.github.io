@@ -1,6 +1,7 @@
 import { CONFIG, TUTOR } from './config.js';
 import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js';
 import { tutorRoutes, tutorNav } from './tutor.js';
+import { backupCard, bindBackup } from './backup.js';
 import { familyRoutes, familyNav } from './family.js';
 
 const api = CONFIG.supabaseUrl
@@ -60,7 +61,7 @@ function renderAuth(tab = store.get(CODE_KEY) ? 'signup' : 'login') {
   <div class="center-screen">
     <div class="auth-card card">
       <div class="brand brand-lg"><span class="logo">M</span><span class="brand-name">mamchuck</span></div>
-      <div><span class="capsule">Физика · Математика · ОГЭ</span>
+      <div><span class="capsule">Физика · Математика</span>
       <h1 class="hero-h1">Личный <span class="grad">кабинет</span></h1>
       <p class="muted">Расписание, домашние задания, материалы и прогресс — в одном месте.</p></div>
       ${hasCode ? h`<p class="notice">Вас пригласили в личный кабинет. Зарегистрируйтесь или войдите — доступ откроется автоматически.</p>` : ''}
@@ -204,6 +205,7 @@ const settingsView = async (view) => {
       <div class="seg" role="radiogroup" aria-label="Тема">
         ${[['auto', 'Как на устройстве'], ['light', 'Светлая'], ['dark', 'Тёмная']].map(([v, l]) => h`<button type="button" role="radio" aria-checked="${getTheme() === v}" class="${getTheme() === v ? 'on' : ''}" data-set-theme="${v}">${l}</button>`)}
       </div></section>
+    ${isTutor() ? backupCard() : ''}
     <button class="btn btn-ghost logout-btn" id="logout">${I.logout} Выйти из аккаунта</button>`);
   $('#f-name').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -216,6 +218,7 @@ const settingsView = async (view) => {
     catch (err) { toast(err.message, 'error'); }
   });
   $('#logout').addEventListener('click', logout);
+  bindBackup(view, api, () => settingsView(view));
   $$('[data-set-theme]', view).forEach((b) => b.addEventListener('click', () => {
     setTheme(b.dataset.setTheme);
     $$('[data-theme-toggle]').forEach((x) => mount(x, h`${isDark() ? I.sun : I.moon}`));
