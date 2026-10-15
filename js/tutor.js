@@ -31,7 +31,7 @@ const filesInput = (name, label) => h`<label class="field"><span>${label}</span>
 // ============================================================
 
 function studentForm(ctx, s) {
-  modal({
+  const m = modal({
     title: s ? 'Редактировать ученика' : 'Новый ученик',
     body: h`
       <label class="field"><span>Имя</span><input name="name" required value="${s?.name || ''}" placeholder="Например: Аня К."></label>
@@ -55,6 +55,28 @@ function studentForm(ctx, s) {
       toast(s ? 'Сохранено' : 'Ученик добавлен');
       if (!s) location.hash = `#/student/${r.id}`; else ctx.refresh();
     },
+  });
+  if (!s) return;
+  const del = document.createElement('div');
+  del.className = 'danger-zone';
+  mount(del, h`<button type="button" class="btn btn-ghost btn-sm btn-danger-ghost">${I.trash} Удалить ученика</button>
+    <span class="hint">Если ученик просто закончил занятия — лучше поставьте статус «Закончил», история сохранится.</span>`);
+  $('.modal-body', m.el).append(del);
+  $('button', del).addEventListener('click', () => {
+    m.close();
+    modal({
+      title: `Удалить «${s.name}»?`, submit: 'Удалить навсегда', danger: true,
+      body: h`<p>Будут удалены <b>все</b> данные ученика: занятия, отчёты, ДЗ и ответы, прогресс, оплаты, заметки.
+        Ученик и родитель потеряют доступ к кабинету. Отменить это нельзя.</p>
+        <p class="hint">Совет: перед удалением скачайте резервную копию в Настройках.</p>
+        <label class="field"><span>Для подтверждения введите имя: ${s.name}</span><input name="confirm" autocomplete="off" required></label>`,
+      onSubmit: async (d) => {
+        if (d.confirm !== s.name.trim()) throw new Error('Имя введено неверно');
+        await ctx.api.remove('students', s.id);
+        toast('Ученик удалён');
+        location.hash = '#/students';
+      },
+    });
   });
 }
 
