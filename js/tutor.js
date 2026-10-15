@@ -1,0 +1,643 @@
+// Кабинет преподавателя
+import {
+  h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
+  plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
+} from './ui.js';
+import {
+  libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
+} from './library.js';
+
+export const tutorNav = [
+  { path: '', label: 'Главная', icon: I.home },
+  { path: 'students', label: 'Ученики', icon: I.users },
+  { path: 'schedule', label: 'Расписание', icon: I.calendar },
+  { path: 'review', label: 'Проверка', icon: I.check },
+  { path: 'library', label: 'Библиотека', icon: I.folder },
+];
+
+const arr = (v) => (v == null ? [] : [].concat(v));
+const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
+const subjectOptions = (list, cur) =>
+  (list?.length ? list : SUBJECTS).map((s) => h`<option ${s === cur ? 'selected' : ''}>${s}</option>`);
+const dueInput = (d) => (d ? toLocalInput(d).slice(0, 10) : '');
+const dueValue = (v) => (v ? new Date(`${v}T20:00`).toISOString() : null);
+
+const FILES_ACCEPT = '.pdf,image/*,.doc,.docx,.ppt,.pptx,.xls,.xlsx';
+const filesInput = (name, label) => h`<label class="field"><span>${label}</span><input type="file" name="${name}" multiple accept="${FILES_ACCEPT}"></label>`;
+
+// ============================================================
+// Формы
+// ============================================================
+
+function studentForm(ctx, s) {
+  modal({
+    title: s ? 'Редактировать ученика' : 'Новый ученик',
+    body: h`
+      <label class="field"><span>Имя</span><input name="name" required value="${s?.name || ''}" placeholder="Например: Аня К."></label>
+      <p class="hint">Рекомендуем имя и первую букву фамилии — без полных персональных данных.</p>
+      <div class="row-2">
+        <label class="field"><span>Класс</span><select name="grade">
+          ${Array.from({ length: 11 }, (_, i) => h`<option value="${i + 1}" ${(s?.grade ?? 9) === i + 1 ? 'selected' : ''}>${i + 1}</option>`)}
+        </select></label>
+        <label class="field"><span>Статус</span><select name="status">
+          ${[['active', 'Занимается'], ['paused', 'Пауза'], ['finished', 'Закончил']].map(([v, l]) => h`<option value="${v}" ${s?.status === v ? 'selected' : ''}>${l}</option>`)}
+        </select></label>
+      </div>
+      <fieldset class="field"><span>Предметы</span><div class="chips">
+        ${SUBJECTS.map((x) => h`<label class="chip-check"><input type="checkbox" name="subjects" value="${x}" ${(s?.subjects || SUBJECTS.slice(0, 1)).includes(x) ? 'checked' : ''}><span>${x}</span></label>`)}
+      </div></fieldset>
+      <label class="field"><span>Цели обучения</span><textarea name="goals" rows="3" placeholder="Например: ОГЭ на 5">${s?.goals || ''}</textarea></label>`,
+    onSubmit: async (d) => {
+      const row = { name: d.name, grade: +d.grade, status: d.status, subjects: arr(d.subjects), goals: d.goals || '' };
+      if (!row.subjects.length) throw new Error('Выберите хотя бы один предмет');
+      const r = s ? await ctx.api.update('students', s.id, row) : await ctx.api.insert('students', row);
+      toast(s ? 'Сохранено' : 'Ученик добавлен');
+      if (!s) location.hash = `#/student/${r.id}`; else ctx.refresh();
+    },
+  });
+}
+
+function lessonForm(ctx, { students, studentId, lesson }) {
+  const fixed = studentId || lesson?.student_id;
+  const st = students.find((s) => s.id === fixed);
+  const start = lesson?.starts_at || (() => { const d = new Date(Date.now() + 864e5); d.setHours(16, 0, 0, 0); return d; })();
+  const m = modal({
+    title: lesson ? 'Изменить занятие' : 'Новое занятие',
+    body: h`
+      ${fixed ? '' : h`<label class="field"><span>Ученик</span><select name="student_id" required>
+        ${students.filter((s) => s.status === 'active').map((s) => h`<option value="${s.id}">${s.name}</option>`)}</select></label>`}
+      <div class="row-2">
+        <label class="field"><span>Дата и время</span><input type="datetime-local" name="starts_at" required value="${toLocalInput(start)}"></label>
+        <label class="field"><span>Длительность</span><select name="duration_min">
+          ${[45, 60, 90, 120].map((m) => h`<option value="${m}" ${(lesson?.duration_min || 60) === m ? 'selected' : ''}>${m} мин</option>`)}</select></label>
+      </div>
+      <label class="field"><span>Предмет</span><select name="subject">${subjectOptions(st?.subjects, lesson?.subject)}</select></label>
+      <label class="field"><span>Тема</span><input name="topic" value="${lesson?.topic || ''}" placeholder="Например: квадратные уравнения"></label>
+      <label class="field"><span>План (видите только вы)</span><textarea name="plan" rows="3">${lesson?.plan || ''}</textarea></label>
+      <div class="divider"><span>Материалы урока — увидит ученик</span></div>
+      ${filesInput('files', 'Загрузить файлы (презентация, конспект)')}
+      ${libraryFieldHtml()}`,
+    onSubmit: async (d) => {
+      const row = { starts_at: new Date(d.starts_at).toISOString(), duration_min: +d.duration_min, subject: d.subject, topic: d.topic || '', plan: d.plan || '' };
+      const l = lesson ? await ctx.api.update('lessons', lesson.id, row) : await ctx.api.insert('lessons', { ...row, student_id: fixed || d.student_id });
+      await uploadForStudent(ctx.api, l.student_id, d.files, { lesson_id: l.id, subject: l.subject, topic: l.topic });
+      await attachItems(ctx.api, l.student_id, picked, { lesson_id: l.id });
+      toast(lesson ? 'Сохранено' : 'Занятие запланировано'); ctx.refresh();
+    },
+  });
+  const picked = libraryField(ctx.api, m, { subject: () => $('[name=subject]', m.el).value });
+}
+
+// «Провести урок»: итог, отчёт для семьи, заметка, ДЗ — одним окном
+function conductLesson(ctx, lesson) {
+  const m = modal({
+    title: 'Провести урок', submit: 'Сохранить урок', wide: true,
+    body: h`
+      <p class="muted">${lesson.subject} · ${fmtDT(lesson.starts_at)}</p>
+      <label class="field"><span>Тема</span><input name="topic" required value="${lesson.topic}"></label>
+      <label class="field"><span>Что прошли — отчёт для ученика и родителя</span><textarea name="report" rows="3" placeholder="Коротко: что разобрали, как получилось, на что обратить внимание">${lesson.report || ''}</textarea></label>
+      <label class="switch"><input type="checkbox" name="publish" checked><span>Опубликовать отчёт для семьи</span></label>
+      <label class="field"><span>${I.note} Личная заметка — видите только вы</span><textarea name="note" rows="2" placeholder="Затруднения, причины ошибок, идеи на следующий раз"></textarea></label>
+      <div class="divider"><span>Домашнее задание (необязательно)</span></div>
+      <label class="field"><span>Название</span><input name="hw_title" placeholder="Например: №1–10 из файла"></label>
+      <label class="field"><span>Инструкция</span><textarea name="hw_desc" rows="2"></textarea></label>
+      <label class="field"><span>Срок</span><input type="date" name="hw_due" value="${dueInput(Date.now() + 3 * 864e5)}"></label>
+      ${filesInput('hw_files', 'Файлы к заданию (можно несколько)')}
+      ${libraryFieldHtml('Добавить к заданию из библиотеки')}`,
+    onSubmit: async (d) => {
+      const { api } = ctx;
+      await api.update('lessons', lesson.id, { status: 'done', topic: d.topic, report: d.report || '', report_published: !!d.publish && !!d.report });
+      if (d.note) await api.insert('private_notes', { student_id: lesson.student_id, lesson_id: lesson.id, body: d.note });
+      if (d.hw_title) {
+        const hw = await api.insert('homework', { student_id: lesson.student_id, lesson_id: lesson.id, subject: lesson.subject, title: d.hw_title, description: d.hw_desc || '', due_at: dueValue(d.hw_due) });
+        await uploadForStudent(api, lesson.student_id, d.hw_files, { homework_id: hw.id, subject: lesson.subject });
+        await attachItems(api, lesson.student_id, picked, { homework_id: hw.id });
+      } else if (picked.length || [].concat(d.hw_files ?? []).length) {
+        throw new Error('Укажите название ДЗ, чтобы прикрепить файлы');
+      }
+      toast('Урок проведён'); ctx.refresh();
+    },
+  });
+  const picked = libraryField(ctx.api, m, { subject: lesson.subject });
+}
+
+function reportForm(ctx, lesson) {
+  modal({
+    title: 'Отчёт о занятии',
+    body: h`
+      <label class="field"><span>Отчёт для ученика и родителя</span><textarea name="report" rows="5">${lesson.report}</textarea></label>
+      <label class="switch"><input type="checkbox" name="publish" ${lesson.report_published ? 'checked' : ''}><span>Опубликован</span></label>`,
+    onSubmit: async (d) => {
+      await ctx.api.update('lessons', lesson.id, { report: d.report || '', report_published: !!d.publish && !!d.report });
+      toast('Сохранено'); ctx.refresh();
+    },
+  });
+}
+
+function homeworkForm(ctx, student, hw) {
+  const m = modal({
+    title: hw ? 'Изменить задание' : 'Новое домашнее задание',
+    body: h`
+      <label class="field"><span>Предмет</span><select name="subject">${subjectOptions(student.subjects, hw?.subject)}</select></label>
+      <label class="field"><span>Название</span><input name="title" required value="${hw?.title || ''}"></label>
+      <label class="field"><span>Инструкция</span><textarea name="description" rows="4">${hw?.description || ''}</textarea></label>
+      <label class="field"><span>Срок сдачи</span><input type="date" name="due" value="${dueInput(hw?.due_at || Date.now() + 3 * 864e5)}"></label>
+      ${filesInput('files', hw ? 'Добавить файлы' : 'Файлы с заданием (можно несколько)')}
+      ${libraryFieldHtml()}
+      <label class="field"><span>Ссылка</span><input type="url" name="url" placeholder="https://"></label>`,
+    onSubmit: async (d) => {
+      const row = { subject: d.subject, title: d.title, description: d.description || '', due_at: dueValue(d.due) };
+      const x = hw ? await ctx.api.update('homework', hw.id, row) : await ctx.api.insert('homework', { ...row, student_id: student.id });
+      await uploadForStudent(ctx.api, student.id, d.files, { homework_id: x.id, subject: x.subject });
+      await attachItems(ctx.api, student.id, picked, { homework_id: x.id });
+      if (d.url) await ctx.api.insert('materials', { student_id: student.id, homework_id: x.id, subject: x.subject, title: 'Ссылка к заданию', url: d.url });
+      toast(hw ? 'Сохранено' : 'Задание выдано'); ctx.refresh();
+    },
+  });
+  const picked = libraryField(ctx.api, m, { subject: () => $('[name=subject]', m.el).value });
+}
+
+function reviewForm(ctx, hw, sub, studentName) {
+  const m = modal({
+    title: 'Проверка работы', submit: 'Отправить оценку', wide: true,
+    body: h`
+      <p class="muted">${studentName} · ${hw.subject} · сдано ${fmtDT(sub.submitted_at)}</p>
+      <h3>${hw.title}</h3>
+      <div class="answer">${sub.answer || h`<span class="muted">Без текста</span>`}</div>
+      ${sub.file_path ? h`<button type="button" class="btn btn-soft" id="sub-file">${I.file} Открыть файл ученика</button>` : ''}
+      <div class="row-2">
+        <label class="field"><span>Оценка</span><select name="grade">
+          ${['5', '4', '3', '2', 'Зачёт', 'Без оценки'].map((g) => h`<option ${sub.grade === g ? 'selected' : ''}>${g}</option>`)}</select></label>
+      </div>
+      <label class="field"><span>Комментарий для ученика</span><textarea name="feedback" rows="4" placeholder="Что получилось, где ошибки и как их исправить">${sub.feedback || ''}</textarea></label>`,
+    onSubmit: async (d) => {
+      await ctx.api.update('submissions', sub.id, { grade: d.grade, feedback: d.feedback || '', reviewed_at: new Date().toISOString() });
+      toast('Проверено'); ctx.refresh();
+    },
+  });
+  $('#sub-file', m.el)?.addEventListener('click', () => openFile(ctx.api, sub.file_path));
+}
+
+function materialForm(ctx, student) {
+  modal({
+    title: 'Загрузить материал только этому ученику',
+    body: h`
+      <p class="hint">Чтобы выдавать файл нескольким ученикам, загрузите его в «Библиотеку».</p>
+      <label class="field"><span>Предмет</span><select name="subject">${subjectOptions(student.subjects)}</select></label>
+      ${filesInput('files', 'Файлы')}
+      <div class="row-2">
+        <label class="field"><span>или ссылка</span><input type="url" name="url" placeholder="https://"></label>
+        <label class="field"><span>Название ссылки</span><input name="title"></label>
+      </div>`,
+    onSubmit: async (d) => {
+      const list = [].concat(d.files ?? []);
+      if (!list.length && !d.url) throw new Error('Прикрепите файл или ссылку');
+      await uploadForStudent(ctx.api, student.id, list, { subject: d.subject });
+      if (d.url) await ctx.api.insert('materials', { student_id: student.id, subject: d.subject, title: d.title || d.url, url: d.url });
+      toast('Материал добавлен'); ctx.refresh();
+    },
+  });
+}
+
+function progressForm(ctx, student, row) {
+  modal({
+    title: row ? 'Изменить тему' : 'Новая тема',
+    body: h`
+      <label class="field"><span>Предмет</span><select name="subject">${subjectOptions(student.subjects, row?.subject)}</select></label>
+      <label class="field"><span>Тема</span><input name="topic" required value="${row?.topic || ''}"></label>
+      <fieldset class="field"><span>Уровень</span><div class="level-pick">
+        ${LEVELS.map(([v, l]) => h`<label><input type="radio" name="level" value="${v}" ${(row?.level ?? 0) === v ? 'checked' : ''}><span>${l}</span></label>`)}
+      </div></fieldset>`,
+    onSubmit: async (d) => {
+      const r = { subject: d.subject, topic: d.topic, level: +d.level, checked_at: new Date().toISOString().slice(0, 10) };
+      if (row) await ctx.api.update('topic_progress', row.id, r);
+      else await ctx.api.insert('topic_progress', { ...r, student_id: student.id });
+      toast('Сохранено'); ctx.refresh();
+    },
+  });
+}
+
+function paymentForm(ctx, student) {
+  modal({
+    title: 'Новая оплата',
+    body: h`
+      <div class="row-2">
+        <label class="field"><span>Сумма, ₽</span><input name="amount" type="number" min="1" step="0.01" required inputmode="decimal"></label>
+        <label class="field"><span>Занятий в пакете</span><input name="lessons" type="number" min="0" step="1" value="4" required></label>
+      </div>
+      <label class="field"><span>Дата</span><input name="paid_at" type="date" value="${new Date().toISOString().slice(0, 10)}" required></label>
+      <label class="field"><span>Комментарий</span><input name="comment" placeholder="Например: пакет на октябрь"></label>`,
+    onSubmit: async (d) => {
+      const k = Math.round(parseFloat(String(d.amount).replace(',', '.')) * 100);
+      if (!(k > 0)) throw new Error('Укажите сумму');
+      await ctx.api.insert('payments', { student_id: student.id, amount_kopecks: k, lessons_count: +d.lessons, paid_at: d.paid_at, comment: d.comment || '' });
+      toast('Оплата записана'); ctx.refresh();
+    },
+  });
+}
+
+async function invite(ctx, student, role) {
+  try {
+    const code = await ctx.api.rpc('create_invitation', { p_student_id: student.id, p_role: role, p_days: 7 });
+    const link = `${location.origin}${location.pathname}#/join/${code}`;
+    const who = role === 'student' ? 'ученика' : 'родителя';
+    const m = modal({
+      title: `Приглашение для ${who}`,
+      body: h`
+        <p>Отправьте ссылку ${who}. Она одноразовая и действует 7 дней. Код показывается только сейчас.</p>
+        <div class="code-box">${code}</div>
+        <div class="copy-row"><input readonly value="${link}" aria-label="Ссылка"><button type="button" class="btn btn-primary" id="copy">Копировать</button></div>
+        <p class="hint">Человек откроет ссылку, зарегистрируется, и доступ к кабинету «${student.name}» откроется автоматически.</p>`,
+    });
+    $('#copy', m.el).addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(`Вход в личный кабинет mamchuck: ${link}`); toast('Скопировано'); }
+      catch { $('.copy-row input', m.el).select(); }
+    });
+    ctx.refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ============================================================
+// Карточки
+// ============================================================
+
+const lessonStatus = { planned: ['Запланировано', 'info'], done: ['Проведено', 'ok'], cancelled: ['Отменено', 'muted'] };
+
+function lessonCard(l, studentName) {
+  const [label, cls] = lessonStatus[l.status];
+  return h`
+  <div class="item">
+    <div class="item-main">
+      <div class="item-title">${l.topic || l.subject}</div>
+      <div class="item-meta">${studentName ? h`<b>${studentName}</b> · ` : ''}${l.subject} · ${fmtDT(l.starts_at)} · ${l.duration_min} мин</div>
+      ${l.status === 'done' && l.report ? h`<div class="item-text">${l.report}${l.report_published ? '' : h` <span class="badge muted">не опубликован</span>`}</div>` : ''}
+    </div>
+    <div class="item-side">
+      <span class="badge ${cls}">${label}</span>
+      <div class="actions">
+        ${l.status === 'planned' ? h`<button class="btn btn-primary btn-sm" data-conduct="${l.id}">Провести урок</button>` : ''}
+        ${l.status === 'done' ? h`<button class="btn btn-ghost btn-sm" data-report="${l.id}">Отчёт</button>` : ''}
+        <button class="btn btn-ghost btn-sm" data-ledit="${l.id}">Изменить</button>
+        ${l.status === 'planned' ? h`<button class="btn btn-ghost btn-sm" data-lcancel="${l.id}">Отменить</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function bindLessons(view, ctx, lessons, students) {
+  const L = byId(lessons);
+  $$('[data-conduct]', view).forEach((b) => b.addEventListener('click', () => conductLesson(ctx, L[b.dataset.conduct])));
+  $$('[data-report]', view).forEach((b) => b.addEventListener('click', () => reportForm(ctx, L[b.dataset.report])));
+  $$('[data-ledit]', view).forEach((b) => b.addEventListener('click', () => lessonForm(ctx, { students, lesson: L[b.dataset.ledit] })));
+  $$('[data-lcancel]', view).forEach((b) => b.addEventListener('click', () =>
+    confirmDialog('Отменить это занятие?', async () => { await ctx.api.update('lessons', b.dataset.lcancel, { status: 'cancelled' }); toast('Занятие отменено'); ctx.refresh(); }, 'Отменить занятие')));
+}
+
+const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
+
+// ============================================================
+// Страницы
+// ============================================================
+
+async function dashboard(view, _p, ctx) {
+  const { api } = ctx;
+  const [students, lessons, subs, hws, balances] = await Promise.all([
+    api.select('students', { order: 'name' }),
+    api.select('lessons', { eq: { status: 'planned' }, order: 'starts_at' }),
+    api.select('submissions', { order: 'submitted_at' }),
+    api.select('homework'),
+    api.select('student_balance'),
+  ]);
+  const S = byId(students), H = byId(hws);
+  const today = startOfToday();
+  const upcoming = lessons.filter((l) => l.starts_at >= today).slice(0, 6);
+  const toReview = subs.filter((s) => !s.reviewed_at);
+  const lowBal = balances.filter((b) => S[b.student_id]?.status === 'active' && b.lessons_left <= 1);
+  const todayCount = lessons.filter((l) => dayKey(l.starts_at) === dayKey(Date.now())).length;
+
+  mount(view, h`
+    ${pageHero({ eyebrow: 'Кабинет преподавателя', title: 'Здравствуйте, ', accent: (ctx.me.full_name || '').split(' ')[0] || 'преподаватель',
+      sub: fmtDay(Date.now()), actions: h`<button class="btn btn-primary" id="add-lesson">${I.plus}<span>Занятие</span></button>` })}
+    <div class="stats">
+      <a class="stat" href="#/schedule"><span>Сегодня</span><b>${plural(todayCount, 'занятие', 'занятия', 'занятий')}</b></a>
+      <a class="stat" href="#/review"><span>На проверке</span><b>${plural(toReview.length, 'работа', 'работы', 'работ')}</b></a>
+      <a class="stat" href="#/students"><span>Учеников</span><b>${students.filter((s) => s.status === 'active').length}</b></a>
+    </div>
+    <div class="grid-2">
+      <section class="card"><div class="card-head"><h2>Ближайшие занятия</h2><a href="#/schedule" class="link">Все</a></div>
+        ${upcoming.length ? h`<div class="list">${upcoming.map((l) => lessonCard(l, S[l.student_id]?.name))}</div>` : empty('Нет запланированных занятий', I.calendar)}
+      </section>
+      <div class="stack">
+        <section class="card"><div class="card-head"><h2>Ждут проверки</h2><a href="#/review" class="link">Все</a></div>
+          ${toReview.length ? h`<div class="list">${toReview.slice(0, 5).map((s) => h`
+            <a class="item item-link" href="#/student/${s.student_id}/homework"><div class="item-main">
+              <div class="item-title">${H[s.homework_id]?.title}</div>
+              <div class="item-meta"><b>${S[s.student_id]?.name}</b> · сдано ${fmtDT(s.submitted_at)}</div></div>
+              <span class="badge info">Проверить</span></a>`)}</div>` : empty('Все работы проверены', I.check)}
+        </section>
+        ${lowBal.length ? h`<section class="card"><div class="card-head"><h2>Заканчиваются оплаченные занятия</h2></div>
+          <div class="list">${lowBal.map((b) => h`<a class="item item-link" href="#/student/${b.student_id}/payments">
+            <div class="item-main"><div class="item-title">${S[b.student_id].name}</div></div>
+            <span class="badge ${b.lessons_left < 0 ? 'bad' : 'warn'}">${b.lessons_left < 0 ? `долг ${-b.lessons_left}` : `осталось ${b.lessons_left}`}</span></a>`)}</div></section>` : ''}
+      </div>
+    </div>`);
+  $('#add-lesson').addEventListener('click', () => lessonForm(ctx, { students }));
+  bindLessons(view, ctx, upcoming, students);
+}
+
+async function studentsPage(view, _p, ctx) {
+  const [students, balances] = await Promise.all([
+    ctx.api.select('students', { order: 'name' }), ctx.api.select('student_balance'),
+  ]);
+  const B = Object.fromEntries(balances.map((b) => [b.student_id, b]));
+  const render = (q = '', st = 'active') => {
+    const list = students.filter((s) => (st === 'all' || s.status === st) && s.name.toLowerCase().includes(q.toLowerCase()));
+    mount($('#slist', view), list.length ? h`${list.map((s) => {
+      const b = B[s.id];
+      return h`<a class="student-card card" href="#/student/${s.id}">
+        <span class="avatar avatar-lg">${s.name[0]}</span>
+        <div class="item-main"><div class="item-title">${s.name}</div>
+          <div class="item-meta">${s.grade ? `${s.grade} класс · ` : ''}${s.subjects.join(', ')}</div></div>
+        ${b ? h`<span class="badge ${b.lessons_left < 0 ? 'bad' : b.lessons_left <= 1 ? 'warn' : 'ok'}">${b.lessons_left < 0 ? `долг ${-b.lessons_left}` : `${b.lessons_left} опл.`}</span>` : ''}
+      </a>`;
+    })}` : empty(students.length ? 'Никого не найдено' : 'Добавьте первого ученика', I.users));
+  };
+  mount(view, h`
+    ${pageHero({ eyebrow: 'Ученики', title: 'Мои ', accent: 'ученики', actions: h`<button class="btn btn-primary" id="add">${I.plus}<span>Ученик</span></button>` })}
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Поиск по имени" aria-label="Поиск">
+      <select id="st" aria-label="Статус"><option value="active">Занимаются</option><option value="paused">На паузе</option><option value="finished">Закончили</option><option value="all">Все</option></select>
+    </div>
+    <div id="slist" class="cards"></div>`);
+  render();
+  $('#q', view).addEventListener('input', () => render($('#q', view).value, $('#st', view).value));
+  $('#st', view).addEventListener('change', () => render($('#q', view).value, $('#st', view).value));
+  $('#add', view).addEventListener('click', () => studentForm(ctx));
+}
+
+const TABS = [
+  ['', 'Обзор'], ['lessons', 'Занятия'], ['homework', 'ДЗ'], ['materials', 'Материалы'],
+  ['progress', 'Прогресс'], ['payments', 'Оплаты'], ['notes', 'Заметки'], ['access', 'Доступ'],
+];
+
+async function studentPage(view, [id, tab = ''], ctx) {
+  const { api } = ctx;
+  const [s] = await api.select('students', { eq: { id } });
+  if (!s) { mount(view, empty('Ученик не найден', I.users)); return; }
+  const shell = (content) => h`
+    <a href="#/students" class="back">${I.back} Ученики</a>
+    <div class="page-head"><div class="who"><span class="avatar avatar-lg">${s.name[0]}</span><div>
+      <h1>${s.name}</h1><p class="muted">${s.grade ? `${s.grade} класс · ` : ''}${s.subjects.join(', ')}${s.status !== 'active' ? ' · ' + ({ paused: 'на паузе', finished: 'закончил' }[s.status]) : ''}</p></div></div>
+      <button class="btn btn-ghost" id="edit">Редактировать</button></div>
+    <nav class="tabs" aria-label="Разделы ученика">${TABS.map(([t, l]) => h`<a href="#/student/${id}${t ? '/' + t : ''}" class="${t === tab ? 'on' : ''}">${l}</a>`)}</nav>
+    ${content}`;
+  const done = (content) => { mount(view, shell(content)); $('#edit', view).addEventListener('click', () => studentForm(ctx, s)); };
+
+  if (tab === '') {
+    const [bal, lessons, hws, subs, prog] = await Promise.all([
+      api.select('student_balance', { eq: { student_id: id } }),
+      api.select('lessons', { eq: { student_id: id }, order: 'starts_at' }),
+      api.select('homework', { eq: { student_id: id } }),
+      api.select('submissions', { eq: { student_id: id } }),
+      api.select('topic_progress', { eq: { student_id: id } }),
+    ]);
+    const b = bal[0] || { lessons_left: 0, lessons_paid: 0, lessons_done: 0 };
+    const next = lessons.find((l) => l.status === 'planned' && l.starts_at >= startOfToday());
+    const subBy = Object.fromEntries(subs.map((x) => [x.homework_id, x]));
+    const open = hws.filter((x) => !subBy[x.id]).length;
+    const avg = prog.length ? Math.round(prog.reduce((a, p) => a + p.level, 0) / prog.length) : 0;
+    done(h`
+      <div class="stats">
+        <a class="stat" href="#/student/${id}/payments"><span>Осталось оплаченных</span><b class="${b.lessons_left < 0 ? 'text-bad' : ''}">${b.lessons_left}</b></a>
+        <a class="stat" href="#/student/${id}/homework"><span>ДЗ не сдано</span><b>${open}</b></a>
+        <a class="stat" href="#/student/${id}/progress"><span>Средний прогресс</span><b>${avg}%</b></a>
+      </div>
+      <div class="grid-2">
+        <section class="card"><div class="card-head"><h2>Следующее занятие</h2></div>
+          ${next ? h`<div class="list">${lessonCard(next)}</div>` : h`${empty('Не запланировано', I.calendar)}<button class="btn btn-soft btn-block" id="plan">${I.plus} Запланировать</button>`}</section>
+        <section class="card"><div class="card-head"><h2>Цели</h2></div><p class="pre">${s.goals || '—'}</p></section>
+      </div>`);
+    bindLessons(view, ctx, next ? [next] : [], [s]);
+    $('#plan', view)?.addEventListener('click', () => lessonForm(ctx, { students: [s], studentId: id }));
+  }
+
+  if (tab === 'lessons') {
+    const lessons = await api.select('lessons', { eq: { student_id: id }, order: 'starts_at', asc: false });
+    const t = startOfToday();
+    const up = lessons.filter((l) => l.status === 'planned').reverse();
+    const past = lessons.filter((l) => l.status !== 'planned');
+    done(h`
+      <div class="section-head"><h2>Запланировано</h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Занятие</button></div>
+      ${up.length ? h`<div class="list card">${up.map((l) => lessonCard(l))}</div>` : empty('Нет запланированных занятий', I.calendar)}
+      ${up.some((l) => l.starts_at < t) ? h`<p class="hint">Есть прошедшие занятия без отметки — нажмите «Провести урок».</p>` : ''}
+      <div class="section-head"><h2>История</h2></div>
+      ${past.length ? h`<div class="list card">${past.map((l) => lessonCard(l))}</div>` : empty('Пока нет проведённых занятий', I.book)}`);
+    $('#add', view).addEventListener('click', () => lessonForm(ctx, { students: [s], studentId: id }));
+    bindLessons(view, ctx, lessons, [s]);
+  }
+
+  if (tab === 'homework') {
+    const [hws, subs, mats] = await Promise.all([
+      api.select('homework', { eq: { student_id: id }, order: 'created_at', asc: false }),
+      api.select('submissions', { eq: { student_id: id } }),
+      api.select('materials', { eq: { student_id: id } }),
+    ]);
+    const subBy = Object.fromEntries(subs.map((x) => [x.homework_id, x]));
+    done(h`
+      <div class="section-head"><h2>Домашние задания</h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Задание</button></div>
+      ${hws.length ? h`<div class="list card">${hws.map((x) => {
+        const sub = subBy[x.id], st = hwStatus(x, sub), files = mats.filter((m) => m.homework_id === x.id);
+        return h`<div class="item"><div class="item-main">
+            <div class="item-title">${x.title}</div>
+            <div class="item-meta">${x.subject} · срок ${fmtD(x.due_at)}${files.length ? ` · ${plural(files.length, 'файл', 'файла', 'файлов')}` : ''}${sub?.grade ? ` · оценка ${sub.grade}` : ''}</div>
+            ${x.description ? h`<div class="item-text">${x.description}</div>` : ''}</div>
+          <div class="item-side"><span class="badge ${st.cls}">${st.label}</span><div class="actions">
+            ${sub ? h`<button class="btn btn-${sub.reviewed_at ? 'ghost' : 'primary'} btn-sm" data-review="${x.id}">${sub.reviewed_at ? 'Ответ' : 'Проверить'}</button>` : ''}
+            <button class="btn btn-ghost btn-sm" data-hedit="${x.id}">Изменить</button>
+            <button class="icon-btn" data-hdel="${x.id}" aria-label="Удалить">${I.trash}</button></div></div></div>`;
+      })}</div>` : empty('Заданий пока нет', I.book)}`);
+    const H = byId(hws);
+    $('#add', view).addEventListener('click', () => homeworkForm(ctx, s));
+    $$('[data-review]', view).forEach((b) => b.addEventListener('click', () => reviewForm(ctx, H[b.dataset.review], subBy[b.dataset.review], s.name)));
+    $$('[data-hedit]', view).forEach((b) => b.addEventListener('click', () => homeworkForm(ctx, s, H[b.dataset.hedit])));
+    $$('[data-hdel]', view).forEach((b) => b.addEventListener('click', () =>
+      confirmDialog('Удалить задание вместе с ответом ученика?', async () => { await api.remove('homework', b.dataset.hdel); toast('Удалено'); ctx.refresh(); })));
+  }
+
+  if (tab === 'materials') {
+    const [mats, hws] = await Promise.all([
+      api.select('materials', { eq: { student_id: id }, order: 'created_at', asc: false }),
+      api.select('homework', { eq: { student_id: id } }),
+    ]);
+    const H = byId(hws);
+    done(h`
+      <div class="section-head"><h2>Материалы</h2><div class="actions">
+        <button class="btn btn-primary btn-sm" id="from-lib">${I.folder} Из библиотеки</button>
+        <button class="btn btn-ghost btn-sm" id="add">${I.plus} Загрузить</button></div></div>
+      ${mats.length ? h`<div class="list card">${mats.map((m) => h`
+        <div class="item"><span class="item-icon">${m.file_path ? I.file : I.link}</span>
+          <div class="item-main"><div class="item-title">${m.title}</div>
+            <div class="item-meta">${m.subject ? `${m.subject}${m.topic ? ' · ' + m.topic : ''} · ` : ''}${fmtD(m.created_at)}${m.homework_id && H[m.homework_id] ? ` · к заданию «${H[m.homework_id].title}»` : ''}${m.lesson_id ? ' · к уроку' : ''}${m.library_item_id ? ' · из библиотеки' : ''}</div></div>
+          <div class="actions">
+            ${m.file_path ? h`<button class="btn btn-ghost btn-sm" data-open="${m.file_path}">Открыть</button>` : h`<a class="btn btn-ghost btn-sm" href="${m.url}" target="_blank" rel="noopener noreferrer">Открыть</a>`}
+            <button class="icon-btn" data-mdel="${m.id}" aria-label="Удалить">${I.trash}</button></div></div>`)}</div>` : empty('Материалов пока нет', I.folder)}`);
+    const M = byId(mats);
+    $('#add', view).addEventListener('click', () => materialForm(ctx, s));
+    $('#from-lib', view).addEventListener('click', async () => {
+      const items = await pickFromLibrary(api, { subject: s.subjects[0] });
+      if (!items.length) return;
+      const fresh = items.filter((i) => !mats.some((m) => m.library_item_id === i.id && !m.homework_id && !m.lesson_id));
+      try { await attachItems(api, id, fresh); toast(`Выдано: ${plural(fresh.length, 'материал', 'материала', 'материалов')}`); ctx.refresh(); }
+      catch (e) { toast(e.message, 'error'); }
+    });
+    $$('[data-open]', view).forEach((b) => b.addEventListener('click', () => openFile(api, b.dataset.open)));
+    $$('[data-mdel]', view).forEach((b) => b.addEventListener('click', () => confirmDialog(M[b.dataset.mdel].library_item_id ? 'Убрать материал у ученика? В библиотеке он останется.' : 'Удалить материал?', async () => {
+      const m = M[b.dataset.mdel];
+      await api.remove('materials', m.id);
+      if (m.file_path && !m.library_item_id) await api.removeFile(m.file_path).catch(() => {});
+      toast('Удалено'); ctx.refresh();
+    })));
+  }
+
+  if (tab === 'progress') {
+    const rows = await api.select('topic_progress', { eq: { student_id: id }, order: 'topic' });
+    const subjects = [...new Set([...s.subjects, ...rows.map((r) => r.subject)])];
+    done(h`
+      <div class="section-head"><h2>Прогресс по темам</h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Тема</button></div>
+      ${rows.length ? subjects.filter((sub) => rows.some((r) => r.subject === sub)).map((sub) => h`
+        <section class="card"><h3>${sub}</h3><div class="progress-list">
+          ${rows.filter((r) => r.subject === sub).map((r) => h`
+            <button class="progress-row" data-pedit="${r.id}">
+              <span class="p-topic">${r.topic}</span>
+              <span class="bar" role="progressbar" aria-valuenow="${r.level}" aria-valuemin="0" aria-valuemax="100"><i style="width:${r.level}%"></i></span>
+              <span class="p-level">${levelLabel(r.level)}</span></button>`)}
+        </div></section>`) : empty('Добавьте темы, чтобы отслеживать прогресс', I.chart)}`);
+    const R = byId(rows);
+    $('#add', view).addEventListener('click', () => progressForm(ctx, s));
+    $$('[data-pedit]', view).forEach((b) => b.addEventListener('click', () => progressForm(ctx, s, R[b.dataset.pedit])));
+  }
+
+  if (tab === 'payments') {
+    const [pays, bal] = await Promise.all([
+      api.select('payments', { eq: { student_id: id }, order: 'paid_at', asc: false }),
+      api.select('student_balance', { eq: { student_id: id } }),
+    ]);
+    const b = bal[0] || { lessons_paid: 0, lessons_done: 0, lessons_left: 0 };
+    const total = pays.reduce((a, p) => a + p.amount_kopecks, 0);
+    done(h`
+      <div class="stats">
+        <div class="stat"><span>Оплачено занятий</span><b>${b.lessons_paid}</b></div>
+        <div class="stat"><span>Проведено</span><b>${b.lessons_done}</b></div>
+        <div class="stat"><span>${b.lessons_left < 0 ? 'Задолженность' : 'Осталось'}</span><b class="${b.lessons_left < 0 ? 'text-bad' : ''}">${Math.abs(b.lessons_left)}</b></div>
+      </div>
+      <div class="section-head"><h2>История оплат <span class="muted small">· всего ${fmtMoney(total)}</span></h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Оплата</button></div>
+      ${pays.length ? h`<div class="list card">${pays.map((p) => h`
+        <div class="item"><div class="item-main"><div class="item-title">${fmtMoney(p.amount_kopecks, p.currency)}</div>
+          <div class="item-meta">${fmtD(p.paid_at)} · ${plural(p.lessons_count, 'занятие', 'занятия', 'занятий')}${p.comment ? ` · ${p.comment}` : ''}</div></div>
+          <button class="icon-btn" data-pdel="${p.id}" aria-label="Удалить">${I.trash}</button></div>`)}</div>` : empty('Оплат пока нет', I.wallet)}`);
+    $('#add', view).addEventListener('click', () => paymentForm(ctx, s));
+    $$('[data-pdel]', view).forEach((x) => x.addEventListener('click', () =>
+      confirmDialog('Удалить запись об оплате?', async () => { await api.remove('payments', x.dataset.pdel); toast('Удалено'); ctx.refresh(); })));
+  }
+
+  if (tab === 'notes') {
+    const notes = await api.select('private_notes', { eq: { student_id: id }, order: 'created_at', asc: false });
+    done(h`
+      <p class="notice">${I.note} Заметки видите только вы. Ученик и родитель к ним доступа не имеют.</p>
+      <form class="card stack" id="nf"><textarea name="body" rows="3" required placeholder="Новая заметка" aria-label="Новая заметка"></textarea>
+        <button class="btn btn-primary">Добавить</button></form>
+      ${notes.length ? h`<div class="list card">${notes.map((n) => h`
+        <div class="item"><div class="item-main"><div class="item-meta">${fmtDT(n.created_at)}</div><div class="item-text pre">${n.body}</div></div>
+          <button class="icon-btn" data-ndel="${n.id}" aria-label="Удалить">${I.trash}</button></div>`)}</div>` : ''}`);
+    $('#nf', view).addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try { await api.insert('private_notes', { student_id: id, body: e.target.body.value.trim() }); toast('Заметка добавлена'); ctx.refresh(); }
+      catch (err) { toast(err.message, 'error'); }
+    });
+    $$('[data-ndel]', view).forEach((b) => b.addEventListener('click', () =>
+      confirmDialog('Удалить заметку?', async () => { await api.remove('private_notes', b.dataset.ndel); ctx.refresh(); })));
+  }
+
+  if (tab === 'access') {
+    const [mems, invs] = await Promise.all([
+      api.select('student_memberships', { eq: { student_id: id } }),
+      api.select('invitations', { eq: { student_id: id }, order: 'created_at', asc: false }),
+    ]);
+    const profs = mems.length ? byId(await api.select('profiles', { eq: { id: mems.map((m) => m.user_id) } })) : {};
+    const invState = (i) => (i.used_at ? ['Использовано', 'ok'] : new Date(i.expires_at) < new Date() ? ['Истекло', 'muted'] : ['Ожидает', 'info']);
+    done(h`
+      <div class="grid-2">
+        <section class="card stack"><h2>Пригласить</h2>
+          <p class="muted">Создайте ссылку и отправьте её ученику или родителю, например в мессенджере.</p>
+          <button class="btn btn-primary" data-inv="student">${I.key} Ссылка для ученика</button>
+          <button class="btn btn-soft" data-inv="parent">${I.key} Ссылка для родителя</button></section>
+        <section class="card"><h2>У кого есть доступ</h2>
+          ${mems.length ? h`<div class="list">${mems.map((m) => h`<div class="item"><div class="item-main">
+            <div class="item-title">${profs[m.user_id]?.full_name || 'Без имени'}</div>
+            <div class="item-meta">${m.role === 'student' ? 'Ученик' : 'Родитель'}</div></div></div>`)}</div>` : empty('Пока никто не подключён', I.users)}</section>
+      </div>
+      ${invs.length ? h`<div class="section-head"><h2>Приглашения</h2></div><div class="list card">${invs.map((i) => {
+        const [l, c] = invState(i);
+        return h`<div class="item"><div class="item-main"><div class="item-title">${i.role === 'student' ? 'Ученик' : 'Родитель'}</div>
+          <div class="item-meta">создано ${fmtDT(i.created_at)} · до ${fmtD(i.expires_at)}</div></div>
+          <span class="badge ${c}">${l}</span>
+          ${!i.used_at ? h`<button class="icon-btn" data-idel="${i.id}" aria-label="Отозвать">${I.trash}</button>` : ''}</div>`;
+      })}</div>` : ''}`);
+    $$('[data-inv]', view).forEach((b) => b.addEventListener('click', () => invite(ctx, s, b.dataset.inv)));
+    $$('[data-idel]', view).forEach((b) => b.addEventListener('click', () =>
+      confirmDialog('Отозвать приглашение? Ссылка перестанет работать.', async () => { await api.remove('invitations', b.dataset.idel); ctx.refresh(); }, 'Отозвать')));
+  }
+}
+
+async function schedulePage(view, [mode = 'upcoming'], ctx) {
+  const [students, lessons] = await Promise.all([
+    ctx.api.select('students', { order: 'name' }),
+    ctx.api.select('lessons', { order: 'starts_at', asc: mode === 'upcoming' }),
+  ]);
+  const S = byId(students), t = startOfToday();
+  const list = mode === 'upcoming'
+    ? lessons.filter((l) => l.status === 'planned')
+    : lessons.filter((l) => l.status !== 'planned' && l.starts_at < new Date().toISOString()).slice(0, 60);
+  const groups = [];
+  for (const l of list) {
+    const k = dayKey(l.starts_at);
+    if (groups.at(-1)?.k !== k) groups.push({ k, d: l.starts_at, items: [] });
+    groups.at(-1).items.push(l);
+  }
+  mount(view, h`
+    ${pageHero({ eyebrow: 'Расписание', title: 'Календарь ', accent: 'занятий', actions: h`<button class="btn btn-primary" id="add">${I.plus}<span>Занятие</span></button>` })}
+    <div class="seg seg-inline">
+      <a href="#/schedule" class="${mode === 'upcoming' ? 'on' : ''}">Предстоящие</a>
+      <a href="#/schedule/past" class="${mode === 'past' ? 'on' : ''}">Прошедшие</a></div>
+    ${groups.length ? groups.map((g) => h`
+      <div class="day-head ${g.d < t ? 'past' : ''}">${fmtDay(g.d)}${dayKey(g.d) === dayKey(Date.now()) ? h` <span class="badge info">сегодня</span>` : ''}</div>
+      <div class="list card">${g.items.map((l) => lessonCard(l, S[l.student_id]?.name))}</div>`)
+    : empty(mode === 'upcoming' ? 'Нет запланированных занятий' : 'История пуста', I.calendar)}`);
+  $('#add', view).addEventListener('click', () => lessonForm(ctx, { students }));
+  bindLessons(view, ctx, list, students);
+}
+
+async function reviewPage(view, _p, ctx) {
+  const [subs, hws, students] = await Promise.all([
+    ctx.api.select('submissions', { order: 'submitted_at', asc: false }),
+    ctx.api.select('homework'), ctx.api.select('students'),
+  ]);
+  const H = byId(hws), S = byId(students);
+  const pending = subs.filter((s) => !s.reviewed_at).reverse();
+  const recent = subs.filter((s) => s.reviewed_at).slice(0, 10);
+  const row = (s) => h`<div class="item"><div class="item-main">
+      <div class="item-title">${H[s.homework_id]?.title}</div>
+      <div class="item-meta"><b>${S[s.student_id]?.name}</b> · ${H[s.homework_id]?.subject} · сдано ${fmtDT(s.submitted_at)}${s.grade ? ` · оценка ${s.grade}` : ''}</div></div>
+    <button class="btn btn-${s.reviewed_at ? 'ghost' : 'primary'} btn-sm" data-rev="${s.id}">${s.reviewed_at ? 'Открыть' : 'Проверить'}</button></div>`;
+  mount(view, h`
+    ${pageHero({ eyebrow: 'Проверка', title: 'Домашние ', accent: 'работы' })}
+    <div class="section-head"><h2>Ждут проверки · ${pending.length}</h2></div>
+    ${pending.length ? h`<div class="list card">${pending.map(row)}</div>` : empty('Все работы проверены', I.check)}
+    ${recent.length ? h`<div class="section-head"><h2>Недавно проверенные</h2></div><div class="list card">${recent.map(row)}</div>` : ''}`);
+  const SB = byId(subs);
+  $$('[data-rev]', view).forEach((b) => b.addEventListener('click', () => {
+    const s = SB[b.dataset.rev]; reviewForm(ctx, H[s.homework_id], s, S[s.student_id]?.name);
+  }));
+}
+
+export const tutorRoutes = { library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
