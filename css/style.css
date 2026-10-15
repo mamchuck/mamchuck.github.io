@@ -727,3 +727,11 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .danger-zone .btn { align-self: flex-start; }
 .btn-danger-ghost { color: var(--bad); border-color: var(--line); }
 .btn-danger-ghost:hover { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+
+/* Пустой кабинет — по центру экрана */
+.empty-screen { min-height: calc(100vh - 200px); min-height: calc(100dvh - 200px); display: grid; place-items: center; padding: 16px 0; }
+.empty-card { width: 100%; max-width: 400px; text-align: center; align-items: center; padding: 28px 24px; }
+.empty-card form { width: 100%; }
+.empty-card .code-input { text-align: center; }
+.empty-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); }
+.empty-icon svg { width: 28px; height: 28px; }

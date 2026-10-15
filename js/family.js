@@ -18,8 +18,22 @@ export const familyNav = (role) => [
 
 const isStudent = (ctx) => ctx.me.role === 'student';
 
-function noChild(view) {
-  mount(view, empty('Кабинет пока не подключён. Попросите у преподавателя код приглашения.', I.users));
+// Аккаунт без привязанного ученика: по центру экрана + ввод кода приглашения
+function noChild(view, ctx) {
+  mount(view, h`<div class="empty-screen"><div class="card empty-card stack">
+    <span class="empty-icon">${I.users}</span>
+    <h2>Кабинет пока не подключён</h2>
+    <p class="muted">Попросите у преподавателя ссылку или код приглашения и введите код ниже.</p>
+    <form id="join-code" class="stack">
+      <input name="code" class="code-input" placeholder="A1B2C3D4E5F6" maxlength="12" autocomplete="off" required aria-label="Код приглашения">
+      <button class="btn btn-primary btn-block">Подключиться</button>
+    </form></div></div>`);
+  $('#join-code', view).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('button', e.target); btn.disabled = true; btn.classList.add('loading');
+    try { await ctx.api.rpc('redeem_invitation', { p_code: e.target.code.value.trim() }); toast('Готово!'); location.hash = '#/'; location.reload(); }
+    catch (err) { toast(err.message, 'error'); btn.disabled = false; btn.classList.remove('loading'); }
+  });
 }
 
 async function openFile(api, path) {
@@ -54,7 +68,7 @@ const hwItem = (x, sub) => {
 
 async function home(view, _p, ctx) {
   const sid = ctx.studentId;
-  if (!sid) return noChild(view);
+  if (!sid) return noChild(view, ctx);
   const { api } = ctx;
   const student = ctx.students.find((s) => s.id === sid);
   const [lessons, hws, subs, bal] = await Promise.all([
@@ -98,7 +112,7 @@ async function home(view, _p, ctx) {
 
 async function homework(view, _p, ctx) {
   const sid = ctx.studentId;
-  if (!sid) return noChild(view);
+  if (!sid) return noChild(view, ctx);
   const [hws, subs] = await Promise.all([
     ctx.api.select('homework', { eq: { student_id: sid }, order: 'created_at', asc: false }),
     ctx.api.select('submissions', { eq: { student_id: sid } }),
@@ -173,7 +187,7 @@ async function hwDetail(view, [id], ctx) {
 
 async function lessons(view, _p, ctx) {
   const sid = ctx.studentId;
-  if (!sid) return noChild(view);
+  if (!sid) return noChild(view, ctx);
   const [all, mats] = await Promise.all([
     ctx.api.select('lessons_public', { eq: { student_id: sid }, order: 'starts_at' }),
     ctx.api.select('materials', { eq: { student_id: sid } }),
@@ -192,7 +206,7 @@ async function lessons(view, _p, ctx) {
 
 async function materials(view, _p, ctx) {
   const sid = ctx.studentId;
-  if (!sid) return noChild(view);
+  if (!sid) return noChild(view, ctx);
   const mats = await ctx.api.select('materials', { eq: { student_id: sid }, order: 'created_at', asc: false });
   const subjects = [...new Set(mats.map((m) => m.subject || 'Прочее'))].sort((a, b) => (a === 'Прочее') - (b === 'Прочее') || a.localeCompare(b, 'ru'));
   let subj = '';
@@ -230,7 +244,7 @@ async function materials(view, _p, ctx) {
 
 async function progress(view, _p, ctx) {
   const sid = ctx.studentId;
-  if (!sid) return noChild(view);
+  if (!sid) return noChild(view, ctx);
   const rows = await ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' });
   const subjects = [...new Set(rows.map((r) => r.subject))];
   mount(view, h`
@@ -249,7 +263,7 @@ async function progress(view, _p, ctx) {
 
 async function payments(view, _p, ctx) {
   const sid = ctx.studentId;
-  if (!sid) return noChild(view);
+  if (!sid) return noChild(view, ctx);
   if (isStudent(ctx)) { location.hash = '#/'; return; }
   const [pays, bal] = await Promise.all([
     ctx.api.select('payments', { eq: { student_id: sid }, order: 'paid_at', asc: false }),
