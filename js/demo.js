@@ -24,6 +24,9 @@ function seed() {
     ],
     lessons: [], homework: [], materials: [], submissions: [], topic_progress: [],
     payments: [], invitations: [], private_notes: [], library_items: [],
+    app_settings: [{ id: 1, reminder_minutes: 120, evening_reminder: false, evening_hour: 20, timezone: 'Europe/Moscow', bot_username: 'mamchuck_bot', bot_ready: true }],
+    telegram_links: [{ user_id: P, chat_id: 1001, tg_username: 'mama_demo', tg_name: 'Мама', notify: true, linked_at: at(-3) }],
+    lesson_responses: [],
   };
   const L = (student_id, d, subject, topic, status, report = '', pub = false, hh = 16) =>
     db.lessons.push({ id: uid(), student_id, starts_at: at(d, hh), duration_min: 60, subject, topic, plan: '', status, report, report_published: pub, created_at: at(d - 3) });
@@ -75,6 +78,8 @@ function seed() {
     { id: uid(), student_id: M, amount_kopecks: 200000, currency: 'RUB', lessons_count: 1, paid_at: at(-4).slice(0, 10), comment: '' },
   );
   db.private_notes.push({ id: uid(), student_id: A, lesson_id: null, body: 'Теряется на задачах с параметром — вернуться после квадратных уравнений.', created_at: at(-2) });
+  const next = db.lessons.find((l) => l.student_id === A && l.status === 'planned');
+  if (next) db.lesson_responses.push({ lesson_id: next.id, user_id: P, student_id: A, role: 'parent', response: 'move', created_at: at(-1) });
   return db;
 }
 
@@ -103,7 +108,9 @@ export function createDemoApi() {
     }
     const rows = db[table];
     if (!rows) throw new Error(`Нет таблицы ${table}`);
+    if (table === 'app_settings') return rows;
     if (me.role === 'tutor') return rows;
+    if (table === 'telegram_links') return rows.filter((r) => r.user_id === me.id);
     if (['invitations', 'private_notes', 'lessons', 'library_items'].includes(table)) return [];
     if (table === 'payments') return rows.filter((r) => isParentOf(r.student_id));
     if (table === 'profiles') return rows.filter((r) => r.id === me.id);
@@ -173,6 +180,17 @@ export function createDemoApi() {
         db.invitations.push({ id: uid(), student_id: args.p_student_id, role: args.p_role, code_hash: '—', expires_at: new Date(now + 7 * day).toISOString(), used_at: null, created_at: new Date().toISOString() });
         return code;
       }
+      if (fn === 'tg_create_link') {
+        // демо: «пользователь нажал Start» через 4 секунды
+        setTimeout(() => {
+          db.telegram_links = db.telegram_links.filter((l) => l.user_id !== me.id);
+          db.telegram_links.push({ user_id: me.id, chat_id: 2000, tg_username: 'demo_user', tg_name: me.full_name, notify: true, linked_at: new Date().toISOString() });
+        }, 4000);
+        return 'DEMO1234ABCD5678';
+      }
+      if (fn === 'tg_unlink') { db.telegram_links = db.telegram_links.filter((l) => l.user_id !== me.id); return null; }
+      if (fn === 'tg_set_notify') { const l = db.telegram_links.find((x) => x.user_id === me.id); if (l) l.notify = args.p_on; return null; }
+      if (fn === 'tg_test') return null;
       throw new Error('В демо-режиме коды приглашений не принимаются');
     },
     async upload(path, file) { await tick(); files.set(path, URL.createObjectURL(file)); return path; },

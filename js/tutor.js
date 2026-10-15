@@ -7,6 +7,7 @@ import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
 } from './library.js';
 import { backupOverdue, lastBackup, bindBackup } from './backup.js';
+import { mountTelegramBanner, linksFor } from './telegram.js';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -270,7 +271,8 @@ async function invite(ctx, student, role) {
         <p>Отправьте ссылку ${who}. Она одноразовая и действует 7 дней. Код показывается только сейчас.</p>
         <div class="code-box">${code}</div>
         <div class="copy-row"><input readonly value="${link}" aria-label="Ссылка"><button type="button" class="btn btn-primary" id="copy">Копировать</button></div>
-        <p class="hint">Человек откроет ссылку, зарегистрируется, и доступ к кабинету «${student.name}» откроется автоматически.</p>`,
+        <p class="hint">Человек откроет ссылку, зарегистрируется, и доступ к кабинету «${student.name}» откроется автоматически.</p>
+        <p class="hint">После входа на главной появится предложение подключить Telegram-уведомления.</p>`,
     });
     $('#copy', m.el).addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(`Вход в личный кабинет mamchuck: ${link}`); toast('Скопировано'); }
@@ -286,6 +288,17 @@ async function invite(ctx, student, role) {
 
 const lessonStatus = { planned: ['Запланировано', 'info'], done: ['Проведено', 'ok'], cancelled: ['Отменено', 'muted'] };
 
+// Ответы на напоминания из Telegram: { lesson_id: [ {role, response} ] }
+let RESP = {};
+async function loadResponses(api) {
+  try {
+    RESP = {};
+    for (const r of await api.select('lesson_responses')) (RESP[r.lesson_id] ||= []).push(r);
+  } catch { RESP = {}; }
+}
+const respBadges = (l) => (l.status === 'planned' && RESP[l.id]?.length ? h`<div class="resp">${RESP[l.id].map((r) => h`
+  <span class="badge ${r.response === 'move' ? 'warn' : 'ok'}">${r.role === 'parent' ? 'Родитель' : 'Ученик'}: ${r.response === 'move' ? '🔁 просит перенести' : '✅ будет'}</span>`)}</div>` : '');
+
 function lessonCard(l, studentName) {
   const [label, cls] = lessonStatus[l.status];
   return h`
@@ -294,6 +307,7 @@ function lessonCard(l, studentName) {
       <div class="item-title">${l.topic || l.subject}</div>
       <div class="item-meta">${studentName ? h`<b>${studentName}</b> · ` : ''}${l.subject} · ${fmtDT(l.starts_at)} · ${l.duration_min} мин</div>
       ${l.status === 'done' && l.report ? h`<div class="item-text">${l.report}${l.report_published ? '' : h` <span class="badge muted">не опубликован</span>`}</div>` : ''}
+      ${respBadges(l)}
     </div>
     <div class="item-side">
       <span class="badge ${cls}">${label}</span>
@@ -324,6 +338,7 @@ const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); retur
 
 async function dashboard(view, _p, ctx) {
   const { api } = ctx;
+  await loadResponses(api);
   const [students, lessons, subs, hws, balances] = await Promise.all([
     api.select('students', { order: 'name' }),
     api.select('lessons', { eq: { status: 'planned' }, order: 'starts_at' }),
@@ -337,6 +352,7 @@ async function dashboard(view, _p, ctx) {
   const toReview = subs.filter((s) => !s.reviewed_at);
   const lowBal = balances.filter((b) => S[b.student_id]?.status === 'active' && b.lessons_left <= 1);
   const todayCount = lessons.filter((l) => dayKey(l.starts_at) === dayKey(Date.now())).length;
+  const moveReq = lessons.filter((l) => l.starts_at >= today && RESP[l.id]?.some((r) => r.response === 'move'));
 
   mount(view, h`
     ${pageHero({ eyebrow: 'Кабинет преподавателя', title: 'Здравствуйте, ', accent: (ctx.me.full_name || '').split(' ')[0] || 'преподаватель',
@@ -351,6 +367,9 @@ async function dashboard(view, _p, ctx) {
         ${upcoming.length ? h`<div class="list">${upcoming.map((l) => lessonCard(l, S[l.student_id]?.name))}</div>` : empty('Нет запланированных занятий', I.calendar)}
       </section>
       <div class="stack">
+        ${moveReq.length ? h`<section class="card move-card"><div class="card-head"><h2>🔁 Просят перенести</h2></div>
+          <div class="list">${moveReq.map((l) => lessonCard(l, S[l.student_id]?.name))}</div>
+          <p class="hint">Измените время занятия — ученику и родителю придёт сообщение о переносе.</p></section>` : ''}
         <section class="card"><div class="card-head"><h2>Ждут проверки</h2><a href="#/review" class="link">Все</a></div>
           ${toReview.length ? h`<div class="list">${toReview.slice(0, 5).map((s) => h`
             <a class="item item-link" href="#/student/${s.student_id}/homework"><div class="item-main">
@@ -370,7 +389,8 @@ async function dashboard(view, _p, ctx) {
     </div>`);
   $('#add-lesson').addEventListener('click', () => lessonForm(ctx, { students }));
   bindBackup(view, ctx.api, () => ctx.refresh());
-  bindLessons(view, ctx, upcoming, students);
+  bindLessons(view, ctx, [...upcoming, ...moveReq], students);
+  mountTelegramBanner(view, ctx);
 }
 
 async function studentsPage(view, _p, ctx) {
@@ -449,6 +469,7 @@ async function studentPage(view, [id, tab = ''], ctx) {
     $('#plan', view)?.addEventListener('click', () => lessonForm(ctx, { students: [s], studentId: id }));
   }
 
+  if (tab === 'lessons' || tab === '') await loadResponses(api);
   if (tab === 'lessons') {
     const lessons = await api.select('lessons', { eq: { student_id: id }, order: 'starts_at', asc: false });
     const t = startOfToday();
@@ -592,6 +613,7 @@ async function studentPage(view, [id, tab = ''], ctx) {
       api.select('invitations', { eq: { student_id: id }, order: 'created_at', asc: false }),
     ]);
     const profs = mems.length ? byId(await api.select('profiles', { eq: { id: mems.map((m) => m.user_id) } })) : {};
+    const tg = await linksFor(api, mems.map((m) => m.user_id));
     const invState = (i) => (i.used_at ? ['Использовано', 'ok'] : new Date(i.expires_at) < new Date() ? ['Истекло', 'muted'] : ['Ожидает', 'info']);
     done(h`
       <div class="grid-2">
@@ -602,7 +624,9 @@ async function studentPage(view, [id, tab = ''], ctx) {
         <section class="card"><h2>У кого есть доступ</h2>
           ${mems.length ? h`<div class="list">${mems.map((m) => h`<div class="item"><div class="item-main">
             <div class="item-title">${profs[m.user_id]?.full_name || 'Без имени'}</div>
-            <div class="item-meta">${m.role === 'student' ? 'Ученик' : 'Родитель'}</div></div></div>`)}</div>` : empty('Пока никто не подключён', I.users)}</section>
+            <div class="item-meta">${m.role === 'student' ? 'Ученик' : 'Родитель'}</div></div>
+            <span class="badge ${tg[m.user_id] ? 'ok' : 'muted'}">${tg[m.user_id] ? 'Telegram ✓' : 'без Telegram'}</span></div>`)}</div>
+            <p class="hint">Telegram подключают сами: Настройки → «Подключить Telegram».</p>` : empty('Пока никто не подключён', I.users)}</section>
       </div>
       ${invs.length ? h`<div class="section-head"><h2>Приглашения</h2></div><div class="list card">${invs.map((i) => {
         const [l, c] = invState(i);
@@ -618,6 +642,7 @@ async function studentPage(view, [id, tab = ''], ctx) {
 }
 
 async function schedulePage(view, [mode = 'upcoming'], ctx) {
+  await loadResponses(ctx.api);
   const [students, lessons] = await Promise.all([
     ctx.api.select('students', { order: 'name' }),
     ctx.api.select('lessons', { order: 'starts_at', asc: mode === 'upcoming' }),

@@ -4,6 +4,7 @@ import {
   pageHero, authorBar,
 } from './ui.js';
 import { TUTOR } from './config.js';
+import { mountTelegramBanner } from './telegram.js';
 
 export const familyNav = (role) => [
   { path: '', label: 'Главная', icon: I.home },
@@ -108,6 +109,7 @@ async function home(view, _p, ctx) {
         ${reports.length ? h`<div class="list">${reports.map(lessonItem)}</div>` : empty('Отчётов пока нет', I.book)}</section>
     </div>
     <section class="card contact-card">${authorBar(TUTOR)}</section>`);
+  mountTelegramBanner(view, ctx);
 }
 
 async function homework(view, _p, ctx) {

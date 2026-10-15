@@ -2,6 +2,7 @@ import { CONFIG, TUTOR } from './config.js';
 import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js';
 import { tutorRoutes, tutorNav } from './tutor.js';
 import { backupCard, bindBackup } from './backup.js';
+import { renderTelegramCard, renderReminderCard } from './telegram.js';
 import { familyRoutes, familyNav } from './family.js';
 
 const api = CONFIG.supabaseUrl
@@ -205,6 +206,8 @@ const settingsView = async (view) => {
       <div class="seg" role="radiogroup" aria-label="Тема">
         ${[['auto', 'Как на устройстве'], ['light', 'Светлая'], ['dark', 'Тёмная']].map(([v, l]) => h`<button type="button" role="radio" aria-checked="${getTheme() === v}" class="${getTheme() === v ? 'on' : ''}" data-set-theme="${v}">${l}</button>`)}
       </div></section>
+    <section class="card stack" id="tg-card"></section>
+    ${isTutor() ? h`<section class="card stack" id="rem-card"></section>` : ''}
     ${isTutor() ? backupCard() : ''}
     <button class="btn btn-ghost logout-btn" id="logout">${I.logout} Выйти из аккаунта</button>`);
   $('#f-name').addEventListener('submit', async (e) => {
@@ -219,6 +222,8 @@ const settingsView = async (view) => {
   });
   $('#logout').addEventListener('click', logout);
   bindBackup(view, api, () => settingsView(view));
+  renderTelegramCard($('#tg-card', view), ctx);
+  if (isTutor()) renderReminderCard($('#rem-card', view), ctx);
   $$('[data-set-theme]', view).forEach((b) => b.addEventListener('click', () => {
     setTheme(b.dataset.setTheme);
     $$('[data-theme-toggle]').forEach((x) => mount(x, h`${isDark() ? I.sun : I.moon}`));
