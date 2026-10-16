@@ -34,12 +34,22 @@ export function createApi(cfg) {
     },
 
     // eq: { column: value | [values] }
+    // Сервер отдаёт максимум 1000 строк за раз — без limit дочитываем порциями
     async select(table, { eq = {}, order, asc = true, limit } = {}) {
-      let q = sb.from(table).select('*');
-      for (const [k, v] of Object.entries(eq)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
-      if (order) q = q.order(order, { ascending: asc });
-      if (limit) q = q.limit(limit);
-      return ok(await q);
+      const build = () => {
+        let q = sb.from(table).select('*');
+        for (const [k, v] of Object.entries(eq)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
+        if (order) q = q.order(order, { ascending: asc });
+        return q;
+      };
+      if (Object.values(eq).some((v) => Array.isArray(v) && !v.length)) return [];
+      if (limit) return ok(await build().limit(limit));
+      const out = [];
+      for (let from = 0; ; from += 1000) {
+        const d = ok(await build().range(from, from + 999));
+        out.push(...d);
+        if (d.length < 1000) return out;
+      }
     },
     // Все строки таблицы, порциями по 1000 (для резервной копии)
     async dumpAll(table) {

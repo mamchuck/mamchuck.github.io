@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610161837';
+} from './ui.js?v=202610162035';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -21,7 +21,10 @@ const notReady = (view) => mount(view, h`${pageHero({ eyebrow: 'Тренажёр
 
 async function img(api, path, cls = 'task-img') {
   if (!path) return h``;
-  try { return h`<img class="${cls}" src="${await api.fileUrl(path)}" alt="Иллюстрация к задаче" loading="lazy">`; }
+  try {
+    const src = /^(https?:|img\/)/.test(path) ? path : await api.fileUrl(path);
+    return h`<img class="${cls}" src="${src}" alt="Иллюстрация к задаче" loading="lazy">`;
+  }
   catch { return h``; }
 }
 async function uploadImage(api, file) {
@@ -89,6 +92,17 @@ function taskForm(ctx, task, preset = {}) {
     },
   });
   return m;
+}
+
+async function previewTask(ctx, t) {
+  const m = modal({
+    title: `${t.subject}, №${t.num}`, wide: true,
+    body: h`<p class="muted">${t.topic}${t.source ? ` · ${t.source}` : ''} · ${plural(t.max_points, 'балл', 'балла', 'баллов')}</p>
+      ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}<div class="ti"></div>
+      <div class="solution"><div><b>Ответ:</b> ${t.answer || '—'}</div>${t.solution ? h`<div class="pre">${t.solution}</div>` : ''}<div class="si"></div></div>`,
+  });
+  mount($('.ti', m.el), await img(ctx.api, t.image_path));
+  mount($('.si', m.el), await img(ctx.api, t.solution_image_path));
 }
 
 // CSV (Excel → «Сохранить как CSV»): предмет;номер;тема;тип;баллы;условие;ответ;решение;источник
@@ -162,74 +176,114 @@ function importForm(ctx) {
 
 async function setForm(ctx, preset = {}) {
   const { api } = ctx;
-  const [students, tasks] = await Promise.all([
+  const [students, tasks, templates, sets] = await Promise.all([
     api.select('students', { eq: { status: 'active' }, order: 'name' }),
     api.select('oge_tasks', { order: 'num' }),
+    api.select('oge_templates', { order: 'created_at', asc: false }).catch(() => []),
+    api.select('oge_sets', { order: 'created_at', asc: false }),
   ]);
   if (!tasks.length) { toast('Сначала добавьте задачи в банк', 'error'); return; }
-  let subject = preset.subject || SUBJECTS[0];
+  if (!students.length) { toast('Нет активных учеников', 'error'); return; }
+  const S = byId(students);
+  const T = byId(tasks);
+  let subject = preset.subject || T[preset.taskIds?.[0]]?.subject || SUBJECTS[0];
+  let tried = {};          // task_id → 'ok' | 'bad' для выбранного ученика
   const m = modal({
-    title: 'Новый вариант', wide: true, submit: 'Выдать вариант',
+    title: preset.title ? 'Выдать вариант' : 'Новый вариант', wide: true, submit: 'Выдать вариант',
     body: h`
       <div class="row-2">
         <label class="field"><span>Ученик</span><select name="student_id" required>${students.map((s) => h`<option value="${s.id}" ${s.id === preset.studentId ? 'selected' : ''}>${s.name}</option>`)}</select></label>
         <label class="field"><span>Предмет</span><select name="subject">${SUBJECTS.map((s) => h`<option ${s === subject ? 'selected' : ''}>${s}</option>`)}</select></label>
       </div>
       <div class="row-2">
-        <label class="field"><span>Название</span><input name="title" required value="Вариант от ${fmtD(Date.now())}"></label>
+        <label class="field"><span>Название</span><input name="title" required value="${preset.title || `Вариант от ${fmtD(Date.now())}`}"></label>
         <label class="field"><span>Срок</span><input type="date" name="due"></label>
       </div>
+      ${templates.length || sets.length ? h`<label class="field"><span>Взять задачи из шаблона или прошлого варианта</span><select name="from">
+        <option value="">— не брать —</option>
+        ${templates.length ? h`<optgroup label="Шаблоны">${templates.map((t) => h`<option value="tpl:${t.id}">${t.title} · ${t.subject} · ${t.task_ids.length} задач</option>`)}</optgroup>` : ''}
+        ${sets.length ? h`<optgroup label="Прошлые варианты">${sets.slice(0, 40).map((x) => h`<option value="set:${x.id}">${x.title} · ${S[x.student_id]?.name || 'ученик'} · ${fmtD(x.created_at)}</option>`)}</optgroup>` : ''}
+      </select></label>` : ''}
       <div class="autopick">
         <span class="field-label">Автоподбор: по одной задаче на номера</span>
-        <input type="number" name="from" min="1" max="40" value="6" aria-label="С номера"> —
-        <input type="number" name="to" min="1" max="40" value="19" aria-label="По номер">
+        <input type="number" name="from_n" min="1" max="40" value="6" aria-label="С номера"> —
+        <input type="number" name="to_n" min="1" max="40" value="19" aria-label="По номер">
         <button type="button" class="btn btn-soft btn-sm" id="pick">Подобрать</button>
       </div>
-      <p class="hint">Подбираются задачи, которые ученик ещё не решал. Можно поправить галочками.</p>
+      <p class="hint">Подбираются задачи, которые ученик ещё не решал. Отметки: ✓ — решал верно, ✗ — ошибался.</p>
+      <div class="set-filter"><input type="search" placeholder="Фильтр: номер или тема" aria-label="Фильтр задач"></div>
       <div class="set-tasks lib-pick"></div>
-      <p class="hint set-count"></p>`,
+      <p class="hint set-count"></p>
+      <label class="switch"><input type="checkbox" name="save_tpl"><span>Сохранить набор как шаблон (чтобы потом выдавать другим)</span></label>`,
     onSubmit: async (d) => {
-      const ids = $$('.set-tasks input:checked', m.el).map((c) => c.value);
+      const ids = [...checked];
       if (!ids.length) throw new Error('Отметьте задачи');
-      const ordered = tasks.filter((t) => ids.includes(t.id)).sort((a, b) => a.num - b.num).map((t) => t.id);
+      const ordered = ids.map((id) => T[id]).filter(Boolean).sort((a, b) => a.num - b.num).map((t) => t.id);
       await api.insert('oge_sets', { student_id: d.student_id, subject: d.subject, title: d.title, task_ids: ordered, due_at: d.due ? new Date(`${d.due}T20:00`).toISOString() : null });
-      toast('Вариант выдан'); ctx.refresh();
+      if (d.save_tpl) await api.insert('oge_templates', { subject: d.subject, title: d.title, task_ids: ordered }).catch(() => {});
+      toast(`Вариант выдан: ${S[d.student_id]?.name || ''}`); ctx.refresh();
     },
   });
+  const checked = new Set(preset.taskIds || []);
   const box = $('.set-tasks', m.el);
-  const render = (checked = new Set()) => {
+  const filterEl = $('.set-filter input', m.el);
+  const render = () => {
     subject = $('[name=subject]', m.el).value;
-    const list = tasks.filter((t) => t.subject === subject);
+    const q = filterEl.value.trim().toLowerCase();
+    const list = tasks.filter((t) => t.subject === subject
+      && (!q || String(t.num) === q || `№${t.num} ${t.topic} ${t.body}`.toLowerCase().includes(q)));
     mount(box, list.length ? h`${list.map((t) => h`<label class="lib-row">
         <input type="checkbox" value="${t.id}" ${checked.has(t.id) ? 'checked' : ''}>
         <span class="num-pill">№${t.num}</span>
-        <span class="item-main"><span class="item-title">${t.topic || 'Без темы'}</span><span class="item-meta">${(t.body || 'скриншот').slice(0, 90)}</span></span></label>`)}`
-      : empty('В банке нет задач по этому предмету', I.target));
+        <span class="item-main"><span class="item-title">${t.topic || 'Без темы'} ${tried[t.id] ? h`<span class="badge ${tried[t.id] === 'ok' ? 'ok' : 'bad'}">${tried[t.id] === 'ok' ? '✓ решал' : '✗ ошибался'}</span>` : ''}</span>
+          <span class="item-meta">${(t.body || 'задача со скриншотом').slice(0, 90)}${t.image_path ? ' 🖼' : ''}</span></span></label>`)}`
+      : empty('Нет задач по фильтру', I.target));
     count();
   };
-  const count = () => { $('.set-count', m.el).textContent = `Выбрано: ${plural($$('.set-tasks input:checked', m.el).length, 'задача', 'задачи', 'задач')}`; };
-  box.addEventListener('change', count);
-  $('[name=subject]', m.el).addEventListener('change', () => render());
-  $('#pick', m.el).addEventListener('click', async () => {
-    const sid = $('[name=student_id]', m.el).value;
-    const tried = new Set((await api.select('oge_attempts', { eq: { student_id: sid } })).map((a) => a.task_id));
-    const from = +$('[name=from]', m.el).value, to = +$('[name=to]', m.el).value;
-    const pick = new Set();
-    for (let n = from; n <= to; n++) {
-      const pool = tasks.filter((t) => t.subject === $('[name=subject]', m.el).value && t.num === n);
-      const fresh = pool.filter((t) => !tried.has(t.id));
-      const src = fresh.length ? fresh : pool;
-      if (src.length) pick.add(src[Math.floor(Math.random() * src.length)].id);
+  const count = () => { $('.set-count', m.el).textContent = `Выбрано: ${plural(checked.size, 'задача', 'задачи', 'задач')}`; };
+  const loadTried = async () => {
+    const atts = await api.select('oge_attempts', { eq: { student_id: $('[name=student_id]', m.el).value } });
+    tried = {};
+    for (const a of atts) {
+      const ok = a.is_correct || (a.points != null && a.points >= a.max_points);
+      tried[a.task_id] = tried[a.task_id] === 'ok' || ok ? 'ok' : 'bad';
     }
-    render(pick);
-    if (!pick.size) toast('Нет задач с такими номерами', 'error');
+    render();
+  };
+  box.addEventListener('change', (e) => { if (e.target.checked) checked.add(e.target.value); else checked.delete(e.target.value); count(); });
+  filterEl.addEventListener('input', render);
+  $('[name=subject]', m.el).addEventListener('change', render);
+  $('[name=student_id]', m.el).addEventListener('change', loadTried);
+  $('[name=from]', m.el)?.addEventListener('change', (e) => {
+    const [kind, id] = e.target.value.split(':');
+    const src = kind === 'tpl' ? templates.find((t) => t.id === id) : sets.find((x) => x.id === id);
+    if (!src) return;
+    checked.clear(); src.task_ids.forEach((tid) => T[tid] && checked.add(tid));
+    $('[name=subject]', m.el).value = src.subject;
+    if (!preset.title) $('[name=title]', m.el).value = src.title;
+    render();
   });
-  render();
+  $('#pick', m.el).addEventListener('click', () => {
+    const from = +$('[name=from_n]', m.el).value, to = +$('[name=to_n]', m.el).value;
+    let added = 0;
+    for (let n = Math.min(from, to); n <= Math.max(from, to); n++) {
+      const pool = tasks.filter((t) => t.subject === subject && t.num === n);
+      if (pool.some((t) => checked.has(t.id))) continue;
+      const fresh = pool.filter((t) => !tried[t.id]);
+      const src = fresh.length ? fresh : pool;
+      if (src.length) { checked.add(src[Math.floor(Math.random() * src.length)].id); added++; }
+    }
+    render();
+    toast(added ? `Добавлено ${plural(added, 'задача', 'задачи', 'задач')}` : 'Новых номеров для подбора нет', added ? 'ok' : 'error');
+  });
+  loadTried();
 }
 
 async function tutorBank(view, ctx) {
   const { api } = ctx;
-  const tasks = await api.select('oge_tasks', { order: 'num' });
+  const [tasks, sets] = await Promise.all([api.select('oge_tasks', { order: 'num' }), api.select('oge_sets')]);
+  const used = {}; for (const x of sets) for (const tid of x.task_ids) used[tid] = (used[tid] || 0) + 1;
+  const sel = new Set();
   let subj = store.get('trainer-subj') || SUBJECTS[0];
   let num = '';
   const draw = () => {
@@ -242,16 +296,24 @@ async function tutorBank(view, ctx) {
       <div class="num-grid num-grid-sm">${Array.from({ length: MAX_NUM[subj] || 25 }, (_, i) => i + 1).map((n) => h`
         <button type="button" class="num-tile ${+num === n ? 'on' : ''} ${counts[n] ? '' : 'empty'}" data-num="${n}"><b>${n}</b><small>${counts[n] || 0}</small></button>`)}</div>
       ${list.length ? h`<div class="list card">${list.map((t) => h`
-        <div class="item"><span class="num-pill">№${t.num}</span>
-          <div class="item-main"><div class="item-title">${t.topic || 'Без темы'}</div>
+        <div class="item lib-item ${sel.has(t.id) ? 'selected' : ''}">
+          <input type="checkbox" class="lib-check" data-bsel="${t.id}" ${sel.has(t.id) ? 'checked' : ''} aria-label="Выбрать для варианта">
+          <span class="num-pill">№${t.num}</span>
+          <div class="item-main"><div class="item-title">${t.topic || 'Без темы'}${used[t.id] ? h` <span class="badge muted">в вариантах: ${used[t.id]}</span>` : ''}</div>
             <div class="item-text">${(t.body || '').slice(0, 160)}${(t.body || '').length > 160 ? '…' : ''}${t.image_path ? ' 🖼' : ''}</div>
             <div class="item-meta">${t.answer_type === 'full' ? 'развёрнутый' : `ответ: ${t.answer}`} · ${plural(t.max_points, 'балл', 'балла', 'баллов')}${t.source ? ` · ${t.source}` : ''}</div></div>
-          <div class="actions"><button class="btn btn-ghost btn-sm" data-tedit="${t.id}">Изменить</button>
+          <div class="actions"><button class="btn btn-ghost btn-sm" data-tview="${t.id}">Просмотр</button>
+            <button class="btn btn-ghost btn-sm" data-tedit="${t.id}">Изменить</button>
             <button class="icon-btn" data-tdel="${t.id}" aria-label="Удалить">${I.trash}</button></div></div>`)}</div>`
       : empty(tasks.length ? 'Нет задач с таким фильтром' : 'Банк пуст — добавьте задачи или загрузите из Excel', I.target)}`);
     const T = byId(tasks);
     $$('[data-num]', view).forEach((b) => b.addEventListener('click', () => { num = num === b.dataset.num ? '' : b.dataset.num; draw(); }));
     $$('[data-tedit]', view).forEach((b) => b.addEventListener('click', () => taskForm(ctx, T[b.dataset.tedit])));
+    $$('[data-tview]', view).forEach((b) => b.addEventListener('click', () => previewTask(ctx, T[b.dataset.tview])));
+    $$('[data-bsel]', view).forEach((c) => c.addEventListener('change', () => {
+      c.checked ? sel.add(c.dataset.bsel) : sel.delete(c.dataset.bsel);
+      c.closest('.lib-item').classList.toggle('selected', c.checked); bar();
+    }));
     $$('[data-tdel]', view).forEach((b) => b.addEventListener('click', () =>
       confirmDialog('Удалить задачу? Попытки учеников по ней тоже удалятся.', async () => { await api.remove('oge_tasks', b.dataset.tdel); toast('Удалено'); ctx.refresh(); })));
   };
@@ -260,7 +322,13 @@ async function tutorBank(view, ctx) {
       <button class="btn btn-ghost" id="imp">${I.upload} Импорт из Excel</button>
       <button class="btn btn-primary" id="addt">${I.plus} Задача</button></div>
     <p class="hint">Всего в банке: ${plural(tasks.length, 'задача', 'задачи', 'задач')}. Нажмите на номер, чтобы отфильтровать.</p>
-    <div id="bank"></div>`);
+    <div id="bank"></div>
+    <div class="select-bar" id="bbar" hidden><span id="bbar-n"></span>
+      <button class="btn btn-primary btn-sm" id="bmake">${I.target} Составить вариант</button>
+      <button class="btn btn-ghost btn-sm" id="bclear">Снять выбор</button></div>`);
+  const bar = () => { $('#bbar', view).hidden = !sel.size; $('#bbar-n', view).textContent = `Выбрано: ${sel.size}`; };
+  $('#bmake', view).addEventListener('click', () => setForm(ctx, { subject: subj, taskIds: [...sel] }));
+  $('#bclear', view).addEventListener('click', () => { sel.clear(); draw(); bar(); });
   $$('[data-subj]', view).forEach((b) => b.addEventListener('click', () => {
     subj = b.dataset.subj; store.set('trainer-subj', subj); num = '';
     $$('[data-subj]', view).forEach((x) => x.classList.toggle('on', x === b)); draw();
@@ -271,26 +339,47 @@ async function tutorBank(view, ctx) {
   draw();
 }
 
-async function tutorSets(view, ctx) {
+async function tutorSets(view, ctx, filterSid = '') {
   const { api } = ctx;
-  const [sets, students, attempts] = await Promise.all([
-    api.select('oge_sets', { order: 'created_at', asc: false }), api.select('students'), api.select('oge_attempts'),
+  const [sets, students, attempts, templates] = await Promise.all([
+    api.select('oge_sets', { order: 'created_at', asc: false }), api.select('students', { order: 'name' }), api.select('oge_attempts'),
+    api.select('oge_templates', { order: 'created_at', asc: false }).catch(() => []),
   ]);
   const S = byId(students);
+  const list = filterSid ? sets.filter((s) => s.student_id === filterSid) : sets;
   mount($('#tab-body', view), h`
-    <div class="section-head"><h2>Выданные варианты</h2><button class="btn btn-primary btn-sm" id="adds">${I.plus} Вариант</button></div>
-    ${sets.length ? h`<div class="list card">${sets.map((s) => {
+    <div class="section-head"><h2>Шаблоны вариантов</h2><button class="btn btn-primary btn-sm" id="adds">${I.plus} Вариант</button></div>
+    ${templates.length ? h`<div class="list card">${templates.map((t) => h`<div class="item">
+        <div class="item-main"><div class="item-title">${t.title}</div><div class="item-meta">${t.subject} · ${plural(t.task_ids.length, 'задача', 'задачи', 'задач')} · ${fmtD(t.created_at)}</div></div>
+        <div class="actions"><button class="btn btn-soft btn-sm" data-give="${t.id}">Выдать</button>
+          <button class="icon-btn" data-tpldel="${t.id}" aria-label="Удалить шаблон">${I.trash}</button></div></div>`)}</div>`
+    : h`<p class="hint">Шаблонов пока нет. При выдаче варианта отметьте «Сохранить набор как шаблон» — и его можно будет выдавать любому ученику в один клик.</p>`}
+    <div class="section-head"><h2>История выданных вариантов</h2>
+      <select id="fs" aria-label="Ученик"><option value="">Все ученики</option>${students.map((s) => h`<option value="${s.id}" ${s.id === filterSid ? 'selected' : ''}>${s.name}</option>`)}</select></div>
+    ${list.length ? h`<div class="list card">${list.map((s) => {
       const at = attempts.filter((a) => a.set_id === s.id);
       const done = new Set(at.map((a) => a.task_id)).size, n = s.task_ids.length;
       const pts = at.reduce((x, a) => x + (a.points || 0), 0);
       const pending = at.some((a) => a.points == null);
-      return h`<a class="item item-link" href="#/trainer/set/${s.id}"><div class="item-main">
+      return h`<div class="item"><a class="item-main item-link-plain" href="#/trainer/set/${s.id}">
           <div class="item-title">${s.title}</div>
-          <div class="item-meta"><b>${S[s.student_id]?.name || ''}</b> · ${s.subject} · ${plural(n, 'задача', 'задачи', 'задач')}${s.due_at ? ` · до ${fmtD(s.due_at)}` : ''}</div></div>
-        <span class="badge ${done === n ? 'ok' : done ? 'info' : 'muted'}">${done}/${n}${done ? ` · ${pts} б.` : ''}</span>
-        ${pending ? h`<span class="badge warn">на проверке</span>` : ''}</a>`;
+          <div class="item-meta"><b>${S[s.student_id]?.name || ''}</b> · ${s.subject} · ${plural(n, 'задача', 'задачи', 'задач')} · выдан ${fmtD(s.created_at)}${s.due_at ? ` · до ${fmtD(s.due_at)}` : ''}</div></a>
+        <div class="actions">
+          <span class="badge ${done === n ? 'ok' : done ? 'info' : 'muted'}">${done}/${n}${done ? ` · ${pts} б.` : ''}</span>
+          ${pending ? h`<span class="badge warn">на проверке</span>` : ''}
+          <button class="btn btn-ghost btn-sm" data-again="${s.id}">Выдать снова</button></div></div>`;
     })}</div>` : empty('Вариантов пока нет', I.target)}`);
+  const TP = byId(templates), SE = byId(sets);
   $('#adds', view).addEventListener('click', () => setForm(ctx));
+  $('#fs', view).addEventListener('change', (e) => tutorSets(view, ctx, e.target.value));
+  $$('[data-give]', view).forEach((b) => b.addEventListener('click', () => {
+    const t = TP[b.dataset.give]; setForm(ctx, { subject: t.subject, taskIds: t.task_ids, title: t.title });
+  }));
+  $$('[data-again]', view).forEach((b) => b.addEventListener('click', () => {
+    const x = SE[b.dataset.again]; setForm(ctx, { subject: x.subject, taskIds: x.task_ids, title: x.title });
+  }));
+  $$('[data-tpldel]', view).forEach((b) => b.addEventListener('click', () =>
+    confirmDialog('Удалить шаблон? Выданные по нему варианты останутся.', async () => { await api.remove('oge_templates', b.dataset.tpldel); ctx.refresh(); })));
 }
 
 async function tutorResults(view, ctx, sidParam) {
@@ -344,7 +433,9 @@ async function tutorSetDetail(view, ctx, id) {
   mount(view, h`
     <a href="#/trainer/sets" class="back">${I.back} Варианты</a>
     ${pageHero({ eyebrow: `${S[s.student_id]?.name || ''} · ${s.subject}`, title: s.title, sub: `${s.due_at ? `Срок: ${fmtD(s.due_at)} · ` : ''}Набрано ${pts} из ${max} баллов`,
-      actions: h`<button class="btn btn-ghost" id="dels">${I.trash}<span>Удалить</span></button>` })}
+      actions: h`<button class="btn btn-soft" id="again">${I.users}<span>Выдать другому</span></button>
+        <button class="btn btn-ghost" id="tpl">${I.folder}<span>В шаблоны</span></button>
+        <button class="btn btn-ghost" id="dels">${I.trash}<span>Удалить</span></button>` })}
     <div class="list card">${s.task_ids.map((tid, i) => {
       const t = T[tid], a = last[tid];
       const st = !a ? ['не решено', 'muted'] : a.points == null ? ['ждёт проверки', 'warn'] : a.is_correct || a.points >= a.max_points ? [`верно · ${a.points} б.`, 'ok'] : a.answer == null ? ['посмотрел ответ', 'bad'] : [`${a.points}/${a.max_points} б.`, 'bad'];
@@ -354,6 +445,11 @@ async function tutorSetDetail(view, ctx, id) {
         <span class="badge ${st[1]}">${st[0]}</span></div>`;
     })}</div>`);
   $('#dels', view).addEventListener('click', () => confirmDialog('Удалить вариант вместе с попытками?', async () => { await api.remove('oge_sets', id); location.hash = '#/trainer/sets'; }));
+  $('#again', view).addEventListener('click', () => setForm(ctx, { subject: s.subject, taskIds: s.task_ids, title: s.title }));
+  $('#tpl', view).addEventListener('click', async () => {
+    try { await api.insert('oge_templates', { subject: s.subject, title: s.title, task_ids: s.task_ids }); toast('Сохранено в шаблоны'); }
+    catch (e) { toast(e.message, 'error'); }
+  });
 }
 
 export async function trainerTutor(view, params, ctx) {

@@ -851,3 +851,5 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
   .row-3 > :first-child { grid-column: 1 / -1; }
   .num-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
 }
+.item-link-plain { display: block; color: inherit; }
+.item-link-plain:hover .item-title { color: var(--accent-strong); }

@@ -27,7 +27,7 @@ function seed() {
     app_settings: [{ id: 1, reminder_minutes: 120, evening_reminder: false, evening_hour: 20, timezone: 'Europe/Moscow', bot_username: 'mamchuck_bot', bot_ready: true }],
     telegram_links: [{ user_id: P, chat_id: 1001, tg_username: 'mama_demo', tg_name: 'Мама', notify: true, linked_at: at(-3) }],
     lesson_responses: [],
-    oge_tasks: [], oge_sets: [], oge_attempts: [],
+    oge_tasks: [], oge_sets: [], oge_attempts: [], oge_templates: [],
   };
   const L = (student_id, d, subject, topic, status, report = '', pub = false, hh = 16) =>
     db.lessons.push({ id: uid(), student_id, starts_at: at(d, hh), duration_min: 60, subject, topic, plan: '', status, report, report_published: pub, created_at: at(d - 3) });
@@ -128,7 +128,7 @@ export function createDemoApi() {
     if (table === 'oge_tasks_public') return db.oge_tasks.map(({ answer, solution, solution_image_path, source, ...t }) => t);
     if (me.role === 'tutor') return rows;
     if (table === 'telegram_links') return rows.filter((r) => r.user_id === me.id);
-    if (['invitations', 'private_notes', 'lessons', 'library_items', 'oge_tasks'].includes(table)) return [];
+    if (['invitations', 'private_notes', 'lessons', 'library_items', 'oge_tasks', 'oge_templates'].includes(table)) return [];
     if (table === 'payments') return rows.filter((r) => isParentOf(r.student_id));
     if (table === 'profiles') return rows.filter((r) => r.id === me.id);
     if (table === 'students') return rows.filter((r) => myStudents().includes(r.id));
