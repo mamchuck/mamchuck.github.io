@@ -2,13 +2,13 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610162035';
+} from './ui.js?v=202610162333';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610162035';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610162035';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610162035';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610162035';
+} from './library.js?v=202610162333';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610162333';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610162333';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610162333';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
