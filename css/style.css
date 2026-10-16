@@ -763,3 +763,13 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .resp { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .resp .badge { text-transform: none; letter-spacing: 0; font-size: 12px; }
 .move-card { border-color: var(--warn-line); }
+
+/* Логотип: M² контуром */
+.logo.logo-outline {
+  background: transparent; color: var(--accent); border: 2px solid var(--accent); box-shadow: none;
+  font-weight: 800; font-size: 14px; letter-spacing: -.02em; line-height: 1; padding-left: 1px;
+}
+.logo.logo-outline sup { font-size: .55em; vertical-align: .75em; margin-left: 1px; font-weight: 800; }
+.brand-lg .logo.logo-outline { font-size: 17px; border-width: 2.5px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo.logo-outline { color: var(--accent-strong); border-color: var(--accent-strong); } }
+:root[data-theme="dark"] .logo.logo-outline { color: var(--accent-strong); border-color: var(--accent-strong); }

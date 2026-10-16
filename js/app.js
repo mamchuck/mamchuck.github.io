@@ -61,7 +61,7 @@ function renderAuth(tab = store.get(CODE_KEY) ? 'signup' : 'login') {
   mount(root, h`
   <div class="center-screen">
     <div class="auth-card card">
-      <div class="brand brand-lg"><span class="logo">M</span><span class="brand-name">mamchuck</span></div>
+      <div class="brand brand-lg"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></div>
       <div><span class="capsule">Физика · Математика</span>
       <h1 class="hero-h1">Личный <span class="grad">кабинет</span></h1>
       <p class="muted">Расписание, домашние задания, материалы и прогресс — в одном месте.</p></div>
@@ -124,7 +124,7 @@ function renderNewPassword() {
 // Аккаунт создан, но ещё не привязан к ученику
 function renderJoin() {
   mount(root, h`<div class="center-screen"><div class="auth-card card">
-    <div class="brand brand-lg"><span class="logo">M</span><span class="brand-name">mamchuck</span></div>
+    <div class="brand brand-lg"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></div>
     <h1>Введите код приглашения</h1>
     <p class="muted">Код выдаёт преподаватель. Он одноразовый и действует ограниченное время.</p>
     <form id="join" class="stack">
@@ -155,7 +155,7 @@ function renderShell() {
   mount(root, h`
   <div class="shell">
     <aside class="sidebar">
-      <div class="brand"><span class="logo">M</span><span class="brand-name">mamchuck</span></div>
+      <div class="brand"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></div>
       ${childPicker}
       <nav class="nav">${nav.map((n) => h`<a href="#/${n.path}" data-nav="${n.path}">${n.icon}<span>${n.label}</span></a>`)}</nav>
       <div class="side-foot">
@@ -166,7 +166,7 @@ function renderShell() {
       </div>
     </aside>
     <header class="topbar">
-      <div class="brand"><span class="logo">M</span><span class="brand-name">mamchuck</span></div>
+      <div class="brand"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></div>
       ${childPicker}
       <button class="icon-btn" data-theme-toggle aria-label="Сменить тему">${isDark() ? I.sun : I.moon}</button>
       <a href="#/settings" class="icon-btn" aria-label="Настройки">${I.settings}</a>
