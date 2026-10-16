@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610161743';
+} from './ui.js?v=202610161815';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610161743';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610161743';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610161743';
+} from './library.js?v=202610161815';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610161815';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610161815';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -95,6 +95,19 @@ function lessonForm(ctx, { students, studentId, lesson }) {
         <label class="field"><span>Длительность</span><select name="duration_min">
           ${[45, 60, 90, 120].map((m) => h`<option value="${m}" ${(lesson?.duration_min || 60) === m ? 'selected' : ''}>${m} мин</option>`)}</select></label>
       </div>
+      ${lesson ? '' : h`
+      <div class="repeat-box">
+        <label class="switch"><input type="checkbox" name="repeat"><span>Повторять каждую неделю</span></label>
+        <div class="repeat-opts" hidden>
+          <fieldset class="field"><span>Дни недели</span><div class="chips">
+            ${WEEKDAYS.map(([n, l]) => h`<label class="chip-check"><input type="checkbox" name="days" value="${n}"><span>${l}</span></label>`)}
+          </div></fieldset>
+          <label class="field"><span>Сколько недель</span><select name="weeks">
+            ${[4, 8, 12, 16, 24, 36].map((w) => h`<option value="${w}" ${w === 8 ? 'selected' : ''}>${w} недель${w === 36 ? ' (учебный год)' : ''}</option>`)}</select></label>
+          <p class="hint repeat-preview"></p>
+        </div>
+      </div>`}
+      ${lesson?.series_id ? h`<p class="hint">🔁 Занятие из повторяющейся серии.</p>` : ''}
       <label class="field"><span>Предмет</span><select name="subject">${subjectOptions(st?.subjects, lesson?.subject)}</select></label>
       <label class="field"><span>Тема</span><input name="topic" value="${lesson?.topic || ''}" placeholder="Например: квадратные уравнения"></label>
       <label class="field"><span>План (видите только вы)</span><textarea name="plan" rows="3">${lesson?.plan || ''}</textarea></label>
@@ -103,6 +116,16 @@ function lessonForm(ctx, { students, studentId, lesson }) {
       ${libraryFieldHtml()}`,
     onSubmit: async (d) => {
       const row = { starts_at: new Date(d.starts_at).toISOString(), duration_min: +d.duration_min, subject: d.subject, topic: d.topic || '', plan: d.plan || '' };
+      if (!lesson && d.repeat) {
+        const dates = seriesDates(d.starts_at, [].concat(d.days ?? []).map(Number), +d.weeks);
+        if (!dates.length) throw new Error('Выберите дни недели');
+        const series_id = crypto.randomUUID(), sid = fixed || d.student_id;
+        const rows = await ctx.api.insertMany('lessons', dates.map((dt) => ({ ...row, starts_at: dt.toISOString(), student_id: sid, series_id })));
+        const first = rows.sort((a, b) => (a.starts_at > b.starts_at ? 1 : -1))[0];
+        await uploadForStudent(ctx.api, sid, d.files, { lesson_id: first.id, subject: first.subject, topic: first.topic });
+        await attachItems(ctx.api, sid, picked, { lesson_id: first.id });
+        toast(`Создано ${plural(rows.length, 'занятие', 'занятия', 'занятий')}`); return ctx.refresh();
+      }
       const l = lesson ? await ctx.api.update('lessons', lesson.id, row) : await ctx.api.insert('lessons', { ...row, student_id: fixed || d.student_id });
       await uploadForStudent(ctx.api, l.student_id, d.files, { lesson_id: l.id, subject: l.subject, topic: l.topic });
       await attachItems(ctx.api, l.student_id, picked, { lesson_id: l.id });
@@ -110,6 +133,63 @@ function lessonForm(ctx, { students, studentId, lesson }) {
     },
   });
   const picked = libraryField(ctx.api, m, { subject: () => $('[name=subject]', m.el).value });
+
+  // Повтор: показать опции, отметить день недели выбранной даты, предпросмотр
+  const rep = $('[name=repeat]', m.el);
+  if (rep) {
+    const opts = $('.repeat-opts', m.el), when = $('[name=starts_at]', m.el);
+    const preview = () => {
+      const days = $$('[name=days]:checked', m.el).map((c) => +c.value);
+      const dates = seriesDates(when.value, days, +$('[name=weeks]', m.el).value);
+      $('.repeat-preview', m.el).textContent = dates.length
+        ? `Будет создано ${plural(dates.length, 'занятие', 'занятия', 'занятий')}: с ${fmtD(dates[0])} по ${fmtD(dates.at(-1))}, в ${when.value.slice(11, 16)}.`
+        : 'Отметьте дни недели.';
+    };
+    const markDay = () => {
+      if ($$('[name=days]:checked', m.el).length) return;
+      const dow = (new Date(when.value).getDay() + 6) % 7 + 1;
+      const c = $(`[name=days][value="${dow}"]`, m.el); if (c) c.checked = true;
+    };
+    rep.addEventListener('change', () => { opts.hidden = !rep.checked; markDay(); preview(); });
+    m.el.addEventListener('change', (e) => { if (e.target.matches('[name=days],[name=weeks],[name=starts_at]')) preview(); });
+  }
+
+  // Серия: удалить все следующие занятия
+  if (lesson?.series_id) {
+    const box = document.createElement('div');
+    box.className = 'danger-zone';
+    mount(box, h`<button type="button" class="btn btn-ghost btn-sm btn-danger-ghost">${I.trash} Удалить это и все следующие занятия серии</button>
+      <span class="hint">Проведённые занятия останутся. Уведомление об удалении не отправляется — предупредите ученика сами.</span>`);
+    $('.modal-body', m.el).append(box);
+    $('button', box).addEventListener('click', async () => {
+      const all = await ctx.api.select('lessons', { eq: { series_id: lesson.series_id } });
+      const left = all.filter((x) => x.status === 'planned' && x.starts_at >= lesson.starts_at);
+      m.close();
+      confirmDialog(`Удалить ${plural(left.length, 'занятие', 'занятия', 'занятий')} серии (с ${fmtD(lesson.starts_at)})?`, async () => {
+        for (const x of left) await ctx.api.remove('lessons', x.id);
+        toast('Удалено'); ctx.refresh();
+      });
+    });
+  }
+}
+
+// Дни недели: 1 = пн … 7 = вс
+const WEEKDAYS = [[1, 'Пн'], [2, 'Вт'], [3, 'Ср'], [4, 'Чт'], [5, 'Пт'], [6, 'Сб'], [7, 'Вс']];
+// Даты серии: с даты первого занятия, по выбранным дням, N недель, в то же время
+function seriesDates(startValue, days, weeks) {
+  const start = new Date(startValue);
+  if (isNaN(start) || !days.length) return [];
+  const monday = new Date(start); monday.setHours(0, 0, 0, 0);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const out = [];
+  for (let w = 0; w < weeks; w++) {
+    for (const dn of [...days].sort()) {
+      const d = new Date(monday); d.setDate(monday.getDate() + w * 7 + dn - 1);
+      d.setHours(start.getHours(), start.getMinutes(), 0, 0);
+      if (d >= start) out.push(d);
+    }
+  }
+  return out;
 }
 
 // «Провести урок»: итог, отчёт для семьи, заметка, ДЗ — одним окном

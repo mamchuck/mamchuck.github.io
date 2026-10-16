@@ -141,6 +141,7 @@ export function createDemoApi() {
       if (limit) rows = rows.slice(0, limit);
       return clone(rows);
     },
+    async insertMany(table, rows) { const out = []; for (const r of rows) out.push(await this.insert(table, r)); return out; },
     async dumpAll(table) { return clone(visible(table)); },
     async insert(table, row) {
       await tick();

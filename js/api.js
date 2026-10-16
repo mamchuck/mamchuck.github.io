@@ -50,6 +50,7 @@ export function createApi(cfg) {
         if (d.length < 1000) return out;
       }
     },
+    async insertMany(table, rows) { return ok(await sb.from(table).insert(rows).select()); },
     async insert(table, row) { return ok(await sb.from(table).insert(row).select().single()); },
     async update(table, id, patch) { return ok(await sb.from(table).update(patch).eq('id', id).select().single()); },
     async remove(table, id) { ok(await sb.from(table).delete().eq('id', id)); },
