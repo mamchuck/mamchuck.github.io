@@ -2,20 +2,27 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610161815';
-import { TUTOR } from './config.js?v=202610161815';
-import { mountTelegramBanner } from './telegram.js?v=202610161815';
+} from './ui.js?v=202610161837';
+import { TUTOR } from './config.js?v=202610161837';
+import { trainerFamily } from './trainer.js?v=202610161837';
+import { mountTelegramBanner } from './telegram.js?v=202610161837';
 
-export const familyNav = (role) => [
+export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
+  { path: 'payments', label: 'Оплаты', icon: I.wallet },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
-  role === 'parent'
-    ? { path: 'payments', label: 'Оплаты', icon: I.wallet }
-    : { path: 'materials', label: 'Материалы', icon: I.folder },
-  ...(role === 'parent' ? [{ path: 'materials', label: 'Материалы', icon: I.folder }] : []),
-];
+  { path: 'trainer', label: 'Тренажёр ОГЭ', short: 'Тренажёр', icon: I.target },
+  { path: 'materials', label: 'Материалы', icon: I.folder },
+] : [
+  { path: '', label: 'Главная', icon: I.home },
+  { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
+  { path: 'trainer', label: 'Тренажёр ОГЭ', short: 'Тренажёр', icon: I.target },
+  { path: 'lessons', label: 'Занятия', icon: I.calendar },
+  { path: 'progress', label: 'Прогресс', icon: I.chart },
+  { path: 'materials', label: 'Материалы', icon: I.folder },
+]);
 
 const isStudent = (ctx) => ctx.me.role === 'student';
 
@@ -286,4 +293,4 @@ async function payments(view, _p, ctx) {
     : empty('Оплат пока нет', I.wallet)}`);
 }
 
-export const familyRoutes = { '': home, homework, hw: hwDetail, lessons, materials, progress, payments };
+export const familyRoutes = { trainer: trainerFamily, '': home, homework, hw: hwDetail, lessons, materials, progress, payments };

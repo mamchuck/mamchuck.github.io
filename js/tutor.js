@@ -2,18 +2,20 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610161815';
+} from './ui.js?v=202610161837';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610161815';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610161815';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610161815';
+} from './library.js?v=202610161837';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610161837';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610161837';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610161837';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'students', label: 'Ученики', icon: I.users },
   { path: 'schedule', label: 'Расписание', icon: I.calendar },
   { path: 'review', label: 'Проверка', icon: I.check },
+  { path: 'trainer', label: 'Тренажёр ОГЭ', short: 'Тренажёр', icon: I.target },
   { path: 'library', label: 'Библиотека', icon: I.folder },
 ];
 
@@ -766,11 +768,13 @@ async function reviewPage(view, _p, ctx) {
     ${pageHero({ eyebrow: 'Проверка', title: 'Домашние ', accent: 'работы' })}
     <div class="section-head"><h2>Ждут проверки · ${pending.length}</h2></div>
     ${pending.length ? h`<div class="list card">${pending.map(row)}</div>` : empty('Все работы проверены', I.check)}
+    <div id="oge-review"></div>
     ${recent.length ? h`<div class="section-head"><h2>Недавно проверенные</h2></div><div class="list card">${recent.map(row)}</div>` : ''}`);
+  trainerReviewBlock(ctx).then((b) => { const el = $('#oge-review', view); if (b && el) { mount(el, b.html); b.bind(el); } });
   const SB = byId(subs);
   $$('[data-rev]', view).forEach((b) => b.addEventListener('click', () => {
     const s = SB[b.dataset.rev]; reviewForm(ctx, H[s.homework_id], s, S[s.student_id]?.name);
   }));
 }
 
-export const tutorRoutes = { library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
+export const tutorRoutes = { trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };

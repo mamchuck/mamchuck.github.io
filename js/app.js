@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js?v=202610161815';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610161815';
-import { tutorRoutes, tutorNav } from './tutor.js?v=202610161815';
-import { backupCard, bindBackup } from './backup.js?v=202610161815';
-import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610161815';
-import { familyRoutes, familyNav } from './family.js?v=202610161815';
+import { CONFIG, TUTOR } from './config.js?v=202610161837';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610161837';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202610161837';
+import { backupCard, bindBackup } from './backup.js?v=202610161837';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610161837';
+import { familyRoutes, familyNav } from './family.js?v=202610161837';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js?v=202610161815')).createApi(CONFIG)
-  : (await import('./demo.js?v=202610161815')).createDemoApi();
+  ? (await import('./api.js?v=202610161837')).createApi(CONFIG)
+  : (await import('./demo.js?v=202610161837')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };
@@ -172,7 +172,8 @@ function renderShell() {
       <a href="#/settings" class="icon-btn" aria-label="Настройки">${I.settings}</a>
     </header>
     <main id="view" class="view" tabindex="-1"></main>
-    <nav class="tabbar">${nav.slice(0, 5).map((n) => h`<a href="#/${n.path}" data-nav="${n.path}">${n.icon}<span>${n.short || n.label}</span></a>`)}</nav>
+    <nav class="tabbar">${(nav.length > 5 ? nav.slice(0, 4) : nav).map((n) => h`<a href="#/${n.path}" data-nav="${n.path}">${n.icon}<span>${n.short || n.label}</span></a>`)}
+      ${nav.length > 5 ? h`<button type="button" class="tab-more" data-more>${I.more}<span>Ещё</span></button>` : ''}</nav>
     ${api.demo ? h`<div class="demo-badge">Демо · <button class="link-btn" id="demo-exit">сменить роль</button></div>` : ''}
   </div>`);
   $$('.child-select').forEach((sel) => sel.addEventListener('change', () => {
@@ -181,6 +182,11 @@ function renderShell() {
     route();
   }));
   $('#demo-exit')?.addEventListener('click', logout);
+  $('[data-more]')?.addEventListener('click', () => {
+    const m = modal({ title: 'Разделы', body: h`<nav class="more-nav">${nav.slice(4).map((n) => h`<a href="#/${n.path}">${n.icon}<span>${n.label}</span></a>`)}
+      <a href="#/settings">${I.settings}<span>Настройки</span></a></nav>` });
+    $$('.more-nav a', m.el).forEach((a) => a.addEventListener('click', () => m.close()));
+  });
   $$('[data-theme-toggle]').forEach((b) => b.addEventListener('click', (e) => {
     e.preventDefault(); e.stopPropagation();
     setTheme(isDark() ? 'light' : 'dark');

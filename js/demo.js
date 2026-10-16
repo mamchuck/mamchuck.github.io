@@ -27,6 +27,7 @@ function seed() {
     app_settings: [{ id: 1, reminder_minutes: 120, evening_reminder: false, evening_hour: 20, timezone: 'Europe/Moscow', bot_username: 'mamchuck_bot', bot_ready: true }],
     telegram_links: [{ user_id: P, chat_id: 1001, tg_username: 'mama_demo', tg_name: 'Мама', notify: true, linked_at: at(-3) }],
     lesson_responses: [],
+    oge_tasks: [], oge_sets: [], oge_attempts: [],
   };
   const L = (student_id, d, subject, topic, status, report = '', pub = false, hh = 16) =>
     db.lessons.push({ id: uid(), student_id, starts_at: at(d, hh), duration_min: 60, subject, topic, plan: '', status, report, report_published: pub, created_at: at(d - 3) });
@@ -78,6 +79,20 @@ function seed() {
     { id: uid(), student_id: M, amount_kopecks: 200000, currency: 'RUB', lessons_count: 1, paid_at: at(-4).slice(0, 10), comment: '' },
   );
   db.private_notes.push({ id: uid(), student_id: A, lesson_id: null, body: 'Теряется на задачах с параметром — вернуться после квадратных уравнений.', created_at: at(-2) });
+  const TK = (subject, num, topic, body, answer, solution, answer_type = 'short', max_points = 1) => {
+    const x = { id: uid(), subject, num, topic, body, answer, solution, answer_type, max_points, image_path: null, source: 'демо', created_at: at(-10) };
+    db.oge_tasks.push(x); return x;
+  };
+  const t1 = TK('Математика', 6, 'Дроби', 'Найдите значение выражения 3/4 + 5/8.', '1,375|11/8', '3/4 = 6/8; 6/8 + 5/8 = 11/8 = 1,375.');
+  TK('Математика', 6, 'Десятичные дроби', 'Найдите значение выражения 2,7 · 3,5 − 1,45.', '8', '2,7 · 3,5 = 9,45; 9,45 − 1,45 = 8.');
+  const t3 = TK('Математика', 9, 'Линейные уравнения', 'Найдите корень уравнения 5x − 8 = 3x + 6.', '7', '2x = 14, x = 7.');
+  TK('Математика', 9, 'Квадратные уравнения', 'Решите уравнение x² − 7x + 10 = 0. Если корней несколько, запишите больший.', '5', 'По теореме Виета корни 2 и 5. Больший — 5.');
+  TK('Математика', 10, 'Вероятность', 'В коробке 12 красных и 8 синих ручек. Найдите вероятность того, что случайно выбранная ручка окажется синей.', '0,4', '8 / 20 = 0,4.');
+  TK('Математика', 21, 'Задачи на движение', 'Моторная лодка прошла 36 км по течению и вернулась обратно, затратив на весь путь 5 часов. Скорость течения 3 км/ч. Найдите собственную скорость лодки.', '15', '36/(v+3) + 36/(v−3) = 5 ⇒ 5v² − 72v − 45 = 0 ⇒ v = 15 км/ч.', 'full', 2);
+  TK('Физика', 6, 'Плотность', 'Масса бруска 540 г, его объём 200 см³. Найдите плотность вещества бруска в г/см³.', '2,7', 'ρ = m / V = 540 / 200 = 2,7 г/см³.');
+  TK('Физика', 8, 'Работа и мощность', 'Подъёмный кран поднял груз массой 500 кг на высоту 12 м за 30 с. Какую мощность развивал кран? Ответ дайте в ваттах. g = 10 Н/кг.', '2000', 'A = mgh = 500 · 10 · 12 = 60 000 Дж; N = A / t = 2000 Вт.');
+  db.oge_sets.push({ id: 'set-demo', student_id: A, subject: 'Математика', title: 'Вариант №1 (демо)', task_ids: [t1.id, t3.id], due_at: at(3, 20), created_at: at(-1) });
+  db.oge_attempts.push({ id: uid(), task_id: t1.id, student_id: A, user_id: SA, set_id: 'set-demo', answer: '11/8', is_correct: true, points: 1, max_points: 1, created_at: at(-1) });
   const next = db.lessons.find((l) => l.student_id === A && l.status === 'planned');
   if (next) db.lesson_responses.push({ lesson_id: next.id, user_id: P, student_id: A, role: 'parent', response: 'move', created_at: at(-1) });
   return db;
@@ -106,12 +121,14 @@ export function createDemoApi() {
         return { student_id: s.id, lessons_paid: paid, lessons_done: done, lessons_left: paid - done };
       }).filter((b) => me.role === 'tutor' || isParentOf(b.student_id));
     }
+    if (table === 'oge_tasks_public') return db.oge_tasks.map(({ answer, solution, solution_image_path, source, ...t }) => t);
     const rows = db[table];
     if (!rows) throw new Error(`Нет таблицы ${table}`);
     if (table === 'app_settings') return rows;
+    if (table === 'oge_tasks_public') return db.oge_tasks.map(({ answer, solution, solution_image_path, source, ...t }) => t);
     if (me.role === 'tutor') return rows;
     if (table === 'telegram_links') return rows.filter((r) => r.user_id === me.id);
-    if (['invitations', 'private_notes', 'lessons', 'library_items'].includes(table)) return [];
+    if (['invitations', 'private_notes', 'lessons', 'library_items', 'oge_tasks'].includes(table)) return [];
     if (table === 'payments') return rows.filter((r) => isParentOf(r.student_id));
     if (table === 'profiles') return rows.filter((r) => r.id === me.id);
     if (table === 'students') return rows.filter((r) => myStudents().includes(r.id));
@@ -192,6 +209,22 @@ export function createDemoApi() {
       if (fn === 'tg_unlink') { db.telegram_links = db.telegram_links.filter((l) => l.user_id !== me.id); return null; }
       if (fn === 'tg_set_notify') { const l = db.telegram_links.find((x) => x.user_id === me.id); if (l) l.notify = args.p_on; return null; }
       if (fn === 'tg_test') return null;
+      if (fn === 'trainer_check' || fn === 'trainer_reveal') {
+        const t = db.oge_tasks.find((x) => x.id === args.p_task);
+        if (!t) throw new Error('Задача не найдена');
+        const reveal = { answer: t.answer.split('|')[0], solution: t.solution, solution_image_path: null };
+        if (fn === 'trainer_reveal') return reveal;
+        if (me.role !== 'student') throw new Error('Решать задачи может только ученик');
+        const sid = myStudents()[0];
+        const norm = (v) => String(v ?? '').trim().toLowerCase().replace(/,/g, '.').replace(/\s+/g, '');
+        if (t.answer_type === 'full' && args.p_answer != null) {
+          db.oge_attempts.push({ id: uid(), task_id: t.id, student_id: sid, user_id: me.id, set_id: args.p_set, answer: args.p_answer, file_path: args.p_file, is_correct: null, points: null, max_points: t.max_points, created_at: new Date().toISOString() });
+          return { pending: true };
+        }
+        const ok = args.p_answer != null && t.answer.split('|').some((v) => norm(v) === norm(args.p_answer) || (+norm(v) === +norm(args.p_answer) && norm(args.p_answer) !== ''));
+        db.oge_attempts.push({ id: uid(), task_id: t.id, student_id: sid, user_id: me.id, set_id: args.p_set, answer: args.p_answer, is_correct: ok, points: ok ? t.max_points : 0, max_points: t.max_points, reviewed_at: new Date().toISOString(), created_at: new Date().toISOString() });
+        return { correct: ok, ...reveal };
+      }
       throw new Error('В демо-режиме коды приглашений не принимаются');
     },
     async upload(path, file) { await tick(); files.set(path, URL.createObjectURL(file)); return path; },
