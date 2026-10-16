@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610162340';
+} from './ui.js?v=202610162356';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -99,8 +99,12 @@ async function previewTask(ctx, t) {
     title: `${t.subject}, №${t.num}`, wide: true,
     body: h`<p class="muted">${t.topic}${t.source ? ` · ${t.source}` : ''} · ${plural(t.max_points, 'балл', 'балла', 'баллов')}</p>
       ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}<div class="ti"></div>
-      <div class="solution"><div><b>Ответ:</b> ${t.answer || '—'}</div>${t.solution ? h`<div class="pre">${t.solution}</div>` : ''}<div class="si"></div></div>`,
+      <div class="tf-reveal" data-answer hidden><b>Ответ:</b> ${(t.answer || '—').split('|')[0]}</div>
+      <div class="tf-reveal" data-solution hidden>${t.solution ? h`<div class="pre">${t.solution}</div>` : 'Решение не добавлено'}<div class="si"></div></div>
+      <div class="tf-actions"><button type="button" class="btn btn-soft btn-sm" data-toggle="answer">Показать ответ</button>
+        <button type="button" class="btn btn-soft btn-sm" data-toggle="solution">Показать решение</button></div>`,
   });
+  bindRevealButtons(m.el);
   mount($('.ti', m.el), await img(ctx.api, t.image_path));
   mount($('.si', m.el), await img(ctx.api, t.solution_image_path));
 }
@@ -279,61 +283,143 @@ async function setForm(ctx, preset = {}) {
   loadTried();
 }
 
+// Карточка задачи в ленте: полное условие, рисунок; ответ и решение — по кнопкам
+const taskCard = (t, { used = 0, selected = false } = {}) => h`
+  <article class="task-feed-card card ${selected ? 'selected' : ''}" data-tid="${t.id}">
+    <header class="tf-head">
+      <input type="checkbox" class="lib-check" data-bsel="${t.id}" ${selected ? 'checked' : ''} aria-label="Выбрать для варианта">
+      <span class="num-pill">№${t.num}</span>
+      <span class="tf-topic">${t.topic || 'Без темы'}</span>
+      <span class="tf-meta">${t.answer_type === 'full' ? 'развёрнутый · ' : ''}${plural(t.max_points, 'балл', 'балла', 'баллов')}${used ? ` · в вариантах: ${used}` : ''}</span>
+    </header>
+    ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}
+    ${t.image_path ? h`<div class="tf-img" data-img="${t.image_path}"><div class="tf-img-ph"></div></div>` : ''}
+    <div class="tf-reveal" data-answer hidden><b>Ответ:</b> ${t.answer ? t.answer.split('|')[0] : '—'}${t.answer && t.answer.includes('|') ? h` <span class="muted small">(принимается также: ${t.answer.split('|').slice(1).join(', ')})</span>` : ''}</div>
+    <div class="tf-reveal" data-solution hidden>${t.solution ? h`<div class="pre">${t.solution}</div>` : h`<span class="muted">Решение не добавлено</span>`}
+      ${t.solution_image_path ? h`<div class="tf-img" data-img="${t.solution_image_path}"><div class="tf-img-ph"></div></div>` : ''}</div>
+    <footer class="tf-actions">
+      <button type="button" class="btn btn-soft btn-sm" data-toggle="answer">Показать ответ</button>
+      <button type="button" class="btn btn-soft btn-sm" data-toggle="solution">Показать решение</button>
+      <span class="tf-spacer"></span>
+      ${t.source ? h`<span class="muted small">${t.source}</span>` : ''}
+      <button type="button" class="btn btn-ghost btn-sm" data-tedit="${t.id}">Изменить</button>
+      <button type="button" class="icon-btn" data-tdel="${t.id}" aria-label="Удалить">${I.trash}</button>
+    </footer>
+  </article>`;
+
+// Картинки грузим, только когда карточка доезжает до экрана
+function lazyImages(root, api) {
+  const load = async (el) => {
+    if (el.dataset.loaded) return; el.dataset.loaded = '1';
+    mount(el, await img(api, el.dataset.img));
+  };
+  if (!('IntersectionObserver' in window)) { $$('[data-img]', root).forEach(load); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); load(e.target); } }), { rootMargin: '400px' });
+  $$('[data-img]', root).forEach((el) => io.observe(el));
+}
+
+function bindRevealButtons(root) {
+  root.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-toggle]'); if (!b) return;
+    const card = b.closest('[data-tid], .task-card, .modal-body'); const what = b.dataset.toggle;
+    const box = $(`[data-${what}]`, card); if (!box) return;
+    box.hidden = !box.hidden;
+    b.textContent = `${box.hidden ? 'Показать' : 'Скрыть'} ${what === 'answer' ? 'ответ' : 'решение'}`;
+    b.classList.toggle('on', !box.hidden);
+  });
+}
+
 async function tutorBank(view, ctx) {
   const { api } = ctx;
   const [tasks, sets] = await Promise.all([api.select('oge_tasks', { order: 'num' }), api.select('oge_sets')]);
   const used = {}; for (const x of sets) for (const tid of x.task_ids) used[tid] = (used[tid] || 0) + 1;
+  const T = byId(tasks);
   const sel = new Set();
   let subj = store.get('trainer-subj') || SUBJECTS[0];
-  let num = '';
+  let num = store.get('trainer-num') || '';
+  let shown = 0, list = [];
+  const PAGE = 25;
+
+  const more = () => {
+    const feed = $('#feed', view); if (!feed) return;
+    const part = list.slice(shown, shown + PAGE); shown += part.length;
+    feed.insertAdjacentHTML('beforeend', part.map((t) => taskCard(t, { used: used[t.id], selected: sel.has(t.id) }).s).join(''));
+    lazyImages(feed, api);
+    $('#feed-more', view).hidden = shown >= list.length;
+    $('#feed-count', view).textContent = `Показано ${shown} из ${list.length}`;
+  };
+
   const draw = () => {
     const q = ($('#tq', view)?.value || '').toLowerCase();
-    const list = tasks.filter((t) => t.subject === subj && (!num || t.num === +num)
+    list = tasks.filter((t) => t.subject === subj && (!num || t.num === +num)
       && (!q || `${t.topic} ${t.body} ${t.source}`.toLowerCase().includes(q)));
     const counts = {};
     for (const t of tasks.filter((x) => x.subject === subj)) counts[t.num] = (counts[t.num] || 0) + 1;
     mount($('#bank', view), h`
-      <div class="num-grid num-grid-sm">${Array.from({ length: MAX_NUM[subj] || 25 }, (_, i) => i + 1).map((n) => h`
+      <div class="num-grid num-grid-sm">
+        <button type="button" class="num-tile ${!num ? 'on' : ''}" data-num=""><b>Все</b><small>${tasks.filter((t) => t.subject === subj).length}</small></button>
+        ${Array.from({ length: MAX_NUM[subj] || 25 }, (_, i) => i + 1).map((n) => h`
         <button type="button" class="num-tile ${+num === n ? 'on' : ''} ${counts[n] ? '' : 'empty'}" data-num="${n}"><b>${n}</b><small>${counts[n] || 0}</small></button>`)}</div>
-      ${list.length ? h`<div class="list card">${list.map((t) => h`
-        <div class="item lib-item ${sel.has(t.id) ? 'selected' : ''}">
-          <input type="checkbox" class="lib-check" data-bsel="${t.id}" ${sel.has(t.id) ? 'checked' : ''} aria-label="Выбрать для варианта">
-          <span class="num-pill">№${t.num}</span>
-          <div class="item-main"><div class="item-title">${t.topic || 'Без темы'}${used[t.id] ? h` <span class="badge muted">в вариантах: ${used[t.id]}</span>` : ''}</div>
-            <div class="item-text">${(t.body || '').slice(0, 160)}${(t.body || '').length > 160 ? '…' : ''}${t.image_path ? ' 🖼' : ''}</div>
-            <div class="item-meta">${t.answer_type === 'full' ? 'развёрнутый' : `ответ: ${t.answer}`} · ${plural(t.max_points, 'балл', 'балла', 'баллов')}${t.source ? ` · ${t.source}` : ''}</div></div>
-          <div class="actions"><button class="btn btn-ghost btn-sm" data-tview="${t.id}">Просмотр</button>
-            <button class="btn btn-ghost btn-sm" data-tedit="${t.id}">Изменить</button>
-            <button class="icon-btn" data-tdel="${t.id}" aria-label="Удалить">${I.trash}</button></div></div>`)}</div>`
+      ${list.length ? h`
+        <div class="feed-head"><h2>${num ? `${subj}: задание № ${num}` : `${subj}: все задания`}</h2>
+          <span class="muted small" id="feed-count"></span>
+          <button type="button" class="btn btn-ghost btn-sm" id="reveal-all">Показать все ответы</button></div>
+        <div id="feed" class="feed"></div>
+        <button type="button" class="btn btn-soft btn-block" id="feed-more">Показать ещё</button>
+        <div id="feed-sentinel"></div>`
       : empty(tasks.length ? 'Нет задач с таким фильтром' : 'Банк пуст — добавьте задачи или загрузите из Excel', I.target)}`);
-    const T = byId(tasks);
-    $$('[data-num]', view).forEach((b) => b.addEventListener('click', () => { num = num === b.dataset.num ? '' : b.dataset.num; draw(); }));
-    $$('[data-tedit]', view).forEach((b) => b.addEventListener('click', () => taskForm(ctx, T[b.dataset.tedit])));
-    $$('[data-tview]', view).forEach((b) => b.addEventListener('click', () => previewTask(ctx, T[b.dataset.tview])));
-    $$('[data-bsel]', view).forEach((c) => c.addEventListener('change', () => {
-      c.checked ? sel.add(c.dataset.bsel) : sel.delete(c.dataset.bsel);
-      c.closest('.lib-item').classList.toggle('selected', c.checked); bar();
+    shown = 0;
+    if (list.length) {
+      more();
+      $('#feed-more', view).addEventListener('click', more);
+      // автодогрузка при прокрутке вниз
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((es) => { if (es[0].isIntersecting && shown < list.length) more(); }, { rootMargin: '600px' });
+        io.observe($('#feed-sentinel', view));
+      }
+      $('#reveal-all', view).addEventListener('click', (e) => {
+        const on = e.target.dataset.on !== '1'; e.target.dataset.on = on ? '1' : '';
+        e.target.textContent = on ? 'Скрыть все ответы' : 'Показать все ответы';
+        $$('#feed [data-answer]', view).forEach((x) => { x.hidden = !on; });
+        $$('#feed [data-toggle="answer"]', view).forEach((b) => { b.textContent = on ? 'Скрыть ответ' : 'Показать ответ'; b.classList.toggle('on', on); });
+      });
+    }
+    $$('[data-num]', view).forEach((b) => b.addEventListener('click', () => {
+      num = b.dataset.num; store.set('trainer-num', num); draw();
+      $('.feed-head', view)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }));
-    $$('[data-tdel]', view).forEach((b) => b.addEventListener('click', () =>
-      confirmDialog('Удалить задачу? Попытки учеников по ней тоже удалятся.', async () => { await api.remove('oge_tasks', b.dataset.tdel); toast('Удалено'); ctx.refresh(); })));
   };
+
   mount($('#tab-body', view), h`
     <div class="toolbar">${subjectSeg(subj)}<input type="search" id="tq" placeholder="Поиск по теме и условию" aria-label="Поиск">
       <button class="btn btn-ghost" id="imp">${I.upload} Импорт из Excel</button>
       <button class="btn btn-primary" id="addt">${I.plus} Задача</button></div>
-    <p class="hint">Всего в банке: ${plural(tasks.length, 'задача', 'задачи', 'задач')}. Нажмите на номер, чтобы отфильтровать.</p>
+    <p class="hint">Всего в банке: ${plural(tasks.length, 'задача', 'задачи', 'задач')}. Выберите номер — откроется лента задач с полными условиями. Ответ и решение — по кнопкам. Отмечайте галочками, чтобы составить вариант.</p>
     <div id="bank"></div>
     <div class="select-bar" id="bbar" hidden><span id="bbar-n"></span>
       <button class="btn btn-primary btn-sm" id="bmake">${I.target} Составить вариант</button>
       <button class="btn btn-ghost btn-sm" id="bclear">Снять выбор</button></div>`);
   const bar = () => { $('#bbar', view).hidden = !sel.size; $('#bbar-n', view).textContent = `Выбрано: ${sel.size}`; };
+  // делегирование: работает и для догруженных карточек
+  const bank = $('#bank', view);
+  bindRevealButtons(bank);
+  bank.addEventListener('change', (e) => {
+    const c = e.target.closest('[data-bsel]'); if (!c) return;
+    c.checked ? sel.add(c.dataset.bsel) : sel.delete(c.dataset.bsel);
+    c.closest('[data-tid]').classList.toggle('selected', c.checked); bar();
+  });
+  bank.addEventListener('click', (e) => {
+    const ed = e.target.closest('[data-tedit]'); if (ed) return taskForm(ctx, T[ed.dataset.tedit]);
+    const del = e.target.closest('[data-tdel]');
+    if (del) confirmDialog('Удалить задачу? Попытки учеников по ней тоже удалятся.', async () => { await api.remove('oge_tasks', del.dataset.tdel); toast('Удалено'); ctx.refresh(); });
+  });
   $('#bmake', view).addEventListener('click', () => setForm(ctx, { subject: subj, taskIds: [...sel] }));
   $('#bclear', view).addEventListener('click', () => { sel.clear(); draw(); bar(); });
   $$('[data-subj]', view).forEach((b) => b.addEventListener('click', () => {
-    subj = b.dataset.subj; store.set('trainer-subj', subj); num = '';
+    subj = b.dataset.subj; store.set('trainer-subj', subj); num = ''; store.set('trainer-num', '');
     $$('[data-subj]', view).forEach((x) => x.classList.toggle('on', x === b)); draw();
   }));
-  $('#tq', view).addEventListener('input', draw);
+  let timer; $('#tq', view).addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(draw, 200); });
   $('#addt', view).addEventListener('click', () => taskForm(ctx, null, { subject: subj, num: +num || undefined }));
   $('#imp', view).addEventListener('click', () => importForm(ctx));
   draw();
