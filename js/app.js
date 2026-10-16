@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js';
-import { tutorRoutes, tutorNav } from './tutor.js';
-import { backupCard, bindBackup } from './backup.js';
-import { renderTelegramCard, renderReminderCard } from './telegram.js';
-import { familyRoutes, familyNav } from './family.js';
+import { CONFIG, TUTOR } from './config.js?v=202610161743';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610161743';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202610161743';
+import { backupCard, bindBackup } from './backup.js?v=202610161743';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610161743';
+import { familyRoutes, familyNav } from './family.js?v=202610161743';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js')).createApi(CONFIG)
-  : (await import('./demo.js')).createDemoApi();
+  ? (await import('./api.js?v=202610161743')).createApi(CONFIG)
+  : (await import('./demo.js?v=202610161743')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };

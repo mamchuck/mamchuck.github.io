@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js';
+} from './ui.js?v=202610161743';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js';
-import { mountTelegramBanner, linksFor } from './telegram.js';
+} from './library.js?v=202610161743';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610161743';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610161743';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },

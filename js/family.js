@@ -2,9 +2,9 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js';
-import { TUTOR } from './config.js';
-import { mountTelegramBanner } from './telegram.js';
+} from './ui.js?v=202610161743';
+import { TUTOR } from './config.js?v=202610161743';
+import { mountTelegramBanner } from './telegram.js?v=202610161743';
 
 export const familyNav = (role) => [
   { path: '', label: 'Главная', icon: I.home },
