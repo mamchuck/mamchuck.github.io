@@ -873,3 +873,18 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 .tf-spacer { flex: 1; }
 #feed-more[hidden] { display: none; }
 @media (max-width: 900px) { .tf-meta { margin-left: 0; width: 100%; } }
+
+/* ---------- Заявки ---------- */
+.lead-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.chip { min-height: 34px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 14px; color: var(--text-2); transition: border-color .15s, color .15s; }
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.lead-list { display: grid; gap: 12px; }
+.lead { display: flex; flex-direction: column; gap: 8px; transition: box-shadow .2s, border-color .2s; }
+.lead:hover { box-shadow: var(--shadow-hover); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.lead-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lead-date { margin-left: auto; }
+.lead-meta { color: var(--text-2); font-size: 14px; }
+.lead-meta a { color: var(--accent); }
+.lead-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.lead-status { width: auto; min-height: 34px; padding: 0 10px; }

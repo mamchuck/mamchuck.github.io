@@ -95,6 +95,16 @@ function seed() {
   db.oge_attempts.push({ id: uid(), task_id: t1.id, student_id: A, user_id: SA, set_id: 'set-demo', answer: '11/8', is_correct: true, points: 1, max_points: 1, created_at: at(-1) });
   const next = db.lessons.find((l) => l.student_id === A && l.status === 'planned');
   if (next) db.lesson_responses.push({ lesson_id: next.id, user_id: P, student_id: A, role: 'parent', response: 'move', created_at: at(-1) });
+  // Заявки из диагностики
+  const it = (bad) => [6, 8, 9, 10, 12, 13, 15, 16, 17, 18].map((num) => ({ num, ok: !bad.includes(num) }));
+  db.xray_sessions = [
+    { id: uid(), subject: 'Математика', created_at: at(-0.05), finished_at: at(-0.05), tg_chat_id: 1, tg_username: 'masha_oge', tg_name: 'Маша',
+      trial_requested_at: at(-0.04), lead_status: 'new', result: { grade: 3, correct: 6, total: 10, items: it([9, 13, 16, 18]) } },
+    { id: uid(), subject: 'Физика', created_at: at(-1), finished_at: at(-1), tg_chat_id: 2, tg_username: null, tg_name: 'Дима',
+      lead_status: 'contacted', result: { grade: 4, correct: 8, total: 10, items: it([9, 15]) } },
+    { id: uid(), subject: 'Математика', created_at: at(-2), finished_at: at(-2), tg_chat_id: null,
+      lead_status: 'new', result: { grade: 2, correct: 3, total: 10, items: it([8, 9, 10, 12, 13, 15, 17]) } },
+  ];
   return db;
 }
 

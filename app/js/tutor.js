@@ -2,16 +2,18 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610162356';
+} from './ui.js?v=202610192212';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610162356';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610162356';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610162356';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610162356';
+} from './library.js?v=202610192212';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610192212';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610192212';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610192212';
+import { leadsPage } from './leads.js?v=202610192212';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
+  { path: 'leads', label: 'Заявки', icon: I.inbox },
   { path: 'students', label: 'Ученики', icon: I.users },
   { path: 'schedule', label: 'Расписание', icon: I.calendar },
   { path: 'review', label: 'Проверка', icon: I.check },
@@ -777,4 +779,4 @@ async function reviewPage(view, _p, ctx) {
   }));
 }
 
-export const tutorRoutes = { trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
+export const tutorRoutes = { leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
