@@ -12,6 +12,26 @@ const tr = (m) => MESSAGES[m] || m;
 export function createApi(cfg) {
   const sb = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const ok = ({ data, error }) => { if (error) throw new Error(tr(error.message)); return data; };
+  const PAGE = 1000, CACHE_TTL = 5 * 60e3, CACHED = new Set(['oge_tasks']), cache = new Map();
+  const invalidate = (table) => { for (const k of cache.keys()) if (k.startsWith(`${table}|`)) cache.delete(k); };
+
+  async function fetchRows(table, { eq = {}, order, asc = true, limit } = {}) {
+    if (Object.values(eq).some((v) => Array.isArray(v) && !v.length)) return [];
+    const build = (count) => {
+      let q = sb.from(table).select('*', count ? { count: 'exact' } : undefined);
+      for (const [k, v] of Object.entries(eq)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
+      if (order) q = q.order(order, { ascending: asc });
+      return q;
+    };
+    if (limit) return ok(await build().limit(limit));
+    const { data, count, error } = await build(true).range(0, PAGE - 1);
+    if (error) throw new Error(tr(error.message));
+    if (data.length < PAGE || !count || count <= PAGE) return data;
+    // Больше 1000 строк: все порции параллельно, со стабильным порядком (иначе страницы могут пересекаться)
+    const pages = await Promise.all(Array.from({ length: Math.ceil(count / PAGE) }, (_, i) =>
+      build().order('id').range(i * PAGE, i * PAGE + PAGE - 1).then(ok)));
+    return pages.flat();
+  }
 
   return {
     demo: false,
@@ -34,22 +54,18 @@ export function createApi(cfg) {
     },
 
     // eq: { column: value | [values] }
-    // Сервер отдаёт максимум 1000 строк за раз — без limit дочитываем порциями
-    async select(table, { eq = {}, order, asc = true, limit } = {}) {
-      const build = () => {
-        let q = sb.from(table).select('*');
-        for (const [k, v] of Object.entries(eq)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
-        if (order) q = q.order(order, { ascending: asc });
-        return q;
-      };
-      if (Object.values(eq).some((v) => Array.isArray(v) && !v.length)) return [];
-      if (limit) return ok(await build().limit(limit));
-      const out = [];
-      for (let from = 0; ; from += 1000) {
-        const d = ok(await build().range(from, from + 999));
-        out.push(...d);
-        if (d.length < 1000) return out;
+    // Сервер отдаёт максимум 1000 строк за раз: первая порция + число строк, остальные порции — параллельно.
+    // Банк задач кэшируется на 5 минут (сбрасывается при любом изменении таблицы).
+    select(table, opts = {}) {
+      if (!CACHED.has(table)) return fetchRows(table, opts);
+      const key = `${table}|${JSON.stringify(opts)}`;
+      let hit = cache.get(key);
+      if (!hit || Date.now() - hit.t > CACHE_TTL) {
+        hit = { t: Date.now(), p: fetchRows(table, opts) };
+        hit.p.catch(() => cache.delete(key));
+        cache.set(key, hit);
       }
+      return hit.p.then((rows) => structuredClone(rows));
     },
     // Все строки таблицы, порциями по 1000 (для резервной копии)
     async dumpAll(table) {
@@ -60,10 +76,10 @@ export function createApi(cfg) {
         if (d.length < 1000) return out;
       }
     },
-    async insertMany(table, rows) { return ok(await sb.from(table).insert(rows).select()); },
-    async insert(table, row) { return ok(await sb.from(table).insert(row).select().single()); },
-    async update(table, id, patch) { return ok(await sb.from(table).update(patch).eq('id', id).select().single()); },
-    async remove(table, id) { ok(await sb.from(table).delete().eq('id', id)); },
+    async insertMany(table, rows) { invalidate(table); return ok(await sb.from(table).insert(rows).select()); },
+    async insert(table, row) { invalidate(table); return ok(await sb.from(table).insert(row).select().single()); },
+    async update(table, id, patch) { invalidate(table); return ok(await sb.from(table).update(patch).eq('id', id).select().single()); },
+    async remove(table, id) { invalidate(table); ok(await sb.from(table).delete().eq('id', id)); },
     async rpc(fn, args) { return ok(await sb.rpc(fn, args)); },
 
     async upload(path, file) { ok(await sb.storage.from('files').upload(path, file)); return path; },
