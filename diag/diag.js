@@ -99,37 +99,77 @@ const GRADE_TEXT = {
   5: 'Сильный результат. Для пятёрки с запасом осталось отточить вторую часть.',
 };
 
+const TG_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.6 19.8c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L5.9 13.3l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.4 2.8c.9-.3 1.7.2 1.5 1.5z"/></svg>';
+
 function resultView(r) {
   const pct = Math.round((100 * r.correct) / r.total);
   const startLink = `https://t.me/${BOT}?start=diag_${r.id.replace(/-/g, '')}`;
   const bad = r.items.filter((i) => !i.ok);
+  const weakNums = bad.map((i) => i.num).join(', ');
   render(`
+    <ol class="x-steps" aria-label="Шаги">
+      <li class="done"><span>✓</span>Диагностика</li>
+      <li class="now"><span>2</span>План в Telegram</li>
+      <li><span>3</span>Подготовка</li>
+    </ol>
+
     <div class="card x-result">
       <p class="l-eyebrow">Диагностика ОГЭ · ${esc(r.subject)}</p>
       <div class="x-ring" style="--p:${pct};--c:${GRADE_COLOR[r.grade]}"><div><span class="x-grade">${r.grade}</span><small>прогноз оценки</small></div></div>
       <p class="x-score">Верно <b>${r.correct} из ${r.total}</b> · ориентировочно <b>${r.primary} из ${r.max}</b> первичных баллов</p>
       <p class="muted" style="margin-top:10px">${GRADE_TEXT[r.grade]}</p>
       ${r.geometry_fail ? '<div class="x-note">⚠️ Не решена ни одна задача по геометрии. На ОГЭ без 2 баллов за геометрию ставят «2», даже если остальное решено.</div>' : ''}
+    </div>
+
+    <section class="x-tg" aria-labelledby="tg-title">
+      <div class="x-tg-head">
+        <span class="x-tg-ico">${TG_ICON}</span>
+        <div><h2 id="tg-title">${bad.length ? 'Твой план подготовки готов' : 'План на пятёрку готов'}</h2>
+          <p>${bad.length ? `Составлен по твоим ответам: задания № ${weakNums}` : 'Ошибок нет — план сразу на вторую часть'}</p></div>
+      </div>
+      <ul class="x-tg-list">
+        ${bad.length ? `<li><b>Разбор ${bad.length} ${bad.length === 1 ? 'ошибки' : 'ошибок'}</b> — где именно теряешь баллы и правильные ответы</li>` : ''}
+        <li><b>План по неделям</b> до экзамена: что решать и в каком порядке</li>
+        <li><b>3 задачи</b> на ${bad.length ? 'самую слабую тему' : 'закрепление'} — с ответами</li>
+      </ul>
+      <a class="x-tg-btn" href="${startLink}" target="_blank" rel="noopener" data-tg>${TG_ICON}<span>Забрать план в Telegram</span></a>
+      <p class="x-tg-free">Бесплатно · придёт за 5 секунд</p>
+      <ol class="x-tg-how">
+        <li>Откроется бот <b>@${BOT}</b> — нажми <b>«Запустить»</b></li>
+        <li>Подпишись на канал <b>@mamchuck_formula</b> — там разборы задач ОГЭ</li>
+        <li>Бот сразу пришлёт разбор и план</li>
+      </ol>
+      <div class="x-qr" hidden><div id="qr"></div><span>С телефона удобнее —<br>наведи камеру на код</span></div>
+      <p class="x-tg-fallback" hidden>Telegram не открылся? <a href="${startLink}" target="_blank" rel="noopener">Открыть ссылку ещё раз</a> или <button class="link-btn" data-copy>скопировать её</button></p>
+    </section>
+
+    <div class="card x-result x-result-grid">
       <div class="x-grid">${r.items.map((i) => `<div class="x-cell ${i.ok ? 'ok' : 'bad'}">${i.num}<small>${i.ok ? 'верно' : 'мимо'}</small></div>`).join('')}</div>
       <p class="hint">Номера заданий ОГЭ</p>
       ${r.strong ? `<p class="x-strong">💪 Сильная сторона: <b>${esc(r.strong)}</b></p>` : ''}
     </div>
-    ${bad.length ? `
-    <div class="card x-lock">
-      <b>Найдено ошибок: ${bad.length}. Полный разбор:</b>
-      <ul>${bad.slice(0, 3).map((i) => `<li>№ ${i.num}: тема, где ошибка, и сколько баллов она стоит</li>`).join('')}${bad.length > 3 ? `<li>…и ещё ${bad.length - 3}</li>` : ''}
-        <li>План подготовки по неделям до экзамена</li><li>3 задачи для тренировки слабой темы</li></ul>
-      <div class="x-lock-cta">
-        <a class="btn btn-primary" href="${startLink}">Получить разбор в Telegram</a>
-        <span class="hint">Бесплатно. Пришлёт бот @${BOT}</span>
-      </div>
-    </div>` : `
-    <div class="card x-lock" style="text-align:center"><b>Ни одной ошибки 🔥</b><p class="muted" style="margin:8px 0 14px">Пора на вторую часть. Забери план в Telegram.</p>
-      <a class="btn btn-primary" href="${startLink}">Получить план в Telegram</a></div>`}
+
     <div class="x-nav" style="margin-top:18px">
       <button class="link-btn small" data-again>Пройти ещё раз</button>
       <button class="link-btn small" data-share>Поделиться результатом</button>
-    </div>`);
+    </div>
+    <a class="x-tg-btn x-sticky" href="${startLink}" target="_blank" rel="noopener" data-tg>${TG_ICON}<span>Забрать план в Telegram</span></a>`);
+
+  // Клик → если вкладка не ушла в Telegram, через пару секунд подсказываем запасной путь
+  root.querySelectorAll('[data-tg]').forEach((a) => a.addEventListener('click', () => {
+    setTimeout(() => { const f = root.querySelector('.x-tg-fallback'); if (f) f.hidden = false; }, 2500);
+  }));
+  root.querySelector('[data-copy]')?.addEventListener('click', async (e) => {
+    try { await navigator.clipboard.writeText(startLink); e.target.textContent = 'скопировано ✓'; } catch {}
+  });
+  // Компьютер: QR-код, чтобы открыть план на телефоне
+  if (matchMedia('(pointer: fine) and (min-width: 720px)').matches) showQr(startLink);
+  // Липкая кнопка видна, только пока основная за экраном
+  const main = root.querySelector('.x-tg-btn:not(.x-sticky)'), sticky = root.querySelector('.x-sticky');
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => sticky.classList.toggle('show', !e.isIntersecting)).observe(main);
+  }
+
   root.querySelector('[data-again]').addEventListener('click', () => { history.replaceState(null, '', location.pathname + location.search); pickView(); });
   root.querySelector('[data-share]').addEventListener('click', async () => {
     const text = `Мой прогноз на ОГЭ по предмету «${r.subject}» — ${r.grade}. Проверь себя за 12 минут:`;
@@ -142,6 +182,15 @@ function errorView(msg, retry) {
   render(`<div class="card x-err"><p>😕 ${esc(msg)}</p><div class="x-actions" style="max-width:360px;margin:16px auto 0">
     ${retry ? '<button class="btn btn-primary" data-retry>Повторить</button>' : ''}<a class="btn btn-ghost" href="https://t.me/${BOT}">Написать в Telegram</a></div></div>`);
   root.querySelector('[data-retry]')?.addEventListener('click', retry);
+}
+
+function showQr(text) {
+  const draw = () => { const el = document.getElementById('qr'); if (!el) return; el.innerHTML = '';
+    new window.QRCode(el, { text, width: 132, height: 132, correctLevel: window.QRCode.CorrectLevel.M }); el.parentElement.hidden = false; };
+  if (window.QRCode) return draw();
+  const sc = document.createElement('script');
+  sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  sc.onload = draw; document.head.appendChild(sc);
 }
 
 // ---------- Запуск ----------
