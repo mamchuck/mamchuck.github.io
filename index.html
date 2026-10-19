@@ -3,20 +3,80 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>mamchuck</title>
-  <meta name="description" content="Личный кабинет ученика, родителя и преподавателя">
+  <title>Репетитор по математике и физике — ОГЭ и ЕГЭ, Хабаровск и онлайн | mamchuck</title>
+  <meta name="description" content="Подготовка к ОГЭ по математике и физике и ЕГЭ по профильной математике. Онлайн и очно в Хабаровске. Бесплатная диагностика за 12 минут.">
   <meta name="theme-color" content="#f3f7fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0c131c" media="(prefers-color-scheme: dark)">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='8' fill='white' stroke='%232b8ad8' stroke-width='3'/%3E%3Ctext x='14.5' y='22' font-family='-apple-system,system-ui,sans-serif' font-size='14' font-weight='800' fill='%232b8ad8' text-anchor='middle'%3EM%3C/text%3E%3Ctext x='24' y='14' font-family='-apple-system,system-ui,sans-serif' font-size='8' font-weight='800' fill='%232b8ad8' text-anchor='middle'%3E2%3C/text%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <script>try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
-  <link rel="stylesheet" href="css/style.css?v=202610162356">
-  <script type="module" src="js/app.js?v=202610162356"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232b8ad8'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='17' font-weight='700' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+  <script>
+    // Ссылки кабинета (#/..., приглашения, восстановление пароля) → /app/
+    if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
+    try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
+  </script>
+  <link rel="stylesheet" href="app/css/style.css">
+  <link rel="stylesheet" href="landing.css">
 </head>
-<body>
-  <div id="app"></div>
-  <noscript>Для работы mamchuck включите JavaScript.</noscript>
+<body class="landing">
+  <header class="l-head">
+    <a href="./" class="l-logo"><span>M</span>mamchuck</a>
+    <nav><a href="#how">Рентген</a><a href="https://t.me/mamchuck_formula">Канал</a><a href="#price">Цены</a><a href="#faq">Вопросы</a></nav>
+    <a href="app/" class="btn btn-ghost">Войти в кабинет</a>
+  </header>
+
+  <main>
+    <section class="l-hero">
+      <p class="l-kicker">ОГЭ · ЕГЭ · математика и физика · онлайн и очно в Хабаровске</p>
+      <h1>Покажу, на каких ошибках ты теряешь баллы. За&nbsp;12&nbsp;минут.</h1>
+      <p class="l-lead">Бесплатный «Рентген»: 10 задач, и ты получаешь прогноз балла, свои ошибки-паттерны и план подготовки до экзамена.</p>
+      <div class="l-cta">
+        <a href="xray/" class="btn btn-primary btn-lg">Пройти рентген бесплатно</a>
+        <a href="https://t.me/mamchuck_bot" class="btn btn-soft btn-lg">Написать в Telegram</a>
+      </div>
+      <p class="hint">Без регистрации. Результат сразу на экране.</p>
+    </section>
+
+    <section id="how" class="l-sec">
+      <h2>Как работает рентген</h2>
+      <div class="l-grid3">
+        <div class="card"><b>1. Выбери экзамен</b><p class="muted">ОГЭ математика, ОГЭ физика или ЕГЭ профиль.</p></div>
+        <div class="card"><b>2. Реши 10 задач</b><p class="muted">От простых к сложным. Не знаешь — жми «не знаю», так точнее.</p></div>
+        <div class="card"><b>3. Получи разбор</b><p class="muted">Прогноз оценки, карта тем 🟢🟡🔴 и конкретные ошибки, которые стоят тебе баллов.</p></div>
+      </div>
+    </section>
+
+
+    <section class="l-sec">
+      <h2>Как проходят занятия</h2>
+      <div class="l-grid3">
+        <div class="card"><b>Личный кабинет</b><p class="muted">Домашние задания, файлы, проверка и оценки в одном месте.</p></div>
+        <div class="card"><b>Отчёты родителям</b><p class="muted">После каждого урока: что прошли, что получилось, над чем работать.</p></div>
+        <div class="card"><b>Прогресс по темам</b><p class="muted">Видно, какие задания экзамена уже закрыты, а какие ещё нет.</p></div>
+      </div>
+    </section>
+
+    <section id="price" class="l-sec">
+      <h2>Форматы</h2>
+      <div class="l-grid3">
+        <div class="card"><b>Пробное занятие</b><p class="l-price">Бесплатно</p><p class="muted">30 минут: разбираем рентген и составляем план.</p></div>
+        <div class="card"><b>Онлайн</b><p class="muted">Из любого города. Доска, запись, кабинет.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
+        <div class="card"><b>Очно, Хабаровск</b><p class="muted">Занятия в Хабаровске.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
+      </div>
+    </section>
+
+
+    <section id="faq" class="l-sec">
+      <h2>Вопросы</h2>
+      <details class="card"><summary>С какого класса начинать готовиться?</summary><p class="muted">Оптимально за год до экзамена. Если осталось меньше — рентген покажет, что успеть в первую очередь.</p></details>
+      <details class="card"><summary>Онлайн так же эффективно, как очно?</summary><p class="muted">Да: общая доска, запись урока и все материалы в кабинете.</p></details>
+      <details class="card"><summary>Рентген правда бесплатный?</summary><p class="muted">Да, без регистрации. Полный план приходит в Telegram.</p></details>
+    </section>
+
+    <section class="l-final card">
+      <h2>Начни с рентгена — это 12 минут</h2>
+      <a href="xray/" class="btn btn-primary btn-lg">Пройти бесплатно</a>
+    </section>
+  </main>
+
+  <footer class="l-foot hint">© mamchuck · <a href="https://t.me/mamchuck_bot">Бот</a> · <a href="https://t.me/mamchuck_formula">Канал</a> · <a href="app/">Кабинет</a></footer>
 </body>
 </html>
