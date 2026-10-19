@@ -1,5 +1,6 @@
 /* Публичные страницы: лендинг и диагностика. Токены и кнопки — из app/css/style.css */
-.landing { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+.landing { max-width: 1120px; margin: 0 auto; padding: 0 20px;
+  --ease: cubic-bezier(.22, .8, .24, 1); --dur: .45s; }
 .landing h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 750; letter-spacing: -.03em; }
 
 /* Шапка */
@@ -7,7 +8,7 @@
   background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .l-head .brand, .l-foot .brand { padding: 0; }
 .l-head nav { display: flex; gap: 26px; margin-left: auto; color: var(--text-2); font-weight: 500; }
-.l-head nav a { transition: color .15s; }
+.l-head nav a { transition: color var(--dur) var(--ease); }
 .l-head nav a:hover { color: var(--accent); }
 
 /* Первый экран */
@@ -19,27 +20,50 @@
 .l-lead { font-size: 19px; line-height: 1.55; color: var(--text-2); max-width: 540px; }
 .l-cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 30px 0 22px; }
 .btn-lg { min-height: 54px; padding: 0 26px; font-size: 16px; font-weight: 600; border-radius: 14px; }
-.btn-primary.btn-lg { box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent); transition: transform .15s, box-shadow .15s, background .15s; }
+.btn-primary.btn-lg { box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent); transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
 .btn-primary.btn-lg:hover { transform: translateY(-2px); box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 45%, transparent); }
-.btn-ghost.btn-lg:hover { border-color: var(--accent); }
+.btn-ghost.btn-lg { transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.btn-ghost.btn-lg:hover { border-color: var(--accent); transform: translateY(-2px); }
 .l-trust { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; padding: 0; margin: 0; color: var(--text-2); font-size: 14px; }
 .l-trust li::before { content: "✓"; color: var(--ok); font-weight: 700; margin-right: 6px; }
 
 /* Пример результата */
-.l-preview { padding: 24px; border-radius: 24px; text-align: center; transform: rotate(1.2deg);
-  box-shadow: 0 30px 60px rgba(15, 40, 70, .12), var(--shadow); }
-.l-preview:hover { transform: rotate(0) translateY(-4px); }
+.l-preview { --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%; --lift: 0px;
+  position: relative; padding: 24px; border-radius: 24px; text-align: center; overflow: hidden; isolation: isolate;
+  transform: perspective(1100px) rotate(1.2deg) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift));
+  box-shadow: 0 30px 60px rgba(15, 40, 70, .12), var(--shadow);
+  transition: transform .9s var(--ease), box-shadow .9s var(--ease), border-color .9s var(--ease);
+  will-change: transform; animation: l-float 7s ease-in-out infinite; }
+.l-preview::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%);
+  transition: opacity .9s var(--ease); }
+.l-preview:hover, .l-preview.is-tilt { --lift: -6px; animation-play-state: paused;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: 0 40px 80px rgba(15, 40, 70, .18), 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent), 0 20px 60px color-mix(in srgb, var(--accent) 22%, transparent); }
+.l-preview:hover { transform: perspective(1100px) rotate(0deg) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift)); }
+.l-preview.is-tilt { transition-duration: .25s, .9s, .9s; }
+.l-preview:hover::before { opacity: 1; }
+@keyframes l-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
 .l-preview-head { display: flex; justify-content: space-between; align-items: center; }
 .l-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; color: var(--accent-strong); background: var(--accent-soft); }
+@property --fill { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
 .l-ring { width: 132px; height: 132px; margin: 18px auto 14px; border-radius: 50%; display: grid; place-items: center;
-  background: conic-gradient(var(--accent) 70%, var(--line) 0); }
+  --fill: 70%; background: conic-gradient(var(--accent) var(--fill), var(--line) 0); animation: l-fill 1.6s var(--ease) .3s both; }
+@keyframes l-fill { from { --fill: 0%; } }
 .l-ring > div { width: 106px; height: 106px; border-radius: 50%; background: var(--surface); display: grid; place-content: center; }
 .l-ring b { font-size: 44px; line-height: 1; color: var(--accent); }
 .l-ring small { color: var(--text-2); font-size: 12px; }
 .l-preview-score { color: var(--text-2); font-size: 15px; }
 .l-preview-score b { color: var(--text); }
 .l-cells { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 16px 0 14px; }
-.l-cells i { font-style: normal; font-weight: 700; font-size: 14px; padding: 9px 0; border-radius: 10px; }
+.l-cells i { font-style: normal; font-weight: 700; font-size: 14px; padding: 9px 0; border-radius: 10px;
+  animation: l-pop .6s var(--ease) both; transition: transform var(--dur) var(--ease); }
+.l-cells i:nth-child(1) { animation-delay: .5s; } .l-cells i:nth-child(2) { animation-delay: .56s; } .l-cells i:nth-child(3) { animation-delay: .62s; }
+.l-cells i:nth-child(4) { animation-delay: .68s; } .l-cells i:nth-child(5) { animation-delay: .74s; } .l-cells i:nth-child(6) { animation-delay: .8s; }
+.l-cells i:nth-child(7) { animation-delay: .86s; } .l-cells i:nth-child(8) { animation-delay: .92s; } .l-cells i:nth-child(9) { animation-delay: .98s; }
+.l-cells i:nth-child(10) { animation-delay: 1.04s; }
+.l-preview:hover .l-cells i:hover { transform: translateY(-2px) scale(1.06); }
+@keyframes l-pop { from { opacity: 0; transform: translateY(6px) scale(.92); } }
 .l-cells .ok { background: var(--ok-soft); color: var(--ok); }
 .l-cells .bad { background: var(--bad-soft); color: var(--bad); }
 .l-preview-note { font-size: 14px; color: var(--text-2); }
@@ -56,7 +80,7 @@
 
 /* Карточки: единый ховер */
 .l-card { margin: 0 !important; display: flex; flex-direction: column; gap: 8px; padding: 24px;
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
 .l-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 .l-card b { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
 .l-emoji { font-size: 28px; line-height: 1; margin-bottom: 6px; }
@@ -73,7 +97,7 @@
 .l-faq { display: grid; gap: 12px; }
 .l-faq summary { cursor: pointer; font-weight: 600; font-size: 16px; color: var(--text); list-style: none; display: flex; justify-content: space-between; gap: 16px; }
 .l-faq summary::-webkit-details-marker { display: none; }
-.l-faq summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 1; transition: transform .2s; }
+.l-faq summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 1; transition: transform var(--dur) var(--ease); }
 .l-faq details[open] summary::after { transform: rotate(45deg); }
 .l-faq details p { margin-top: 4px; }
 
@@ -82,7 +106,8 @@
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); display: flex; flex-direction: column; align-items: center; gap: 12px;
   box-shadow: 0 24px 50px color-mix(in srgb, var(--accent) 30%, transparent); }
 .l-final p { opacity: .85; font-size: 17px; }
-.l-btn-white { background: #fff; color: var(--accent-dark); margin-top: 10px; transition: transform .15s; }
+.l-btn-white { background: #fff; color: var(--accent-dark); margin-top: 10px; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.l-btn-white:hover { box-shadow: 0 12px 30px rgba(0, 0, 0, .18); }
 .l-btn-white:hover { transform: translateY(-2px); }
 
 /* Подвал */
@@ -95,7 +120,7 @@
 
 @media (max-width: 900px) {
   .l-hero { grid-template-columns: 1fr; gap: 36px; padding: 28px 0 48px; }
-  .l-preview { transform: none; max-width: 420px; width: 100%; justify-self: center; }
+  .l-preview { max-width: 420px; width: 100%; justify-self: center; transform: perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift)); }
   .l-grid3, .l-grid2 { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
@@ -110,4 +135,8 @@
   .l-sticky { display: flex; position: fixed; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 20;
     min-height: 54px; font-size: 16px; font-weight: 600; border-radius: 14px; box-shadow: 0 12px 30px rgba(15, 40, 70, .3); }
 }
-@media (hover: none) { .l-card:hover, .l-preview:hover { transform: none; } }
+@media (hover: none) { .l-card:hover { transform: none; } .l-preview { animation: l-float 7s ease-in-out infinite; } }
+@media (prefers-reduced-motion: reduce) {
+  .l-preview, .l-ring, .l-cells i { animation: none !important; }
+  .l-preview, .l-card, .btn { transition-duration: .01s !important; }
+}

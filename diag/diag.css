@@ -1,14 +1,14 @@
 #x { max-width: 680px; margin: 0 auto; padding: 32px 0 72px; }
-#x .card { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
+#x .card { transition: box-shadow .45s cubic-bezier(.22, .8, .24, 1), border-color .45s cubic-bezier(.22, .8, .24, 1), transform .45s cubic-bezier(.22, .8, .24, 1); }
 #x .card:hover { box-shadow: var(--shadow-hover); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
 .x-title { font-size: clamp(32px, 5vw, 46px); line-height: 1.05; letter-spacing: -.035em; font-weight: 800; margin: 16px 0 12px; }
 .x-sub { font-size: 17px; color: var(--text-2); }
 .x-pick { display: grid; gap: 14px; margin-top: 28px; }
 .x-card { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; cursor: pointer;
   padding: 22px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface);
-  box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s, border-color .15s; }
+  box-shadow: var(--shadow); transition: transform .45s cubic-bezier(.22, .8, .24, 1), box-shadow .45s cubic-bezier(.22, .8, .24, 1), border-color .45s cubic-bezier(.22, .8, .24, 1); }
 .x-card:hover .x-arrow { color: var(--accent); transform: translateX(3px); }
-.x-arrow { transition: transform .2s, color .2s; }
+.x-arrow { transition: transform .45s cubic-bezier(.22, .8, .24, 1), color .45s cubic-bezier(.22, .8, .24, 1); }
 .x-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
 .x-card b { display: block; font-size: 18px; }
 .x-ico { font-size: 28px; width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); flex: none; }
@@ -17,7 +17,7 @@
 
 .x-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; color: var(--text-2); font-size: 14px; }
 .x-bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
-.x-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .35s ease; }
+.x-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .45s cubic-bezier(.22, .8, .24, 1); }
 .x-q { padding: 26px; }
 .x-num { display: inline-block; font-size: 13px; font-weight: 600; color: var(--accent-strong); background: var(--accent-soft); padding: 4px 10px; border-radius: 99px; }
 .x-body { font-size: 18px; line-height: 1.55; margin: 16px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -85,7 +85,7 @@
   background: color-mix(in srgb, var(--tg) 18%, transparent); color: var(--tg); font-size: 12px; font-weight: 800; }
 .x-tg-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 60px; padding: 0 20px; border-radius: 16px;
   background: var(--tg); color: #fff !important; font-size: 18px; font-weight: 700; letter-spacing: -.01em;
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--tg) 45%, transparent); transition: transform .15s, box-shadow .15s, background .15s; }
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--tg) 45%, transparent); transition: transform .45s cubic-bezier(.22, .8, .24, 1), box-shadow .45s cubic-bezier(.22, .8, .24, 1), background .45s cubic-bezier(.22, .8, .24, 1); }
 .x-tg-btn svg { width: 24px; height: 24px; }
 .x-tg-btn:hover { background: var(--tg-strong); transform: translateY(-2px); box-shadow: 0 16px 34px color-mix(in srgb, var(--tg) 55%, transparent); }
 .x-tg > .x-tg-btn { animation: x-pulse 2.4s ease-in-out 1.2s 3; }
@@ -105,7 +105,7 @@
 
 /* Липкая кнопка: появляется, когда основная ушла за экран вниз */
 .x-sticky { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 30; width: min(560px, calc(100% - 32px));
-  transform: translate(-50%, 140%); opacity: 0; pointer-events: none; transition: transform .25s ease, opacity .25s ease; }
+  transform: translate(-50%, 140%); opacity: 0; pointer-events: none; transition: transform .45s cubic-bezier(.22, .8, .24, 1), opacity .45s cubic-bezier(.22, .8, .24, 1); }
 .x-sticky.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
 .x-sticky:hover { transform: translate(-50%, -2px); }
 @media (max-width: 560px) {

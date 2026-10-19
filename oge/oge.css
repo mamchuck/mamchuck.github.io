@@ -32,7 +32,7 @@
 
 .o-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .o-num { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 16px; border: 1px solid var(--line);
-  background: var(--surface); box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s, border-color .2s; }
+  background: var(--surface); box-shadow: var(--shadow); transition: transform .45s cubic-bezier(.22, .8, .24, 1), box-shadow .45s cubic-bezier(.22, .8, .24, 1), border-color .45s cubic-bezier(.22, .8, .24, 1); }
 .o-num:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
 .o-num b { font-size: 18px; color: var(--accent); }
 .o-num span { font-size: 14px; color: var(--text-2); line-height: 1.35; }
