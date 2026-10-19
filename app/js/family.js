@@ -2,10 +2,10 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610192212';
-import { TUTOR } from './config.js?v=202610192212';
-import { trainerFamily } from './trainer.js?v=202610192212';
-import { mountTelegramBanner } from './telegram.js?v=202610192212';
+} from './ui.js?v=202610192224';
+import { TUTOR } from './config.js?v=202610192224';
+import { trainerFamily } from './trainer.js?v=202610192224';
+import { mountTelegramBanner } from './telegram.js?v=202610192224';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },

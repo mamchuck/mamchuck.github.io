@@ -1,1 +1,11 @@
 .DS_Store
+# секреты — никогда в репозиторий
+.env
+.env.*
+*.pem
+*.key
+*.p12
+secrets*
+service_role*
+supabase/.temp/
+node_modules/
