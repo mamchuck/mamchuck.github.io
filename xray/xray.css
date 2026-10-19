@@ -1,0 +1,54 @@
+#x { max-width: 680px; margin: 0 auto; padding: 24px 0 64px; }
+.x-title { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 8px 0 12px; }
+.x-sub { font-size: 17px; color: var(--text-2); }
+.x-pick { display: grid; gap: 14px; margin-top: 28px; }
+.x-card { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; cursor: pointer;
+  padding: 22px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface);
+  box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s, border-color .15s; }
+.x-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+.x-card b { display: block; font-size: 18px; }
+.x-ico { font-size: 30px; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); flex: none; }
+.x-arrow { margin-left: auto; color: var(--text-3); font-size: 22px; }
+.x-perks { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 22px; color: var(--text-2); font-size: 14px; }
+
+.x-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; color: var(--text-2); font-size: 14px; }
+.x-bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.x-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .35s ease; }
+.x-q { padding: 26px; }
+.x-num { display: inline-block; font-size: 13px; font-weight: 600; color: var(--accent-strong); background: var(--accent-soft); padding: 4px 10px; border-radius: 99px; }
+.x-body { font-size: 18px; line-height: 1.55; margin: 16px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.x-img { display: block; max-width: 100%; max-height: 320px; margin: 0 auto 16px; border-radius: 12px; background: #fff; padding: 8px; }
+.x-input { width: 100%; min-height: 54px; font-size: 20px; padding: 0 16px; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line-2); background: var(--surface); }
+.x-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.x-actions { display: flex; gap: 10px; margin-top: 14px; }
+.x-actions .btn { flex: 1; min-height: 50px; font-size: 16px; }
+.x-nav { display: flex; justify-content: space-between; margin-top: 14px; }
+
+.x-result { text-align: center; padding: 32px 22px; }
+.x-ring { --p: 0; width: 168px; height: 168px; margin: 8px auto 18px; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--c, var(--accent)) calc(var(--p) * 1%), var(--line) 0); }
+.x-ring > div { width: 136px; height: 136px; border-radius: 50%; background: var(--surface); display: grid; place-content: center; }
+.x-grade { font-size: 56px; font-weight: 800; line-height: 1; color: var(--c, var(--accent)); }
+.x-ring small { color: var(--text-2); font-size: 13px; margin-top: 4px; }
+.x-score { font-size: 17px; color: var(--text-2); }
+.x-score b { color: var(--text); }
+.x-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 22px 0 6px; }
+.x-cell { padding: 10px 0; border-radius: 12px; font-weight: 700; font-size: 15px; }
+.x-cell small { display: block; font-weight: 500; font-size: 11px; opacity: .8; }
+.x-cell.ok { background: var(--ok-soft); color: var(--ok); }
+.x-cell.bad { background: var(--bad-soft); color: var(--bad); }
+.x-note { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--warn-soft); color: var(--text); font-size: 14px; text-align: left; }
+.x-strong { margin-top: 14px; font-size: 15px; }
+.x-lock { position: relative; margin-top: 18px; padding: 22px; text-align: left; overflow: hidden; }
+.x-lock ul { margin: 12px 0 0; padding: 14px 14px 14px 32px; border-radius: 12px; background: var(--accent-softer); filter: blur(3.5px); user-select: none; color: var(--text-2); line-height: 1.9; }
+.x-lock-cta { display: grid; gap: 8px; justify-items: center; text-align: center; margin-top: 18px; }
+.x-lock-cta .btn { min-height: 52px; font-size: 16px; font-weight: 600; padding: 0 24px; }
+.x-err { padding: 22px; text-align: center; }
+.x-spin { width: 36px; height: 36px; margin: 60px auto; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: x-spin .8s linear infinite; }
+@keyframes x-spin { to { transform: rotate(360deg); } }
+@media (max-width: 560px) {
+  .x-q { padding: 20px 16px; }
+  .x-body { font-size: 17px; }
+  .x-grid { gap: 6px; }
+}
