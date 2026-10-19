@@ -1,0 +1,57 @@
+/* Открытый тренажёр ОГЭ. Карточки задач берут стили из diag/diag.css (x-*) — они продублированы здесь. */
+.o-main { padding-bottom: 24px; }
+.o-crumbs { font-size: 14px; color: var(--text-3); padding-top: 16px; }
+.o-crumbs a { color: var(--text-2); }
+.o-crumbs a:hover { color: var(--accent); }
+.o-hero { padding: 24px 0 28px; max-width: 760px; }
+.o-hero h1 { font-size: clamp(28px, 4.4vw, 44px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 16px 0 14px; }
+.o-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.o-tasks { display: grid; gap: 16px; }
+.o-side { position: sticky; top: 84px; display: grid; gap: 16px; }
+.o-cta { border-color: var(--accent); }
+.o-cta .btn { margin-top: 6px; }
+.o-tips { margin: 4px 0 0; padding-left: 18px; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+
+.o-task { padding: 22px; }
+.o-task-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.o-answer { display: flex; gap: 10px; }
+.o-answer .x-input { flex: 1; min-height: 50px; font-size: 18px; }
+.o-answer .btn { min-height: 50px; padding: 0 22px; font-weight: 600; }
+.o-show { align-self: flex-start; margin-top: 4px; }
+.o-task.is-ok { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+.o-task.is-bad { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+.o-result { margin-top: 6px; padding: 14px 16px; border-radius: 12px; background: var(--accent-softer); }
+.o-task.is-ok .o-result { background: var(--ok-soft); }
+.o-task.is-bad .o-result { background: var(--bad-soft); }
+.o-verdict { font-weight: 600; }
+.o-solution { margin-top: 8px; white-space: pre-wrap; color: var(--text-2); line-height: 1.6; }
+.o-summary { text-align: center; align-items: center; padding: 28px; }
+.o-summary.good { border-color: var(--ok); }
+.o-score { font-size: 40px !important; font-weight: 800 !important; letter-spacing: -.03em; }
+.o-sum-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; }
+
+.o-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.o-num { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 16px; border: 1px solid var(--line);
+  background: var(--surface); box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s, border-color .2s; }
+.o-num:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+.o-num b { font-size: 18px; color: var(--accent); }
+.o-num span { font-size: 14px; color: var(--text-2); line-height: 1.35; }
+.o-num.on { border-color: var(--accent); background: var(--accent-soft); }
+
+/* из diag.css */
+.x-num { display: inline-block; font-size: 13px; font-weight: 600; color: var(--accent-strong); background: var(--accent-soft); padding: 4px 10px; border-radius: 99px; }
+.x-body { font-size: 17px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.x-img { display: block; max-width: 100%; max-height: 320px; margin: 0 auto; border-radius: 12px; background: #fff; padding: 8px; }
+.x-input { width: 100%; padding: 0 16px; border-radius: var(--radius-sm); border: 1.5px solid var(--line-2); background: var(--surface); }
+.x-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.x-spin { width: 36px; height: 36px; margin: 60px auto; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: x-spin .8s linear infinite; }
+@keyframes x-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .o-layout { grid-template-columns: 1fr; }
+  .o-side { position: static; }
+}
+@media (max-width: 560px) {
+  .o-task { padding: 18px 16px; }
+  .o-answer .btn { padding: 0 16px; }
+}
