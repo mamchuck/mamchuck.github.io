@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Репетитор по математике и физике — ОГЭ и ЕГЭ, Хабаровск и онлайн | mamchuck</title>
-  <meta name="description" content="Подготовка к ОГЭ по математике и физике и ЕГЭ по профильной математике. Онлайн и очно в Хабаровске. Бесплатная диагностика за 12 минут.">
+  <title>Подготовка к ОГЭ и ЕГЭ по математике и физике — онлайн и в Хабаровске | mamchuck</title>
+  <meta name="description" content="Бесплатная диагностика ОГЭ за 12 минут: прогноз оценки, сильные и слабые задания, план подготовки. Занятия онлайн и очно в Хабаровске.">
   <meta name="theme-color" content="#f3f7fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0c131c" media="(prefers-color-scheme: dark)">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232b8ad8'/%3E%3Ctext x='16' y='22' font-family='system-ui' font-size='17' font-weight='700' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='8' fill='white' stroke='%232b8ad8' stroke-width='3'/%3E%3Ctext x='14.5' y='22' font-family='-apple-system,system-ui,sans-serif' font-size='14' font-weight='800' fill='%232b8ad8' text-anchor='middle'%3EM%3C/text%3E%3Ctext x='24' y='14' font-family='-apple-system,system-ui,sans-serif' font-size='8' font-weight='800' fill='%232b8ad8' text-anchor='middle'%3E2%3C/text%3E%3C/svg%3E">
   <script>
     // Ссылки кабинета (#/..., приглашения, восстановление пароля) → /app/
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
@@ -18,65 +18,111 @@
 </head>
 <body class="landing">
   <header class="l-head">
-    <a href="./" class="l-logo"><span>M</span>mamchuck</a>
-    <nav><a href="#how">Рентген</a><a href="https://t.me/mamchuck_formula">Канал</a><a href="#price">Цены</a><a href="#faq">Вопросы</a></nav>
-    <a href="app/" class="btn btn-ghost">Войти в кабинет</a>
+    <a href="./" class="brand" aria-label="mamchuck — на главную"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></a>
+    <nav><a href="#diag">Диагностика</a><a href="#lessons">Занятия</a><a href="#formats">Форматы</a><a href="#faq">Вопросы</a></nav>
+    <a href="app/" class="btn btn-ghost">Войти</a>
   </header>
 
   <main>
+    <!-- Первый экран: обещание + пример результата -->
     <section class="l-hero">
-      <p class="l-kicker">ОГЭ · ЕГЭ · математика и физика · онлайн и очно в Хабаровске</p>
-      <h1>Покажу, на каких ошибках ты теряешь баллы. За&nbsp;12&nbsp;минут.</h1>
-      <p class="l-lead">Бесплатный «Рентген»: 10 задач, и ты получаешь прогноз балла, свои ошибки-паттерны и план подготовки до экзамена.</p>
-      <div class="l-cta">
-        <a href="xray/" class="btn btn-primary btn-lg">Пройти рентген бесплатно</a>
-        <a href="https://t.me/mamchuck_bot" class="btn btn-soft btn-lg">Написать в Telegram</a>
+      <div class="l-hero-text">
+        <span class="l-chip">● Бесплатно · без регистрации</span>
+        <h1>Узнай, на что ты сдашь ОГЭ, <span class="l-accent">уже сегодня</span></h1>
+        <p class="l-lead">10 задач, 12 минут. Покажу прогноз оценки, сильные и слабые задания и что подтянуть в первую очередь.</p>
+        <div class="l-cta">
+          <a href="diag/" class="btn btn-primary btn-lg">Начать диагностику <span aria-hidden="true">→</span></a>
+          <a href="https://t.me/mamchuck_bot" class="btn btn-ghost btn-lg">Задать вопрос</a>
+        </div>
+        <ul class="l-trust">
+          <li>Результат сразу на экране</li>
+          <li>Задачи по структуре ФИПИ</li>
+          <li>Математика и физика</li>
+        </ul>
       </div>
-      <p class="hint">Без регистрации. Результат сразу на экране.</p>
+
+      <div class="l-preview card" aria-label="Пример результата диагностики">
+        <div class="l-preview-head"><span class="hint">Пример результата</span><span class="l-badge">Математика</span></div>
+        <div class="l-ring"><div><b>4</b><small>прогноз</small></div></div>
+        <p class="l-preview-score">Верно <b>7 из 10</b> · ≈ <b>17 из 31</b> баллов</p>
+        <div class="l-cells">
+          <i class="ok">6</i><i class="ok">8</i><i class="bad">9</i><i class="ok">10</i><i class="ok">12</i>
+          <i class="bad">13</i><i class="ok">15</i><i class="ok">16</i><i class="ok">17</i><i class="bad">18</i>
+        </div>
+        <p class="l-preview-note">Подтянуть: <b>уравнения</b>, <b>неравенства</b>, <b>задачи на клетках</b></p>
+      </div>
     </section>
 
-    <section id="how" class="l-sec">
-      <h2>Как работает рентген</h2>
-      <div class="l-grid3">
-        <div class="card"><b>1. Выбери экзамен</b><p class="muted">ОГЭ математика, ОГЭ физика или ЕГЭ профиль.</p></div>
-        <div class="card"><b>2. Реши 10 задач</b><p class="muted">От простых к сложным. Не знаешь — жми «не знаю», так точнее.</p></div>
-        <div class="card"><b>3. Получи разбор</b><p class="muted">Прогноз оценки, карта тем 🟢🟡🔴 и конкретные ошибки, которые стоят тебе баллов.</p></div>
-      </div>
-    </section>
-
-
+    <!-- Боль → понимание -->
     <section class="l-sec">
-      <h2>Как проходят занятия</h2>
+      <p class="l-eyebrow">Знакомо?</p>
+      <h2>Готовишься, а уверенности нет</h2>
       <div class="l-grid3">
-        <div class="card"><b>Личный кабинет</b><p class="muted">Домашние задания, файлы, проверка и оценки в одном месте.</p></div>
-        <div class="card"><b>Отчёты родителям</b><p class="muted">После каждого урока: что прошли, что получилось, над чем работать.</p></div>
-        <div class="card"><b>Прогресс по темам</b><p class="muted">Видно, какие задания экзамена уже закрыты, а какие ещё нет.</p></div>
+        <div class="card l-card"><span class="l-emoji">😕</span><b>Решаешь дома — а на пробнике тройка</b><p class="muted">Баллы теряются на одних и тех же ошибках, и их не видно со стороны.</p></div>
+        <div class="card l-card"><span class="l-emoji">🌀</span><b>Непонятно, что повторять</b><p class="muted">25 заданий, куча тем — и время уходит на то, что ты и так умеешь.</p></div>
+        <div class="card l-card"><span class="l-emoji">⏳</span><b>До экзамена всё меньше времени</b><p class="muted">Хочется план: что делать на этой неделе, чтобы точно успеть.</p></div>
       </div>
     </section>
 
-    <section id="price" class="l-sec">
-      <h2>Форматы</h2>
+    <!-- Как работает диагностика -->
+    <section id="diag" class="l-sec">
+      <p class="l-eyebrow">Диагностика</p>
+      <h2>Три шага до понятного плана</h2>
       <div class="l-grid3">
-        <div class="card"><b>Пробное занятие</b><p class="l-price">Бесплатно</p><p class="muted">30 минут: разбираем рентген и составляем план.</p></div>
-        <div class="card"><b>Онлайн</b><p class="muted">Из любого города. Доска, запись, кабинет.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
-        <div class="card"><b>Очно, Хабаровск</b><p class="muted">Занятия в Хабаровске.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
+        <div class="card l-card"><span class="l-step">1</span><b>Выбери предмет</b><p class="muted">ОГЭ по математике или физике.</p></div>
+        <div class="card l-card"><span class="l-step">2</span><b>Реши 10 задач</b><p class="muted">От простых к сложным. Не знаешь — жми «Не знаю»: так прогноз точнее.</p></div>
+        <div class="card l-card"><span class="l-step">3</span><b>Получи результат</b><p class="muted">Прогноз оценки и слабые задания — сразу. Подробный разбор и план — в Telegram.</p></div>
+      </div>
+      <a href="diag/" class="btn btn-primary btn-lg l-center">Пройти диагностику бесплатно</a>
+    </section>
+
+    <!-- Как проходят занятия -->
+    <section id="lessons" class="l-sec">
+      <p class="l-eyebrow">Занятия</p>
+      <h2>Подготовка, где виден каждый шаг</h2>
+      <div class="l-grid2">
+        <div class="card l-card l-feature"><span class="l-ico">📊</span><div><b>Прогресс по каждому заданию</b><p class="muted">Карта номеров ОГЭ: что уже закрыто, а что ещё нет.</p></div></div>
+        <div class="card l-card l-feature"><span class="l-ico">🎯</span><div><b>Тренажёр ОГЭ</b><p class="muted">Больше тысячи задач по номерам с проверкой и решениями.</p></div></div>
+        <div class="card l-card l-feature"><span class="l-ico">📝</span><div><b>Домашние задания в кабинете</b><p class="muted">Задание, файлы, сдача и проверка — в одном месте, без потерянных фото в чатах.</p></div></div>
+        <div class="card l-card l-feature"><span class="l-ico">👨‍👩‍👧</span><div><b>Родители в курсе</b><p class="muted">Короткий отчёт после урока и напоминания в Telegram.</p></div></div>
       </div>
     </section>
 
+    <!-- Форматы -->
+    <section id="formats" class="l-sec">
+      <p class="l-eyebrow">Форматы</p>
+      <h2>Онлайн из любого города или очно в Хабаровске</h2>
+      <div class="l-grid3">
+        <div class="card l-card l-format l-format-hi"><span class="l-badge">Начни с этого</span><b>Пробное занятие</b><p class="l-price">Бесплатно</p><p class="muted">30 минут: разбираем диагностику и составляем план.</p><a class="btn btn-primary" href="https://t.me/mamchuck_bot">Записаться</a></div>
+        <div class="card l-card l-format"><b>Онлайн</b><p class="l-price">60 минут</p><p class="muted">Общая доска, запись урока и материалы в кабинете.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
+        <div class="card l-card l-format"><b>Очно, Хабаровск</b><p class="l-price">60 минут</p><p class="muted">Те же материалы и кабинет, только вживую.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
+      </div>
+    </section>
 
+    <!-- Вопросы -->
     <section id="faq" class="l-sec">
-      <h2>Вопросы</h2>
-      <details class="card"><summary>С какого класса начинать готовиться?</summary><p class="muted">Оптимально за год до экзамена. Если осталось меньше — рентген покажет, что успеть в первую очередь.</p></details>
-      <details class="card"><summary>Онлайн так же эффективно, как очно?</summary><p class="muted">Да: общая доска, запись урока и все материалы в кабинете.</p></details>
-      <details class="card"><summary>Рентген правда бесплатный?</summary><p class="muted">Да, без регистрации. Полный план приходит в Telegram.</p></details>
+      <p class="l-eyebrow">Вопросы</p>
+      <h2>Коротко о главном</h2>
+      <div class="l-faq">
+        <details class="card l-card"><summary>Диагностика правда бесплатная?</summary><p class="muted">Да. Без регистрации, результат сразу на экране. Подробный разбор приходит в Telegram — тоже бесплатно.</p></details>
+        <details class="card l-card"><summary>Насколько точный прогноз?</summary><p class="muted">Это ориентир по 10 задачам первой части. Он хорошо показывает слабые места, но не заменяет полный пробник.</p></details>
+        <details class="card l-card"><summary>С какого класса начинать?</summary><p class="muted">Идеально — за год до экзамена. Если времени меньше, диагностика покажет, что успеть в первую очередь.</p></details>
+        <details class="card l-card"><summary>Онлайн так же эффективно, как очно?</summary><p class="muted">Да: общая доска, запись урока, все задания и прогресс — в личном кабинете.</p></details>
+      </div>
     </section>
 
-    <section class="l-final card">
-      <h2>Начни с рентгена — это 12 минут</h2>
-      <a href="xray/" class="btn btn-primary btn-lg">Пройти бесплатно</a>
+    <section class="l-final">
+      <h2>12 минут — и понятно, что делать дальше</h2>
+      <p>Без регистрации. Можно с телефона.</p>
+      <a href="diag/" class="btn btn-lg l-btn-white">Начать диагностику <span aria-hidden="true">→</span></a>
     </section>
   </main>
 
-  <footer class="l-foot hint">© mamchuck · <a href="https://t.me/mamchuck_bot">Бот</a> · <a href="https://t.me/mamchuck_formula">Канал</a> · <a href="app/">Кабинет</a></footer>
+  <footer class="l-foot">
+    <a href="./" class="brand"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></a>
+    <nav><a href="https://t.me/mamchuck_formula">Канал</a><a href="https://t.me/mamchuck_bot">Бот</a><a href="app/">Кабинет</a></nav>
+  </footer>
+
+  <a href="diag/" class="l-sticky btn btn-primary">Начать диагностику — 12 минут</a>
 </body>
 </html>

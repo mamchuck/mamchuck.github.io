@@ -1,9 +1,9 @@
-// «Рентген ОГЭ»: 10 задач без регистрации → прогноз оценки → полный разбор в Telegram.
+// «Диагностика ОГЭ»: 10 задач без регистрации → прогноз оценки → полный разбор в Telegram.
 // Проверка ответов — только в базе (xray_submit), ответы на страницу не приходят.
 import { CONFIG } from '../app/js/config.js';
 
 const BOT = 'mamchuck_bot';
-const KEY = 'xray';
+const KEY = 'diag';
 const DEMO = new URLSearchParams(location.search).has('demo');
 const root = document.getElementById('x');
 
@@ -23,15 +23,15 @@ async function rpc(fn, args) {
     body: JSON.stringify(args),
   });
   const data = await r.json().catch(() => null);
-  if (!r.ok) throw new Error(r.status === 404 ? 'Рентген ещё не запущен — загляните чуть позже.' : data?.message || 'Ошибка сети');
+  if (!r.ok) throw new Error(r.status === 404 ? 'Диагностика ещё не запущена — загляните чуть позже.' : data?.message || 'Ошибка сети');
   return data;
 }
 
 // ---------- 1. Выбор предмета ----------
 function pickView() {
   render(`
-    <p class="l-kicker">Бесплатно · без регистрации · 12 минут</p>
-    <h1 class="x-title">Рентген ОГЭ</h1>
+    <span class="l-chip">● Бесплатно · без регистрации · 12 минут</span>
+    <h1 class="x-title">Диагностика ОГЭ</h1>
     <p class="x-sub">10 задач от простых к сложным. В конце — прогноз оценки и номера, на которых ты теряешь баллы.</p>
     <div class="x-pick">
       <button class="x-card" data-s="Математика"><span class="x-ico">📐</span><span><b>Математика</b><span class="muted">Алгебра и геометрия, № 6–18</span></span><span class="x-arrow">→</span></button>
@@ -101,11 +101,11 @@ const GRADE_TEXT = {
 
 function resultView(r) {
   const pct = Math.round((100 * r.correct) / r.total);
-  const startLink = `https://t.me/${BOT}?start=xray_${r.id.replace(/-/g, '')}`;
+  const startLink = `https://t.me/${BOT}?start=diag_${r.id.replace(/-/g, '')}`;
   const bad = r.items.filter((i) => !i.ok);
   render(`
     <div class="card x-result">
-      <p class="l-kicker">Рентген ОГЭ · ${esc(r.subject)}</p>
+      <p class="l-eyebrow">Диагностика ОГЭ · ${esc(r.subject)}</p>
       <div class="x-ring" style="--p:${pct};--c:${GRADE_COLOR[r.grade]}"><div><span class="x-grade">${r.grade}</span><small>прогноз оценки</small></div></div>
       <p class="x-score">Верно <b>${r.correct} из ${r.total}</b> · ориентировочно <b>${r.primary} из ${r.max}</b> первичных баллов</p>
       <p class="muted" style="margin-top:10px">${GRADE_TEXT[r.grade]}</p>

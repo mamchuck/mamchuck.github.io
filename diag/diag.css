@@ -1,13 +1,17 @@
-#x { max-width: 680px; margin: 0 auto; padding: 24px 0 64px; }
-.x-title { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 8px 0 12px; }
+#x { max-width: 680px; margin: 0 auto; padding: 32px 0 72px; }
+#x .card { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
+#x .card:hover { box-shadow: var(--shadow-hover); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.x-title { font-size: clamp(32px, 5vw, 46px); line-height: 1.05; letter-spacing: -.035em; font-weight: 800; margin: 16px 0 12px; }
 .x-sub { font-size: 17px; color: var(--text-2); }
 .x-pick { display: grid; gap: 14px; margin-top: 28px; }
 .x-card { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; cursor: pointer;
   padding: 22px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface);
   box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s, border-color .15s; }
-.x-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+.x-card:hover .x-arrow { color: var(--accent); transform: translateX(3px); }
+.x-arrow { transition: transform .2s, color .2s; }
+.x-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
 .x-card b { display: block; font-size: 18px; }
-.x-ico { font-size: 30px; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); flex: none; }
+.x-ico { font-size: 28px; width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); flex: none; }
 .x-arrow { margin-left: auto; color: var(--text-3); font-size: 22px; }
 .x-perks { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 22px; color: var(--text-2); font-size: 14px; }
 
@@ -20,6 +24,7 @@
 .x-img { display: block; max-width: 100%; max-height: 320px; margin: 0 auto 16px; border-radius: 12px; background: #fff; padding: 8px; }
 .x-input { width: 100%; min-height: 54px; font-size: 20px; padding: 0 16px; border-radius: var(--radius-sm);
   border: 1.5px solid var(--line-2); background: var(--surface); }
+.x-actions .btn-primary { box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent); }
 .x-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
 .x-actions { display: flex; gap: 10px; margin-top: 14px; }
 .x-actions .btn { flex: 1; min-height: 50px; font-size: 16px; }
