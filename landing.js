@@ -21,3 +21,9 @@ if (card && matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMe
     card.style.setProperty('--ry', '0deg');
   });
 }
+
+// Блик на главной кнопке следует за курсором
+document.querySelectorAll('.l-cta-main').forEach((b) => b.addEventListener('pointermove', (e) => {
+  const r = b.getBoundingClientRect();
+  b.style.setProperty('--gx', `${((e.clientX - r.left) / r.width) * 100}%`);
+}));

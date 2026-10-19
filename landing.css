@@ -140,3 +140,47 @@
   .l-preview, .l-ring, .l-cells i { animation: none !important; }
   .l-preview, .l-card, .btn { transition-duration: .01s !important; }
 }
+
+/* ---------- Главная кнопка: «Пройти диагностику» ---------- */
+.l-cta-main { position: relative; isolation: isolate; overflow: hidden; gap: 12px; min-height: 60px; padding: 0 22px 0 28px;
+  border: 0; border-radius: 18px; color: #fff !important; font-size: 17px; font-weight: 700; letter-spacing: -.01em;
+  background: linear-gradient(135deg, #4aa8f5 0%, var(--accent) 45%, #1f6fd1 100%);
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -2px 0 rgba(0, 0, 0, .12);
+  transition: transform .45s var(--ease), box-shadow .45s var(--ease), filter .45s var(--ease);
+  animation: l-breathe 3.2s ease-in-out infinite; }
+/* блик, пробегающий по кнопке */
+.l-cta-main::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .38) 50%, transparent 65%);
+  transform: translateX(-130%); animation: l-shine 4.2s ease-in-out 1.2s infinite; }
+/* мягкое свечение за кнопкой */
+.l-cta-main::after { content: ""; position: absolute; inset: 0; z-index: -2; border-radius: inherit;
+  background: radial-gradient(120% 140% at var(--gx, 50%) 0%, rgba(255, 255, 255, .22), transparent 60%); opacity: .7; transition: opacity .45s var(--ease); }
+.l-cta-main:hover { transform: translateY(-3px) scale(1.02); filter: saturate(1.1) brightness(1.04); animation-play-state: paused;
+  box-shadow: 0 22px 48px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 -2px 0 rgba(0, 0, 0, .12); }
+.l-cta-main:hover::after { opacity: 1; }
+.l-cta-main:active { transform: translateY(0) scale(.98); transition-duration: .12s; }
+.l-cta-main:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, white); outline-offset: 3px; }
+.l-cta-pill { padding: 4px 10px; border-radius: 99px; font-size: 13px; font-weight: 700; background: rgba(255, 255, 255, .2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+.l-arrow { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, .18);
+  transition: transform .45s var(--ease), background .45s var(--ease); }
+.l-arrow svg { width: 18px; height: 18px; }
+.l-cta-main:hover .l-arrow, .l-cta-white:hover .l-arrow { transform: translateX(4px); background: rgba(255, 255, 255, .3); }
+.l-cta-white { gap: 12px; min-height: 60px; padding: 0 22px 0 28px; border-radius: 18px; font-weight: 700; font-size: 17px; }
+.l-cta-white .l-arrow { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-dark); }
+.l-cta-white:hover { transform: translateY(-3px) scale(1.02); }
+.l-cta-white:hover .l-arrow { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+@keyframes l-shine { 0% { transform: translateX(-130%); } 35%, 100% { transform: translateX(130%); } }
+@keyframes l-breathe { 0%, 100% { box-shadow: 0 14px 34px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -2px 0 rgba(0, 0, 0, .12); }
+  50% { box-shadow: 0 18px 44px color-mix(in srgb, var(--accent) 60%, transparent), inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -2px 0 rgba(0, 0, 0, .12); } }
+.l-sticky.l-cta-main { justify-content: center; }
+@media (max-width: 900px) { .l-hero { grid-template-columns: minmax(0, 1fr); } .l-hero-text { min-width: 0; } }
+@media (max-width: 640px) {
+  .l-cta-main, .l-cta-white { width: 100%; justify-content: center; font-size: 16px; padding: 0 12px 0 18px; white-space: normal; text-align: left; }
+  .l-cta-text { flex: 1; }
+  .l-sticky.l-cta-main { position: fixed; width: auto; display: flex; animation: none; }
+  .l-cta .l-cta-main { order: -1; }
+}
+@media (max-width: 380px) { .l-cta-pill { display: none; } }
+@media (prefers-reduced-motion: reduce) { .l-cta-main, .l-cta-main::before { animation: none !important; } }

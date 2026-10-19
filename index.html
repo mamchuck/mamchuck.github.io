@@ -16,8 +16,8 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css?v=202610192250">
-  <link rel="stylesheet" href="landing.css?v=202610192250">
+  <link rel="stylesheet" href="app/css/style.css?v=202610192257">
+  <link rel="stylesheet" href="landing.css?v=202610192257">
 </head>
 <body class="landing">
   <header class="l-head">
@@ -34,7 +34,7 @@
         <h1>Узнай, на что ты сдашь ОГЭ, <span class="l-accent">уже сегодня</span></h1>
         <p class="l-lead">10 задач, 12 минут. Покажу прогноз оценки, сильные и слабые задания и что подтянуть в первую очередь.</p>
         <div class="l-cta">
-          <a href="diag/" class="btn btn-primary btn-lg">Начать диагностику <span aria-hidden="true">→</span></a>
+          <a href="diag/" class="btn btn-lg l-cta-main"><span class="l-cta-text">Пройти диагностику бесплатно</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
           <a href="https://t.me/mamchuck_bot" class="btn btn-ghost btn-lg">Задать вопрос</a>
         </div>
         <ul class="l-trust">
@@ -76,7 +76,7 @@
         <div class="card l-card"><span class="l-step">2</span><b>Реши 10 задач</b><p class="muted">От простых к сложным. Не знаешь — жми «Не знаю»: так прогноз точнее.</p></div>
         <div class="card l-card"><span class="l-step">3</span><b>Получи результат</b><p class="muted">Прогноз оценки и слабые задания — сразу. Подробный разбор и план — в Telegram.</p></div>
       </div>
-      <a href="diag/" class="btn btn-primary btn-lg l-center">Пройти диагностику бесплатно</a>
+      <a href="diag/" class="btn btn-lg l-cta-main l-center"><span class="l-cta-text">Пройти диагностику бесплатно</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
     </section>
 
     <!-- Как проходят занятия -->
@@ -117,7 +117,7 @@
     <section class="l-final">
       <h2>12 минут — и понятно, что делать дальше</h2>
       <p>Без регистрации. Можно с телефона.</p>
-      <a href="diag/" class="btn btn-lg l-btn-white">Начать диагностику <span aria-hidden="true">→</span></a>
+      <a href="diag/" class="btn btn-lg l-btn-white l-cta-white"><span class="l-cta-text">Пройти диагностику бесплатно</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
     </section>
   </main>
 
@@ -126,7 +126,7 @@
     <nav><a href="oge/">Тренажёр ОГЭ</a><a href="https://t.me/mamchuck_formula">Канал</a><a href="https://t.me/mamchuck_bot">Бот</a><a href="app/">Кабинет</a></nav>
   </footer>
 
-  <a href="diag/" class="l-sticky btn btn-primary">Начать диагностику — 12 минут</a>
-  <script src="landing.js?v=202610192250" defer></script>
+  <a href="diag/" class="l-sticky btn l-cta-main"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+  <script src="landing.js?v=202610192257" defer></script>
 </body>
 </html>
