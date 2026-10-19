@@ -16,8 +16,8 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css">
-  <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="app/css/style.css?v=202610192250">
+  <link rel="stylesheet" href="landing.css?v=202610192250">
 </head>
 <body class="landing">
   <header class="l-head">
@@ -127,6 +127,6 @@
   </footer>
 
   <a href="diag/" class="l-sticky btn btn-primary">Начать диагностику — 12 минут</a>
-  <script src="landing.js" defer></script>
+  <script src="landing.js?v=202610192250" defer></script>
 </body>
 </html>
