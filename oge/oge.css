@@ -55,3 +55,7 @@
   .o-task { padding: 18px 16px; }
   .o-answer .btn { padding: 0 16px; }
 }
+.o-counted { display: inline-flex; margin-top: 14px; padding: 8px 14px; border-radius: 99px; font-size: 14px; font-weight: 600;
+  color: var(--accent-strong); background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: transform .45s cubic-bezier(.22, .8, .24, 1); }
+.o-counted:hover { transform: translateY(-2px); }

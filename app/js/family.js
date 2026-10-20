@@ -2,11 +2,11 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610201525';
-import { TUTOR } from './config.js?v=202610201525';
-import { trainerFamily } from './trainer.js?v=202610201525';
-import { mountTelegramBanner } from './telegram.js?v=202610201525';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610201525';
+} from './ui.js?v=202610201531';
+import { TUTOR } from './config.js?v=202610201531';
+import { trainerFamily } from './trainer.js?v=202610201531';
+import { mountTelegramBanner } from './telegram.js?v=202610201531';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610201531';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -260,7 +260,7 @@ async function progress(view, _p, ctx) {
   const subjects = [...new Set(rows.map((r) => r.subject))];
   mount(view, h`
     ${pageHero({ eyebrow: 'Прогресс', title: isStudent(ctx) ? 'Твой путь к ' : 'Путь к ', accent: 'ОГЭ' })}
-    ${gameBlock(game, { canClaim: isStudent(ctx) })}
+    ${gameBlock(game, { canClaim: isStudent(ctx), studentId: sid })}
     ${rows.length ? h`<div class="section-head"><h2>Темы от преподавателя</h2></div>` : ''}
     ${rows.length ? h`<div class="stats">${subjects.map((s) => {
       const r = rows.filter((x) => x.subject === s);

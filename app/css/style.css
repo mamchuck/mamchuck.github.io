@@ -993,3 +993,35 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
   .g-dot { width: 50px; height: 50px; }
 }
 @media (prefers-reduced-motion: reduce) { .g-streak::after, .g-flame, .g-node.focus .g-dot::before, .g-bar i { animation: none !important; } }
+
+/* 🎯 Следующая цель */
+.g-goal { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--radius);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)), var(--surface) 70%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, var(--line)), var(--shadow); }
+.g-goal > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.g-goal .g-label { color: var(--accent-strong); opacity: 1; }
+.g-goal b { font-size: 16px; line-height: 1.35; }
+.g-goal p { color: var(--text-2); margin: 0; }
+.g-goal-ico { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; font-size: 24px;
+  background: var(--g-blue); box-shadow: 0 8px 18px var(--g-glow); }
+.g-goal-btn { flex: none; transition: transform .45s var(--ease), box-shadow .45s var(--ease); box-shadow: 0 8px 20px var(--g-glow); }
+.g-goal-btn:hover { transform: translateY(-2px); }
+
+/* 🎉 Праздник */
+.g-party { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; pointer-events: auto;
+  background: color-mix(in srgb, var(--bg) 40%, transparent); animation: g-fade .3s ease; }
+.g-party.out { opacity: 0; transition: opacity .5s ease; }
+.g-party-card { display: grid; justify-items: center; gap: 6px; padding: 26px 34px; border-radius: 24px; color: #fff; text-align: center;
+  background: linear-gradient(135deg, #4aa8f5, #2b8ad8 50%, #1f6fd1); box-shadow: 0 24px 60px rgba(43, 138, 216, .45);
+  animation: g-pop .6s cubic-bezier(.22, 1.4, .36, 1); }
+.g-party-card span { font-size: 44px; line-height: 1; }
+.g-party-card b { font-size: 22px; }
+.g-party-card small { opacity: .85; }
+.g-party i { position: absolute; left: 50%; top: 50%; width: 9px; height: 14px; border-radius: 3px; background: var(--c);
+  animation: g-burst 1.4s cubic-bezier(.15, .7, .3, 1) both; will-change: transform, opacity; }
+@keyframes g-fade { from { opacity: 0; } }
+@keyframes g-pop { from { transform: scale(.6); opacity: 0; } }
+@keyframes g-burst { from { transform: rotate(var(--a)) translateY(0) scale(.6); opacity: 1; }
+  to { transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(320deg); opacity: 0; } }
+@media (max-width: 760px) { .g-goal { flex-wrap: wrap; } .g-goal-btn { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .g-party i { display: none; } .g-party-card, .g-party { animation: none; } }

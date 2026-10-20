@@ -11,10 +11,20 @@ let score = { ok: 0, done: 0, total: 0 };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const imgSrc = (p) => (/^https?:/.test(p) ? p : `${UP}app/${p}`);
 
-async function rpc(fn, args) {
+// Ученик вошёл в кабинет (сессия Supabase в этом же браузере) → решения идут в его прогресс через trainer_check
+function session() {
+  try {
+    const k = Object.keys(localStorage).find((x) => /^sb-.+-auth-token$/.test(x));
+    const s = k && JSON.parse(localStorage.getItem(k));
+    return s?.access_token && s.expires_at * 1000 > Date.now() + 30e3 ? s.access_token : null;
+  } catch { return null; }
+}
+let asStudent = !!session();
+
+async function rpc(fn, args, token) {
   const r = await fetch(`${CONFIG.supabaseUrl}/rest/v1/rpc/${fn}`, {
     method: 'POST',
-    headers: { apikey: CONFIG.supabaseAnonKey, Authorization: `Bearer ${CONFIG.supabaseAnonKey}`, 'Content-Type': 'application/json' },
+    headers: { apikey: CONFIG.supabaseAnonKey, Authorization: `Bearer ${token || CONFIG.supabaseAnonKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(args),
   });
   const data = await r.json().catch(() => null);
@@ -57,7 +67,13 @@ function bind(form) {
     form.dataset.done = '1';
     form.querySelectorAll('button, input').forEach((el) => { el.disabled = true; });
     try {
-      const r = await rpc('pt_check', { p_task: form.dataset.id, p_answer: answer });
+      let r = null;
+      if (asStudent) {
+        // засчитать в прогресс; если аккаунт не ученика (родитель/преподаватель) — обычная проверка
+        try { r = await rpc('trainer_check', { p_task: form.dataset.id, p_answer: answer }, session()); markCounted(); }
+        catch { asStudent = false; }
+      }
+      if (!r) r = await rpc('pt_check', { p_task: form.dataset.id, p_answer: answer });
       score.done += 1; if (r.correct) score.ok += 1;
       form.classList.add(r.correct ? 'is-ok' : 'is-bad');
       const res = form.querySelector('.o-result');
@@ -75,6 +91,14 @@ function bind(form) {
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); const v = form.a.value.trim(); if (v) check(v); else form.a.focus(); });
   form.querySelector('[data-show]').addEventListener('click', () => check(null));
+}
+
+function markCounted() {
+  if (document.querySelector('.o-counted')) return;
+  const el = document.createElement('a');
+  el.className = 'o-counted'; el.href = `${UP}app/#/progress`;
+  el.innerHTML = '✓ Решения засчитываются в твою карту прогресса →';
+  document.querySelector('.o-hero')?.appendChild(el);
 }
 
 function summary() {
