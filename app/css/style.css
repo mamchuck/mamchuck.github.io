@@ -888,3 +888,95 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 .lead-meta a { color: var(--accent); }
 .lead-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .lead-status { width: auto; min-height: 34px; padding: 0 10px; }
+
+/* ---------- Геймификация ---------- */
+.g-wrap { display: grid; gap: 16px; margin-bottom: 22px; --ease: cubic-bezier(.22, .8, .24, 1); }
+.g-top { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; }
+
+/* 🔥 серия */
+.g-streak { position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px; padding: 22px 24px; border-radius: var(--radius);
+  color: #fff; background: linear-gradient(120deg, #64748b, #475569); box-shadow: var(--shadow); isolation: isolate; }
+.g-streak.on { background: linear-gradient(120deg, #ff8a3d, #ff4d6d, #ff8a3d); background-size: 220% 100%; animation: g-flow 8s ease-in-out infinite;
+  box-shadow: 0 14px 34px rgba(255, 90, 80, .32); }
+.g-streak::after { content: ""; position: absolute; inset: -40% -10% auto auto; width: 220px; height: 220px; border-radius: 50%; z-index: -1;
+  background: radial-gradient(circle, rgba(255, 255, 255, .28), transparent 65%); }
+.g-flame { font-size: 52px; line-height: 1; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .25)); }
+.g-streak.on .g-flame { animation: g-flicker 1.8s ease-in-out infinite; transform-origin: 50% 90%; }
+.g-streak:not(.on) .g-flame { filter: grayscale(1) opacity(.6); }
+.g-streak-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.g-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.g-big { font-size: 40px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+.g-big small { font-size: 17px; font-weight: 600; opacity: .9; }
+.g-hint { font-size: 13px; opacity: .92; }
+.g-streak.today .g-hint::before { content: "✓ "; font-weight: 800; }
+.g-streak-side { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; font-size: 13px; white-space: nowrap; }
+.g-streak-side b { font-size: 18px; }
+.g-streak-side small { opacity: .85; }
+@keyframes g-flow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes g-flicker { 0%, 100% { transform: scale(1) rotate(-2deg); } 30% { transform: scale(1.08) rotate(2deg); } 60% { transform: scale(.97) rotate(-1deg); } }
+
+/* ⭐ уровень */
+.g-level { display: flex; align-items: center; gap: 16px; margin: 0; }
+.g-level-badge { flex: none; display: grid; place-content: center; text-align: center; width: 68px; height: 68px; border-radius: 20px; color: #fff;
+  background: linear-gradient(135deg, #4aa8f5, var(--accent) 50%, #1f6fd1); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent); }
+.g-level-badge span { font-size: 11px; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: .06em; }
+.g-level-badge b { font-size: 28px; line-height: 1; }
+.g-level-main { flex: 1; min-width: 0; display: grid; gap: 8px; }
+.g-level-row { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.g-bar { height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.g-bar.sm { height: 6px; margin-top: auto; }
+.g-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7cc4ff, var(--accent)); transition: width .8s var(--ease); }
+
+/* 🗺 дорожная карта */
+.g-map { margin: 0; }
+.g-map-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.g-map-head h3 { margin: 0; }
+.g-legend { display: flex; gap: 16px; margin: 10px 0 4px; font-size: 13px; color: var(--text-2); }
+.g-legend span { display: flex; align-items: center; gap: 6px; }
+.lg { width: 10px; height: 10px; border-radius: 50%; }
+.lg.done { background: var(--ok); } .lg.active { background: var(--accent); } .lg.locked { background: var(--line-2); }
+.g-map-body { position: relative; height: var(--h); max-width: 520px; margin: 0 auto; }
+.g-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.g-path { fill: none; stroke: var(--line-2); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 2 12; vector-effect: non-scaling-stroke; }
+.g-path.lit { stroke: var(--accent); stroke-dasharray: none; opacity: .75; }
+.g-module { position: absolute; left: 0; right: 0; transform: translateY(-50%); text-align: center; font-size: 12px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+.g-module::before, .g-module::after { content: ""; display: inline-block; width: 40px; height: 1px; background: var(--line-2); vertical-align: middle; margin: 0 10px; }
+.g-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 6px; width: 120px; text-align: center; z-index: 1; }
+.g-dot { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; font-size: 18px;
+  transition: transform .45s var(--ease), box-shadow .45s var(--ease); }
+.g-dot svg { width: 26px; height: 26px; }
+.g-node:hover .g-dot { transform: translateY(-3px) scale(1.06); }
+.g-node.done .g-dot { color: #fff; background: linear-gradient(135deg, #34d399, var(--ok)); box-shadow: 0 8px 20px color-mix(in srgb, var(--ok) 35%, transparent); }
+.g-node.active .g-dot { color: var(--accent-strong); background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent-soft), 0 8px 20px color-mix(in srgb, var(--accent) 22%, transparent); }
+.g-node.locked .g-dot { color: var(--text-3); background: var(--accent-softer); box-shadow: inset 0 0 0 2px var(--line); }
+.g-node.focus .g-dot { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent), 0 10px 26px color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: g-pulse 2.4s ease-in-out infinite; }
+.g-ring { position: absolute; inset: 2px; width: calc(100% - 4px) !important; height: calc(100% - 4px) !important; transform: rotate(-90deg); }
+.g-ring circle { fill: none; stroke: var(--line); stroke-width: 4; }
+.g-ring circle + circle { stroke: var(--accent); stroke-linecap: round; }
+.g-cap { font-size: 12px; line-height: 1.3; color: var(--text-2); padding: 3px 8px; border-radius: 10px; background: var(--surface); box-shadow: 0 0 0 4px var(--surface); }
+.g-cap b { display: block; color: var(--text); font-size: 13px; }
+.g-cap em { font-style: normal; color: var(--accent-strong); font-weight: 600; }
+@keyframes g-pulse { 50% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 10px color-mix(in srgb, var(--accent) 8%, transparent), 0 10px 26px color-mix(in srgb, var(--accent) 35%, transparent); } }
+
+/* 🎟 награды */
+.g-rewards .section-head { margin-top: 4px; }
+.g-reward-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.g-reward { margin: 0; display: flex; flex-direction: column; gap: 6px; padding: 18px; transition: transform .45s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease); }
+.g-reward:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.g-reward-ico { font-size: 30px; line-height: 1; margin-bottom: 4px; filter: grayscale(1) opacity(.5); transition: filter .45s var(--ease); }
+.g-reward.open .g-reward-ico, .g-reward.claimed .g-reward-ico { filter: none; }
+.g-reward.open:not(.claimed) { border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface) 70%); }
+.g-reward .btn, .g-reward .badge { align-self: flex-start; margin-top: auto; }
+
+@media (max-width: 760px) {
+  .g-top { grid-template-columns: 1fr; }
+  .g-streak { padding: 18px; gap: 14px; }
+  .g-flame { font-size: 42px; }
+  .g-big { font-size: 34px; }
+  .g-node { width: 100px; }
+  .g-dot { width: 50px; height: 50px; }
+}
+@media (prefers-reduced-motion: reduce) { .g-streak.on, .g-streak.on .g-flame, .g-node.focus .g-dot { animation: none; } }

@@ -2,14 +2,15 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610192326';
+} from './ui.js?v=202610201513';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610192326';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610192326';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610192326';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610192326';
-import { leadsPage } from './leads.js?v=202610192326';
+} from './library.js?v=202610201513';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610201513';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610201513';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610201513';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610201513';
+import { leadsPage } from './leads.js?v=202610201513';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -633,9 +634,12 @@ async function studentPage(view, [id, tab = ''], ctx) {
   }
 
   if (tab === 'progress') {
-    const rows = await api.select('topic_progress', { eq: { student_id: id }, order: 'topic' });
+    const [rows, game] = await Promise.all([api.select('topic_progress', { eq: { student_id: id }, order: 'topic' }), loadGame(api, id)]);
     const subjects = [...new Set([...s.subjects, ...rows.map((r) => r.subject)])];
+    const claims = await tutorClaims(api, id, game);
     done(h`
+      ${claims}
+      ${gameBlock(game)}
       <div class="section-head"><h2>Прогресс по темам</h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Тема</button></div>
       ${rows.length ? subjects.filter((sub) => rows.some((r) => r.subject === sub)).map((sub) => h`
         <section class="card"><h3>${sub}</h3><div class="progress-list">
@@ -647,6 +651,7 @@ async function studentPage(view, [id, tab = ''], ctx) {
         </div></section>`) : empty('Добавьте темы, чтобы отслеживать прогресс', I.chart)}`);
     const R = byId(rows);
     $('#add', view).addEventListener('click', () => progressForm(ctx, s));
+    bindTutorClaims(view, ctx);
     $$('[data-pedit]', view).forEach((b) => b.addEventListener('click', () => progressForm(ctx, s, R[b.dataset.pedit])));
   }
 

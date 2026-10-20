@@ -208,6 +208,23 @@ export function createDemoApi() {
         db.invitations.push({ id: uid(), student_id: args.p_student_id, role: args.p_role, code_hash: '—', expires_at: new Date(now + 7 * day).toISOString(), used_at: null, created_at: new Date().toISOString() });
         return code;
       }
+      if (fn === 'game_state' || fn === 'game_claim') {
+        const titles = { 6: 'Действия с дробями', 7: 'Числовая прямая', 8: 'Степени и корни', 9: 'Уравнения', 10: 'Вероятность', 11: 'Графики функций', 12: 'Расчёты по формулам', 13: 'Неравенства', 14: 'Прогрессии', 15: 'Треугольники', 16: 'Окружность', 17: 'Четырёхугольники', 18: 'Фигуры на клетках', 19: 'Верные утверждения', 20: 'Уравнения и системы', 21: 'Текстовая задача' };
+        const st = { 6: ['done', 92], 7: ['done', 85], 8: ['done', 80], 9: ['active', 60], 10: ['active', 40], 15: ['active', 70] };
+        db.game_claims = db.game_claims || [];
+        if (fn === 'game_claim') db.game_claims.push({ id: uid(), reward_id: args.p_reward, status: 'requested' });
+        const claimOf = (id) => db.game_claims.find((c) => c.reward_id === id)?.status || null;
+        return {
+          streak: { current: 5, best: 8, freezes: 1, done_today: false },
+          xp: { total: 340, level: 3, level_from: 200, level_to: 450 },
+          map: Object.entries(titles).map(([n, t]) => ({ subject: 'Математика', num: +n, title: t,
+            module: n <= 14 ? 'Алгебра' : n <= 19 ? 'Геометрия' : 'Вторая часть',
+            status: st[n]?.[0] || 'locked', accuracy: st[n]?.[1] ?? null, attempts: st[n] ? 8 : 0, correct: st[n] ? 6 : 0 })),
+          rewards: [['warmup', 'Разогрев', 'Значок: 3 дня подряд', '🔥', 3], ['freepass', 'Free Pass', 'ДЗ на день позже без штрафа', '🎟️', 7],
+            ['extra', 'Разбор вне урока', '10 минут разбора в Telegram', '💬', 14], ['lesson', 'Бонусное занятие', '30 минут бесплатно', '🏆', 30]]
+            .map(([id, title, description, icon, need]) => ({ id, code: id, title, description, icon, need, unlocked: 8 >= need, claim: claimOf(id) })),
+        };
+      }
       if (fn === 'tg_create_link') {
         // демо: «пользователь нажал Start» через 4 секунды
         setTimeout(() => {

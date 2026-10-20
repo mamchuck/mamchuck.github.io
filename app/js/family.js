@@ -2,10 +2,11 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610192326';
-import { TUTOR } from './config.js?v=202610192326';
-import { trainerFamily } from './trainer.js?v=202610192326';
-import { mountTelegramBanner } from './telegram.js?v=202610192326';
+} from './ui.js?v=202610201513';
+import { TUTOR } from './config.js?v=202610201513';
+import { trainerFamily } from './trainer.js?v=202610201513';
+import { mountTelegramBanner } from './telegram.js?v=202610201513';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610201513';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -254,10 +255,13 @@ async function materials(view, _p, ctx) {
 async function progress(view, _p, ctx) {
   const sid = ctx.studentId;
   if (!sid) return noChild(view, ctx);
-  const rows = await ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' });
+  const [rows, game] = await Promise.all([
+    ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' }), loadGame(ctx.api, sid)]);
   const subjects = [...new Set(rows.map((r) => r.subject))];
   mount(view, h`
-    ${pageHero({ eyebrow: 'Прогресс', title: 'Освоение ', accent: 'тем' })}
+    ${pageHero({ eyebrow: 'Прогресс', title: isStudent(ctx) ? 'Твой путь к ' : 'Путь к ', accent: 'ОГЭ' })}
+    ${gameBlock(game, { canClaim: isStudent(ctx) })}
+    ${rows.length ? h`<div class="section-head"><h2>Темы от преподавателя</h2></div>` : ''}
     ${rows.length ? h`<div class="stats">${subjects.map((s) => {
       const r = rows.filter((x) => x.subject === s);
       return h`<div class="stat"><span>${s}</span><b>${Math.round(r.reduce((a, x) => a + x.level, 0) / r.length)}%</b></div>`;
@@ -267,7 +271,8 @@ async function progress(view, _p, ctx) {
         <span class="p-topic">${r.topic}</span>
         <span class="bar" role="progressbar" aria-valuenow="${r.level}" aria-valuemin="0" aria-valuemax="100"><i style="width:${r.level}%"></i></span>
         <span class="p-level">${levelLabel(r.level)}</span></div>`)}</div></section>`)}`
-    : empty('Преподаватель ещё не отметил темы', I.chart)}`);
+    : game ? '' : empty('Преподаватель ещё не отметил темы', I.chart)}`);
+  bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
 async function payments(view, _p, ctx) {
