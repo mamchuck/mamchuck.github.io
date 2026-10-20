@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610202108';
+} from './ui.js?v=202610202111';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -565,17 +565,20 @@ export async function trainerTutor(view, params, ctx) {
 // Развёрнутые решения на проверку — блок для страницы «Проверка»
 export async function trainerReviewBlock(ctx) {
   try {
-    const [atts, tasks, students] = await Promise.all([
-      ctx.api.select('oge_attempts', { order: 'created_at' }), ctx.api.select('oge_tasks'), ctx.api.select('students'),
+    const [atts, tasks, students, sets] = await Promise.all([
+      ctx.api.select('oge_attempts', { order: 'created_at' }), ctx.api.select('oge_tasks'), ctx.api.select('students'), ctx.api.select('oge_sets'),
     ]);
-    const pending = atts.filter((a) => a.points == null);
+    // в пробнике ученик мог отправить решение заново — проверяем только последнее
+    const newer = new Set(atts.map((a, k) => atts.slice(k + 1).some((b) => b.set_id && b.set_id === a.set_id && b.task_id === a.task_id) ? a.id : null));
+    const mock = new Set(sets.filter((x) => x.kind === 'mock').map((x) => x.id));
+    const pending = atts.filter((a) => a.points == null && !(mock.has(a.set_id) && newer.has(a.id)));
     if (!pending.length) return null;
     const T = byId(tasks), S = byId(students);
     return {
       html: h`<div class="section-head"><h2>Тренажёр: развёрнутые решения · ${pending.length}</h2></div>
         <div class="list card">${pending.map((a) => h`<div class="item"><span class="num-pill">№${T[a.task_id]?.num}</span>
           <div class="item-main"><div class="item-title">${S[a.student_id]?.name} · ${T[a.task_id]?.subject}</div>
-            <div class="item-meta">${T[a.task_id]?.topic || ''} · ${fmtDT(a.created_at)}</div></div>
+            <div class="item-meta">${mock.has(a.set_id) ? '🧪 пробник · ' : ''}${T[a.task_id]?.topic || ''} · ${fmtDT(a.created_at)}</div></div>
           <button class="btn btn-primary btn-sm" data-oge="${a.id}">Проверить</button></div>`)}</div>`,
       bind(view) {
         const A = byId(pending);
