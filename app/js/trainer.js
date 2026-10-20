@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610202051';
+} from './ui.js?v=202610202108';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -317,7 +317,7 @@ const taskCard = (t, { used = 0, selected = false } = {}) => h`
   </article>`;
 
 // Картинки грузим, только когда карточка доезжает до экрана
-function lazyImages(root, api) {
+export function lazyImages(root, api) {
   const load = async (el) => {
     if (el.dataset.loaded) return; el.dataset.loaded = '1';
     mount(el, await img(api, el.dataset.img));

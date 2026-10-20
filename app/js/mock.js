@@ -1,8 +1,8 @@
 // «Пробник ОГЭ»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
 // Вариант собирает сервер (mock_create): по задаче на номер, сначала нерешённые. Ответы проверяет trainer_check,
 // но до завершения пробника итог не показывается.
-import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610202051';
-import { img } from './trainer.js?v=202610202051';
+import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610202108';
+import { img, lazyImages } from './trainer.js?v=202610202108';
 
 const INFO = {
   'Математика': { n: 25, min: 235, max: 31, grade: [[22, 5], [15, 4], [8, 3], [0, 2]] },
@@ -167,13 +167,37 @@ async function run(view, ctx, set, tasks, by) {
   timer = setInterval(tick, 1000);
 }
 
-// ---------- Итог ----------
+// ---------- Итог: карточка на каждый номер — условие, твой ответ, верный ответ, решение ----------
+const STATUS = {
+  ok: ['✅', 'Верно'], part: ['🟡', 'Частично'], bad: ['❌', 'Неверно'], none: ['➖', 'Нет ответа'], wait: ['⏳', 'На проверке'],
+};
+function statusOf(t, a) {
+  if (!a) return 'none';
+  if (a.points == null) return 'wait';
+  return a.points >= t.max_points ? 'ok' : a.points > 0 ? 'part' : 'bad';
+}
+
 async function result(view, ctx, set, tasks, by) {
   const { api } = ctx;
   const list = set.task_ids.map((id) => tasks[id]).filter(Boolean);
   const r = score(set, tasks, by);
-  const cls = (t) => { const a = by[t.id]; return !a ? '' : a.points == null ? 'lv-mid' : a.points >= a.max_points ? 'lv-ok' : a.points > 0 ? 'lv-mid' : 'lv-bad'; };
-  const lost = list.filter((t) => by[t.id]?.points != null && by[t.id].points < t.max_points || !by[t.id]).map((t) => t.num);
+  // ответы и решения ко всем заданиям (mock_review); если функции ещё нет в базе — только к решённым
+  let rev = {};
+  try { rev = Object.fromEntries((await api.rpc('mock_review', { p_set: set.id })).map((x) => [x.id, x])); }
+  catch {
+    await Promise.all(list.filter((t) => by[t.id]?.points != null).map(async (t) => {
+      try { rev[t.id] = await api.rpc('trainer_reveal', { p_task: t.id }); } catch {}
+    }));
+  }
+  const st = Object.fromEntries(list.map((t) => [t.id, statusOf(t, by[t.id])]));
+  const count = (...k) => list.filter((t) => k.includes(st[t.id])).length;
+  const part = (lo, hi) => list.filter((t) => t.num >= lo && t.num <= hi)
+    .reduce((acc, t) => [acc[0] + (by[t.id]?.points || 0), acc[1] + t.max_points], [0, 0]);
+  const parts = set.subject === 'Математика' ? [['Часть 1', ...part(1, 19)], ['Часть 2', ...part(20, 25)]] : [];
+  const lost = list.filter((t) => ['bad', 'part', 'none'].includes(st[t.id])).map((t) => t.num);
+  const lv = { ok: 'lv-ok', part: 'lv-mid', wait: 'lv-mid', bad: 'lv-bad', none: '' };
+  const yours = (a) => (!a ? '—' : a.answer === '(фото)' ? 'фото решения' : a.answer || '—');
+
   mount(view, h`
     <a href="#/mock" class="back">${I.back} Пробник</a>
     <section class="card mock-total">
@@ -183,30 +207,57 @@ async function result(view, ctx, set, tasks, by) {
         ${r.pending ? h`<p class="result result-wait">✍️ ${plural(r.pending, 'развёрнутое решение ждёт', 'развёрнутых решения ждут', 'развёрнутых решений ждут')} проверки — оценка может вырасти.</p>` : ''}
         ${set.subject === 'Математика' ? h`<p class="hint">На экзамене для «3» и выше нужно ещё хотя бы 2 балла за геометрию (№ 15–19, 23–25).</p>` : ''}</div>
     </section>
-    ${lost.length ? h`<div class="section-head"><h2>Что подтянуть</h2></div>
+    <div class="stats mock-stats">
+      <div class="stat"><span>Верно</span><b>${count('ok')}</b></div>
+      <div class="stat"><span>Ошибки</span><b>${count('bad', 'part')}</b></div>
+      <div class="stat"><span>Без ответа</span><b>${count('none')}</b></div>
+      ${parts.map(([n, p, m]) => h`<div class="stat"><span>${n}</span><b>${p} / ${m}</b></div>`)}
+    </div>
+    ${lost.length && lost.length < list.length ? h`<div class="section-head"><h2>Что подтянуть</h2></div>
       <div class="chips">${lost.map((n) => h`<a class="btn btn-soft btn-sm" href="#/trainer/num/${encodeURIComponent(set.subject)}/${n}">№${n}</a>`)}</div>
       <p class="hint">Нажми на номер — откроется тренировка по нему.</p>` : ''}
-    <div class="section-head"><h2>Разбор по заданиям</h2></div>
-    <div class="steps">${list.map((t) => h`<button type="button" class="step ${cls(t)}" data-open="${t.id}">${t.num}</button>`)}</div>
-    <div id="mock-detail"></div>`);
-  const open = async (id) => {
-    const t = tasks[id], a = by[id], box = $('#mock-detail', view);
-    $$('[data-open]', view).forEach((b) => b.classList.toggle('on', b.dataset.open === id));
-    let rev = null;
-    if (a && a.points != null) { try { rev = await api.rpc('trainer_reveal', { p_task: id }); } catch { rev = null; } }
-    mount(box, h`<section class="card task-card">
-      <div class="card-head"><span class="num-pill num-pill-lg">№${t.num}</span><span class="muted small">${a?.points != null ? `${a.points} из ${t.max_points} б.` : a ? 'на проверке' : 'без ответа'}</span></div>
-      ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}<div class="ti"></div>
-      ${a ? h`<div class="muted">Твой ответ: <b>${a.answer === '(фото)' ? 'фото решения' : a.answer || '—'}</b></div>` : ''}
-      ${a?.feedback ? h`<div class="answer">💬 ${a.feedback}</div>` : ''}
-      ${rev ? h`<div class="solution"><div><b>Правильный ответ:</b> ${rev.answer || '—'}</div>${rev.solution ? h`<div class="pre">${rev.solution}</div>` : ''}<div class="si"></div></div>`
-    : !a ? h`<a class="btn btn-soft btn-sm" href="#/trainer/num/${encodeURIComponent(set.subject)}/${t.num}">Решить № ${t.num} в тренажёре</a>` : ''}
-    </section>`);
-    mount($('.ti', box), await img(api, t.image_path));
-    if (rev?.solution_image_path) mount($('.si', box), await img(api, rev.solution_image_path));
-    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-  $$('[data-open]', view).forEach((b) => b.addEventListener('click', () => open(b.dataset.open)));
+    <div class="section-head mock-review-head"><h2>Разбор по заданиям</h2>
+      <div class="seg seg-inline" role="tablist">
+        <button type="button" class="on" data-f="all">Все · ${list.length}</button>
+        <button type="button" data-f="bad">Ошибки · ${count('bad', 'part', 'none')}</button>
+        <button type="button" data-f="ok">Верно · ${count('ok')}</button>
+        ${count('wait') ? h`<button type="button" data-f="wait">На проверке · ${count('wait')}</button>` : ''}
+      </div></div>
+    <div class="steps">${list.map((t) => h`<button type="button" class="step ${lv[st[t.id]]}" data-jump="${t.num}">${t.num}</button>`)}</div>
+    <div class="mock-review">${list.map((t) => {
+      const a = by[t.id], s = st[t.id], x = rev[t.id], ok = s === 'ok';
+      const sol = x ? h`${x.solution ? h`<div class="pre">${x.solution}</div>` : h`<p class="muted">Решение к этой задаче не добавлено.</p>`}
+        ${x.solution_image_path ? h`<div class="tf-img" data-img="${x.solution_image_path}"><div class="tf-img-ph"></div></div>` : ''}` : '';
+      return h`<article class="card mock-item st-${s}" id="q-${t.num}" data-st="${s}">
+        <header class="mock-item-head">
+          <span class="num-pill num-pill-lg">№${t.num}</span>
+          <span class="mock-item-topic muted small">${t.topic || ''}</span>
+          <span class="mock-badge st-${s}">${STATUS[s][0]} ${STATUS[s][1]}</span>
+          <span class="mock-pts">${a?.points ?? 0}<small>/${t.max_points}</small></span>
+        </header>
+        ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}
+        ${t.image_path ? h`<div class="tf-img" data-img="${t.image_path}"><div class="tf-img-ph"></div></div>` : ''}
+        <div class="mock-ans">
+          <div class="mock-ans-cell your st-${s}"><small>Твой ответ</small><b>${yours(a)}</b></div>
+          <div class="mock-ans-cell right"><small>Правильный ответ</small><b>${x ? x.answer || '—' : '—'}</b></div>
+        </div>
+        ${a?.feedback ? h`<div class="answer">💬 ${a.feedback}</div>` : ''}
+        ${x ? (ok ? h`<details class="mock-sol"><summary>Посмотреть решение</summary>${sol}</details>`
+    : h`<div class="mock-sol open"><div class="mock-sol-title">Решение</div>${sol}</div>`) : ''}
+        ${['bad', 'part', 'none'].includes(s) ? h`<a class="link-btn mock-train" href="#/trainer/num/${encodeURIComponent(set.subject)}/${t.num}">Потренировать № ${t.num} →</a>` : ''}
+      </article>`;
+    })}</div>`);
+  lazyImages(view, api);
+  $$('[data-jump]', view).forEach((b) => b.addEventListener('click', () => {
+    const el = $(`#q-${b.dataset.jump}`, view);
+    if (el.hidden) { $('[data-f="all"]', view).click(); }
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  $$('[data-f]', view).forEach((b) => b.addEventListener('click', () => {
+    $$('[data-f]', view).forEach((x) => x.classList.toggle('on', x === b));
+    const f = b.dataset.f, want = { all: null, bad: ['bad', 'part', 'none'], ok: ['ok'], wait: ['wait'] }[f];
+    $$('.mock-item', view).forEach((el) => { el.hidden = !!want && !want.includes(el.dataset.st); });
+  }));
 }
 
 export async function mockView(view, params, ctx) {
