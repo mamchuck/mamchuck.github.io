@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610201801';
+} from './ui.js?v=202610202037';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -99,8 +99,8 @@ async function previewTask(ctx, t) {
     title: `${t.subject}, №${t.num}`, wide: true,
     body: h`<p class="muted">${t.topic}${t.source ? ` · ${t.source}` : ''} · ${plural(t.max_points, 'балл', 'балла', 'баллов')}</p>
       ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}<div class="ti"></div>
-      <div class="tf-reveal" data-answer hidden><b>Ответ:</b> ${(t.answer || '—').split('|')[0]}</div>
-      <div class="tf-reveal" data-solution hidden>${t.solution ? h`<div class="pre">${t.solution}</div>` : 'Решение не добавлено'}<div class="si"></div></div>
+      <div class="tf-reveal" data-answer hidden><b>Ответ:</b> ${(t.answer || '—').split('|')[0]}<div class="si"></div></div>
+      <div class="tf-reveal" data-solution hidden>${t.solution ? h`<div class="pre">${t.solution}</div>` : 'Решение не добавлено'}</div>
       <div class="tf-actions"><button type="button" class="btn btn-soft btn-sm" data-toggle="answer">Показать ответ</button>
         <button type="button" class="btn btn-soft btn-sm" data-toggle="solution">Показать решение</button></div>`,
   });
@@ -303,9 +303,9 @@ const taskCard = (t, { used = 0, selected = false } = {}) => h`
     </header>
     ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}
     ${t.image_path ? h`<div class="tf-img" data-img="${t.image_path}"><div class="tf-img-ph"></div></div>` : ''}
-    <div class="tf-reveal" data-answer hidden><b>Ответ:</b> ${t.answer ? t.answer.split('|')[0] : '—'}${t.answer && t.answer.includes('|') ? h` <span class="muted small">(принимается также: ${t.answer.split('|').slice(1).join(', ')})</span>` : ''}</div>
-    <div class="tf-reveal" data-solution hidden>${t.solution ? h`<div class="pre">${t.solution}</div>` : h`<span class="muted">Решение не добавлено</span>`}
+    <div class="tf-reveal" data-answer hidden><b>Ответ:</b> ${t.answer ? t.answer.split('|')[0] : '—'}${t.answer && t.answer.includes('|') ? h` <span class="muted small">(принимается также: ${t.answer.split('|').slice(1).join(', ')})</span>` : ''}
       ${t.solution_image_path ? h`<div class="tf-img" data-img="${t.solution_image_path}"><div class="tf-img-ph"></div></div>` : ''}</div>
+    <div class="tf-reveal" data-solution hidden>${t.solution ? h`<div class="pre">${t.solution}</div>` : h`<span class="muted">Решение не добавлено</span>`}</div>
     <footer class="tf-actions">
       <button type="button" class="btn btn-soft btn-sm" data-toggle="answer">Показать ответ</button>
       <button type="button" class="btn btn-soft btn-sm" data-toggle="solution">Показать решение</button>
