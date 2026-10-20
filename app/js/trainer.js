@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610201531';
+} from './ui.js?v=202610201548';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -583,7 +583,7 @@ async function reviewAttempt(ctx, a, t, S) {
       <h3>Решение ученика</h3>
       ${a.answer && a.answer !== '(фото)' ? h`<div class="answer">${a.answer}</div>` : ''}
       <div class="si"></div>
-      ${t.solution || t.answer ? h`<details><summary>Эталон</summary><div class="answer">${t.answer ? h`Ответ: <b>${t.answer}</b><br>` : ''}${t.solution}</div></details>` : ''}
+      ${t.solution || t.answer ? h`<details><summary>Эталон</summary><div class="answer">${t.answer ? h`Ответ: <b>${t.answer}</b><br>` : ''}<div class="pre">${t.solution}</div></div></details>` : ''}
       <div class="row-2">
         <label class="field"><span>Баллы (из ${t.max_points})</span><select name="points">${Array.from({ length: t.max_points + 1 }, (_, i) => h`<option value="${i}">${i}</option>`)}</select></label>
       </div>
