@@ -4,6 +4,7 @@ import { CONFIG } from '../app/js/config.js';
 const main = document.querySelector('[data-num]');
 const box = document.getElementById('tasks');
 const SUBJECT = main.dataset.subject, NUM = +main.dataset.num;
+const PART2 = main.dataset.part === '2';   // вторая часть: решение на бумаге → сравнение с эталоном
 const UP = '../../../';
 const seen = [];
 let score = { ok: 0, done: 0, total: 0 };
@@ -32,7 +33,21 @@ async function rpc(fn, args, token) {
   return data;
 }
 
+// Вторая часть: развёрнутое решение не проверить автоматически — даём эталон и самооценку
+function fullCard(t, i) {
+  return `
+  <div class="card l-card o-task o-full" data-id="${t.id}">
+    <div class="o-task-head"><span class="x-num">Задача ${i}</span><span class="hint">${esc(t.topic)} · ${t.max_points} балл${t.max_points > 1 && t.max_points < 5 ? 'а' : 'ов'}</span></div>
+    <div class="x-body">${esc(t.body)}</div>
+    ${t.image_path ? `<img class="x-img" src="${esc(imgSrc(t.image_path))}" alt="Рисунок к задаче" loading="lazy">` : ''}
+    <p class="o-paper">✍️ Реши на листочке, оформи как на экзамене — потом сравни с эталоном.</p>
+    <button type="button" class="btn btn-primary o-reveal" data-reveal>Сравнить с решением</button>
+    <div class="o-result" hidden></div>
+  </div>`;
+}
+
 function taskCard(t, i) {
+  if (t.full) return fullCard(t, i);
   return `
   <form class="card l-card o-task" data-id="${t.id}" autocomplete="off">
     <div class="o-task-head"><span class="x-num">Задача ${i}</span><span class="hint">${esc(t.topic)}</span></div>
@@ -55,7 +70,7 @@ async function load() {
     tasks.forEach((t) => seen.push(t.id));
     score = { ok: 0, done: 0, total: tasks.length };
     box.innerHTML = tasks.map((t, i) => taskCard(t, i + 1)).join('') + '<div id="summary"></div>';
-    box.querySelectorAll('.o-task').forEach(bind);
+    box.querySelectorAll('.o-task').forEach((el) => (el.classList.contains('o-full') ? bindFull(el) : bind(el)));
   } catch (e) {
     box.innerHTML = `<div class="card l-card">😕 ${esc(e.message)}</div>`;
   }
@@ -93,6 +108,38 @@ function bind(form) {
   form.querySelector('[data-show]').addEventListener('click', () => check(null));
 }
 
+function bindFull(card) {
+  card.querySelector('[data-reveal]').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const r = await rpc('pt_reveal', { p_task: card.dataset.id });
+      btn.remove();
+      const res = card.querySelector('.o-result');
+      res.hidden = false;
+      res.innerHTML = `
+        <p class="o-verdict">📘 Эталонное решение · максимум ${r.max_points} балл${r.max_points > 1 && r.max_points < 5 ? 'а' : 'ов'}</p>
+        <div class="o-solution">${esc(r.solution)}</div>
+        ${r.solution_image_path ? `<img class="x-img o-graph" src="${esc(imgSrc(r.solution_image_path))}" alt="График к решению" loading="lazy">` : ''}
+        <div class="o-self"><span>Как у тебя?</span>
+          <button type="button" class="btn btn-sm o-s ok" data-mark="ok">✅ Решил верно</button>
+          <button type="button" class="btn btn-sm o-s part" data-mark="part">🟡 Частично</button>
+          <button type="button" class="btn btn-sm o-s no" data-mark="no">❌ Не получилось</button></div>`;
+      res.querySelectorAll('[data-mark]').forEach((b) => b.addEventListener('click', () => {
+        const mark = b.dataset.mark;
+        res.querySelectorAll('[data-mark]').forEach((x) => { x.disabled = true; x.classList.toggle('on', x === b); });
+        card.classList.add(mark === 'ok' ? 'is-ok' : mark === 'no' ? 'is-bad' : 'is-part');
+        rpc('pt_self', { p_task: card.dataset.id, p_mark: mark }).catch(() => {});
+        score.done += 1; if (mark === 'ok') score.ok += 1;
+        if (score.done === score.total) summary();
+      }));
+    } catch (err) {
+      btn.disabled = false;
+      alert(err.message);
+    }
+  });
+}
+
 function markCounted() {
   if (document.querySelector('.o-counted')) return;
   const el = document.createElement('a');
@@ -107,7 +154,9 @@ function summary() {
   document.getElementById('summary').innerHTML = `
     <div class="card l-card o-summary ${good ? 'good' : ''}">
       <b class="o-score">${ok} из ${total}</b>
-      <p class="muted">${good ? `Задание ${NUM} у тебя получается. А как с остальными номерами?` : `Задание ${NUM} пока проседает — это нормально, его можно закрыть за пару недель.`}</p>
+      <p class="muted">${good ? `Задание ${NUM} у тебя получается. А как с остальными номерами?`
+        : PART2 ? `Вторая часть — это про оформление и обоснования. На занятии разберём, за что эксперт снимает баллы.`
+        : `Задание ${NUM} пока проседает — это нормально, его можно закрыть за пару недель.`}</p>
       <div class="o-sum-actions">
         <a class="btn btn-primary" href="${UP}diag/">Узнать прогноз на ОГЭ</a>
         <button class="btn btn-ghost" data-more>Ещё 5 задач</button>

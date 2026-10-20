@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610201548';
+} from './ui.js?v=202610201801';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -209,12 +209,15 @@ async function setForm(ctx, preset = {}) {
         ${sets.length ? h`<optgroup label="Прошлые варианты">${sets.slice(0, 40).map((x) => h`<option value="set:${x.id}">${x.title} · ${S[x.student_id]?.name || 'ученик'} · ${fmtD(x.created_at)}</option>`)}</optgroup>` : ''}
       </select></label>` : ''}
       <div class="autopick">
-        <span class="field-label">Автоподбор: по одной задаче на номера</span>
+        <span class="field-label">Автоподбор: номера</span>
         <input type="number" name="from_n" min="1" max="40" value="6" aria-label="С номера"> —
         <input type="number" name="to_n" min="1" max="40" value="19" aria-label="По номер">
+        <span class="field-label">по</span>
+        <input type="number" name="per_n" min="1" max="30" value="1" aria-label="Задач на каждый номер">
+        <span class="field-label">задач на номер</span>
         <button type="button" class="btn btn-soft btn-sm" id="pick">Подобрать</button>
       </div>
-      <p class="hint">Подбираются задачи, которые ученик ещё не решал. Отметки: ✓ — решал верно, ✗ — ошибался.</p>
+      <p class="hint">Например, 6 — 6 по 10: десять задач только на № 6. Сначала берутся задачи, которые ученик ещё не решал, потом те, где ошибался. Отметки: ✓ — решал верно, ✗ — ошибался.</p>
       <div class="set-filter"><input type="search" placeholder="Фильтр: номер или тема" aria-label="Фильтр задач"></div>
       <div class="set-tasks lib-pick"></div>
       <p class="hint set-count"></p>
@@ -269,14 +272,20 @@ async function setForm(ctx, preset = {}) {
   });
   $('#pick', m.el).addEventListener('click', () => {
     const from = +$('[name=from_n]', m.el).value, to = +$('[name=to_n]', m.el).value;
+    const per = Math.max(1, Math.min(30, +$('[name=per_n]', m.el).value || 1));
+    const shuffle = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
     let added = 0;
     for (let n = Math.min(from, to); n <= Math.max(from, to); n++) {
       const pool = tasks.filter((t) => t.subject === subject && t.num === n);
-      if (pool.some((t) => checked.has(t.id))) continue;
-      const fresh = pool.filter((t) => !tried[t.id]);
-      const src = fresh.length ? fresh : pool;
-      if (src.length) { checked.add(src[Math.floor(Math.random() * src.length)].id); added++; }
+      const need = per - pool.filter((t) => checked.has(t.id)).length;      // уже отмеченные засчитываются
+      if (need <= 0) continue;
+      const free = pool.filter((t) => !checked.has(t.id));
+      // приоритет: не решал → ошибался → решал верно
+      const order = [...shuffle(free.filter((t) => !tried[t.id])), ...shuffle(free.filter((t) => tried[t.id] === 'bad')),
+        ...shuffle(free.filter((t) => tried[t.id] === 'ok'))];
+      order.slice(0, need).forEach((t) => { checked.add(t.id); added += 1; });
     }
+    if (from === to) filterEl.value = String(from);                         // один номер — сразу показать только его
     render();
     toast(added ? `Добавлено ${plural(added, 'задача', 'задачи', 'задач')}` : 'Новых номеров для подбора нет', added ? 'ok' : 'error');
   });
