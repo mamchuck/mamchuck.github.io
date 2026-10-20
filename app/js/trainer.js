@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610202037';
+} from './ui.js?v=202610202051';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -19,7 +19,7 @@ async function tableReady(api) {
 const notReady = (view) => mount(view, h`${pageHero({ eyebrow: 'Тренажёр ОГЭ', title: 'Скоро ', accent: 'здесь' })}
   ${empty('Тренажёр включится после обновления базы (supabase/005_trainer.sql).', I.target)}`);
 
-async function img(api, path, cls = 'task-img') {
+export async function img(api, path, cls = 'task-img') {
   if (!path) return h``;
   try {
     const src = /^(https?:|img\/)/.test(path) ? path : await api.fileUrl(path);
@@ -340,7 +340,7 @@ function bindRevealButtons(root) {
 
 async function tutorBank(view, ctx) {
   const { api } = ctx;
-  const [tasks, sets] = await Promise.all([api.select('oge_tasks', { order: 'num' }), api.select('oge_sets')]);
+  const [tasks, sets] = await Promise.all([api.select('oge_tasks', { order: 'num' }), api.select('oge_sets').then((r) => r.filter((x) => x.kind !== 'mock'))]);
   const used = {}; for (const x of sets) for (const tid of x.task_ids) used[tid] = (used[tid] || 0) + 1;
   const T = byId(tasks);
   const sel = new Set();
@@ -452,17 +452,18 @@ async function tutorSets(view, ctx, filterSid = '') {
     <div class="section-head"><h2>История выданных вариантов</h2>
       <select id="fs" aria-label="Ученик"><option value="">Все ученики</option>${students.map((s) => h`<option value="${s.id}" ${s.id === filterSid ? 'selected' : ''}>${s.name}</option>`)}</select></div>
     ${list.length ? h`<div class="list card">${list.map((s) => {
-      const at = attempts.filter((a) => a.set_id === s.id);
-      const done = new Set(at.map((a) => a.task_id)).size, n = s.task_ids.length;
+      const last = {}; for (const a of attempts.filter((x) => x.set_id === s.id).sort((x, y) => (x.created_at > y.created_at ? 1 : -1))) last[a.task_id] = a;
+      const at = Object.values(last);   // засчитывается последняя попытка (в пробнике ответ можно менять)
+      const done = at.length, n = s.task_ids.length, mock = s.kind === 'mock';
       const pts = at.reduce((x, a) => x + (a.points || 0), 0);
       const pending = at.some((a) => a.points == null);
       return h`<div class="item"><a class="item-main item-link-plain" href="#/trainer/set/${s.id}">
           <div class="item-title">${s.title}</div>
-          <div class="item-meta"><b>${S[s.student_id]?.name || ''}</b> · ${s.subject} · ${plural(n, 'задача', 'задачи', 'задач')} · выдан ${fmtD(s.created_at)}${s.due_at ? ` · до ${fmtD(s.due_at)}` : ''}</div></a>
+          <div class="item-meta"><b>${S[s.student_id]?.name || ''}</b> · ${s.subject} · ${plural(n, 'задача', 'задачи', 'задач')} · ${mock ? 'начат' : 'выдан'} ${fmtD(s.created_at)}${s.due_at ? ` · до ${fmtD(s.due_at)}` : ''}</div></a>
         <div class="actions">
           <span class="badge ${done === n ? 'ok' : done ? 'info' : 'muted'}">${done}/${n}${done ? ` · ${pts} б.` : ''}</span>
           ${pending ? h`<span class="badge warn">на проверке</span>` : ''}
-          <button class="btn btn-ghost btn-sm" data-again="${s.id}">Выдать снова</button></div></div>`;
+          ${mock ? h`<span class="badge info">пробник${s.finished_at ? '' : ' · идёт'}</span>` : h`<button class="btn btn-ghost btn-sm" data-again="${s.id}">Выдать снова</button>`}</div></div>`;
     })}</div>` : empty('Вариантов пока нет', I.target)}`);
   const TP = byId(templates), SE = byId(sets);
   $('#adds', view).addEventListener('click', () => setForm(ctx));
@@ -616,7 +617,7 @@ async function familyHome(view, ctx) {
   const student = ctx.students.find((s) => s.id === sid);
   const [tasks, sets, attempts] = await Promise.all([
     api.select('oge_tasks_public', { order: 'num' }),
-    api.select('oge_sets', { eq: { student_id: sid }, order: 'created_at', asc: false }),
+    api.select('oge_sets', { eq: { student_id: sid }, order: 'created_at', asc: false }).then((r) => r.filter((x) => x.kind !== 'mock')),
     api.select('oge_attempts', { eq: { student_id: sid } }),
   ]);
   const subs = (student?.subjects || SUBJECTS).filter((s) => tasks.some((t) => t.subject === s));

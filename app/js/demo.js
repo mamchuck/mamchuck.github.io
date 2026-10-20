@@ -91,7 +91,7 @@ function seed() {
   TK('Математика', 21, 'Задачи на движение', 'Моторная лодка прошла 36 км по течению и вернулась обратно, затратив на весь путь 5 часов. Скорость течения 3 км/ч. Найдите собственную скорость лодки.', '15', '36/(v+3) + 36/(v−3) = 5 ⇒ 5v² − 72v − 45 = 0 ⇒ v = 15 км/ч.', 'full', 2);
   TK('Физика', 6, 'Плотность', 'Масса бруска 540 г, его объём 200 см³. Найдите плотность вещества бруска в г/см³.', '2,7', 'ρ = m / V = 540 / 200 = 2,7 г/см³.');
   TK('Физика', 8, 'Работа и мощность', 'Подъёмный кран поднял груз массой 500 кг на высоту 12 м за 30 с. Какую мощность развивал кран? Ответ дайте в ваттах. g = 10 Н/кг.', '2000', 'A = mgh = 500 · 10 · 12 = 60 000 Дж; N = A / t = 2000 Вт.');
-  db.oge_sets.push({ id: 'set-demo', student_id: A, subject: 'Математика', title: 'Вариант №1 (демо)', task_ids: [t1.id, t3.id], due_at: at(3, 20), created_at: at(-1) });
+  db.oge_sets.push({ id: 'set-demo', student_id: A, subject: 'Математика', kind: 'set', title: 'Вариант №1 (демо)', task_ids: [t1.id, t3.id], due_at: at(3, 20), created_at: at(-1) });
   db.oge_attempts.push({ id: uid(), task_id: t1.id, student_id: A, user_id: SA, set_id: 'set-demo', answer: '11/8', is_correct: true, points: 1, max_points: 1, created_at: at(-1) });
   const next = db.lessons.find((l) => l.student_id === A && l.status === 'planned');
   if (next) db.lesson_responses.push({ lesson_id: next.id, user_id: P, student_id: A, role: 'parent', response: 'move', created_at: at(-1) });
@@ -236,6 +236,21 @@ export function createDemoApi() {
       if (fn === 'tg_unlink') { db.telegram_links = db.telegram_links.filter((l) => l.user_id !== me.id); return null; }
       if (fn === 'tg_set_notify') { const l = db.telegram_links.find((x) => x.user_id === me.id); if (l) l.notify = args.p_on; return null; }
       if (fn === 'tg_test') return null;
+      if (fn === 'mock_create') {
+        if (me.role !== 'student') throw new Error('Пробник может начать только ученик');
+        const sid = myStudents()[0], subj = args.p_subject;
+        const open = db.oge_sets.find((s) => s.kind === 'mock' && s.student_id === sid && s.subject === subj && !s.finished_at);
+        if (open) return open.id;
+        const ids = [];   // в демо — по задаче на каждый номер, который есть в демо-банке
+        for (let n = 1; n <= (subj === 'Математика' ? 25 : 22); n++) {
+          const all = db.oge_tasks.filter((t) => t.subject === subj && t.num === n);
+          if (all.length) ids.push(all[Math.floor(Math.random() * all.length)].id);
+        }
+        const s = { id: uid(), student_id: sid, subject: subj, kind: 'mock', title: 'Пробник ОГЭ (демо)', task_ids: ids,
+          duration_min: subj === 'Математика' ? 235 : 180, finished_at: null, created_at: new Date().toISOString() };
+        db.oge_sets.push(s); return s.id;
+      }
+      if (fn === 'mock_finish') { const s = db.oge_sets.find((x) => x.id === args.p_set); if (s && !s.finished_at) s.finished_at = new Date().toISOString(); return { ok: true }; }
       if (fn === 'trainer_check' || fn === 'trainer_reveal') {
         const t = db.oge_tasks.find((x) => x.id === args.p_task);
         if (!t) throw new Error('Задача не найдена');
@@ -250,6 +265,7 @@ export function createDemoApi() {
         }
         const ok = args.p_answer != null && t.answer.split('|').some((v) => norm(v) === norm(args.p_answer) || (+norm(v) === +norm(args.p_answer) && norm(args.p_answer) !== ''));
         db.oge_attempts.push({ id: uid(), task_id: t.id, student_id: sid, user_id: me.id, set_id: args.p_set, answer: args.p_answer, is_correct: ok, points: ok ? t.max_points : 0, max_points: t.max_points, reviewed_at: new Date().toISOString(), created_at: new Date().toISOString() });
+        if (db.oge_sets.find((x) => x.id === args.p_set)?.kind === 'mock') return { saved: true };
         return { correct: ok, ...reveal };
       }
       throw new Error('В демо-режиме коды приглашений не принимаются');

@@ -1026,3 +1026,20 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
   to { transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(320deg); opacity: 0; } }
 @media (max-width: 760px) { .g-goal { flex-wrap: wrap; } .g-goal-btn { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .g-party i { display: none; } .g-party-card, .g-party { animation: none; } }
+
+/* ---------- Пробник ОГЭ ---------- */
+.step.done { background: var(--accent-soft, rgba(43,138,216,.12)); color: var(--accent-strong, var(--accent)); border-color: transparent; }
+.mock-bar { position: sticky; top: 8px; z-index: 5; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; }
+.mock-bar > div { flex: 1; min-width: 0; }
+.mock-clock { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 20px; letter-spacing: .02em; }
+.mock-clock.low { color: var(--bad); }
+.mock-grade { display: inline-grid; place-items: center; min-width: 40px; height: 40px; padding: 0 8px; border-radius: 12px; font-weight: 900; font-size: 20px; }
+.mock-grade.big { min-width: 84px; height: 84px; border-radius: 24px; font-size: 40px; flex: none; }
+.mock-grade.g5 { background: var(--ok-soft); color: var(--ok); }
+.mock-grade.g4 { background: var(--accent-soft, rgba(43,138,216,.12)); color: var(--accent-strong, var(--accent)); }
+.mock-grade.g3 { background: var(--warn-soft); color: var(--warn); }
+.mock-grade.g2 { background: var(--bad-soft); color: var(--bad); }
+.mock-total { display: flex; gap: 18px; align-items: center; }
+.mock-total h1 { margin: 0 0 4px; }
+.mock-total .result { margin-top: 10px; }
+@media (max-width: 560px) { .mock-total { flex-direction: column; align-items: flex-start; } .mock-clock { font-size: 18px; } }
