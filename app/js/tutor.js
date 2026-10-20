@@ -2,15 +2,15 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610202111';
+} from './ui.js?v=202610202148';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610202111';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610202111';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610202111';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610202111';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610202111';
-import { leadsPage } from './leads.js?v=202610202111';
+} from './library.js?v=202610202148';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610202148';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610202148';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610202148';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610202148';
+import { leadsPage } from './leads.js?v=202610202148';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -86,10 +86,10 @@ function studentForm(ctx, s) {
   });
 }
 
-function lessonForm(ctx, { students, studentId, lesson }) {
+function lessonForm(ctx, { students, studentId, lesson, at }) {
   const fixed = studentId || lesson?.student_id;
   const st = students.find((s) => s.id === fixed);
-  const start = lesson?.starts_at || (() => { const d = new Date(Date.now() + 864e5); d.setHours(16, 0, 0, 0); return d; })();
+  const start = lesson?.starts_at || at || (() => { const d = new Date(Date.now() + 864e5); d.setHours(16, 0, 0, 0); return d; })();
   const m = modal({
     title: lesson ? 'Изменить занятие' : 'Новое занятие',
     body: h`
@@ -730,7 +730,124 @@ async function studentPage(view, [id, tab = ''], ctx) {
   }
 }
 
-async function schedulePage(view, [mode = 'upcoming'], ctx) {
+const scheduleTabs = (mode) => h`<div class="seg seg-inline">
+  <a href="#/schedule" class="${mode === 'week' ? 'on' : ''}">Неделя</a>
+  <a href="#/schedule/upcoming" class="${mode === 'upcoming' ? 'on' : ''}">Список</a>
+  <a href="#/schedule/past" class="${mode === 'past' ? 'on' : ''}">Прошедшие</a></div>`;
+
+// ---------- Неделя: дни колонками, часы строками (как в Google Календаре) ----------
+const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const HOUR_PX = 56;
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+const subjCls = (s) => ({ 'Математика': 'math', 'Физика': 'phys' }[s] || 'other');
+function mondayOf(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
+function parseDay(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+function weekTitle(mon) {
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const f = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
+  return `${mon.getMonth() === sun.getMonth() ? mon.getDate() : f.format(mon)} – ${f.format(sun)} ${sun.getFullYear()}`;
+}
+// Пересекающиеся занятия в одном дне — рядом, в несколько дорожек
+function lanes(items) {
+  const out = []; let group = [], end = 0;
+  const flush = () => { const n = Math.max(...group.map((g) => g.lane)) + 1; group.forEach((g) => { g.lanes = n; out.push(g); }); group = []; };
+  for (const it of items.sort((a, b) => a.s - b.s)) {
+    if (group.length && it.s >= end) flush();
+    const used = new Set(group.filter((g) => g.e > it.s).map((g) => g.lane));
+    let lane = 0; while (used.has(lane)) lane++;
+    group.push({ ...it, lane }); end = Math.max(end, it.e);
+  }
+  if (group.length) flush();
+  return out;
+}
+
+async function scheduleWeek(view, ctx, dayParam) {
+  const { api } = ctx;
+  await loadResponses(api);
+  const mon = mondayOf(parseDay(dayParam) || new Date());
+  const next = new Date(mon); next.setDate(next.getDate() + 7);
+  const prev = new Date(mon); prev.setDate(prev.getDate() - 7);
+  const [students, all] = await Promise.all([api.select('students', { order: 'name' }), api.select('lessons', { order: 'starts_at' })]);
+  const S = byId(students);
+  const week = all.filter((l) => l.starts_at >= mon.toISOString() && l.starts_at < next.toISOString());
+  const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
+  // диапазон часов: 9–21, расширяется под занятия
+  let h0 = 9, h1 = 21;
+  for (const l of week) {
+    const s = new Date(l.starts_at), e = new Date(+s + l.duration_min * 60e3);
+    h0 = Math.min(h0, s.getHours()); h1 = Math.max(h1, e.getHours() + (e.getMinutes() ? 1 : 0));
+  }
+  const hours = Array.from({ length: h1 - h0 }, (_, i) => h0 + i);
+  const todayKey = ymd(new Date()), now = new Date();
+  const active = week.filter((l) => l.status !== 'cancelled');
+  const totalMin = active.reduce((x, l) => x + l.duration_min, 0);
+  const col = (d) => {
+    const k = ymd(d);
+    const items = lanes(week.filter((l) => ymd(new Date(l.starts_at)) === k).map((l) => {
+      const s = new Date(l.starts_at); const sm = s.getHours() * 60 + s.getMinutes();
+      return { l, s: sm, e: sm + l.duration_min };
+    }));
+    const nowTop = k === todayKey && now.getHours() >= h0 && now.getHours() < h1 ? ((now.getHours() - h0) * 60 + now.getMinutes()) / 60 * HOUR_PX : null;
+    return h`<div class="wk-col ${k === todayKey ? 'today' : ''} ${d < mondayOf(now) || (k < todayKey) ? 'past' : ''}" data-day="${k}" style="height:${hours.length * HOUR_PX}px">
+      ${items.map(({ l, s, lane, lanes: n }) => {
+        const st = new Date(l.starts_at), en = new Date(+st + l.duration_min * 60e3);
+        const move = RESP[l.id]?.some((r) => r.response === 'move');
+        return h`<button type="button" class="wk-ev s-${subjCls(l.subject)} st-${l.status} ${l.duration_min < 50 ? 'short' : ''}" data-ev="${l.id}"
+          style="top:${(s - h0 * 60) / 60 * HOUR_PX + 1}px;height:${l.duration_min / 60 * HOUR_PX - 3}px;left:calc(${(100 / n) * lane}% + 2px);width:calc(${100 / n}% - 4px)"
+          title="${hhmm(st)}–${hhmm(en)} · ${S[l.student_id]?.name || ''} · ${l.subject}${l.topic ? ` · ${l.topic}` : ''}">
+          <span class="wk-time">${hhmm(st)}–${hhmm(en)}${l.status === 'done' ? ' ✓' : ''}${move ? ' 🔁' : ''}</span>
+          <b class="wk-name">${S[l.student_id]?.name || 'Ученик'}</b>
+          <span class="wk-subj">${l.subject}${l.topic ? ` · ${l.topic}` : ''}</span>
+        </button>`;
+      })}
+      ${nowTop != null ? h`<div class="wk-now" style="top:${nowTop}px"></div>` : ''}
+    </div>`;
+  };
+  mount(view, h`
+    ${pageHero({ eyebrow: 'Расписание', title: 'Календарь ', accent: 'занятий', actions: h`<button class="btn btn-primary" id="add">${I.plus}<span>Занятие</span></button>` })}
+    ${scheduleTabs('week')}
+    <div class="wk-toolbar">
+      <a class="icon-btn" href="#/schedule/week/${ymd(prev)}" aria-label="Предыдущая неделя">‹</a>
+      <a class="btn btn-ghost btn-sm" href="#/schedule/week/${ymd(new Date())}">Сегодня</a>
+      <a class="icon-btn" href="#/schedule/week/${ymd(next)}" aria-label="Следующая неделя">›</a>
+      <h2 class="wk-title">${weekTitle(mon)}</h2>
+      <span class="muted small">${plural(active.length, 'занятие', 'занятия', 'занятий')}${totalMin ? ` · ${+(totalMin / 60).toFixed(1)} ч` : ''}</span>
+    </div>
+    <div class="card wk-card"><div class="wk-scroll"><div class="wk">
+      <div class="wk-corner"></div>
+      ${days.map((d, i) => h`<div class="wk-head ${ymd(d) === todayKey ? 'today' : ''}"><span>${WD[i]}</span><b>${d.getDate()}</b></div>`)}
+      <div class="wk-times" style="height:${hours.length * HOUR_PX}px">${hours.map((x) => h`<span style="height:${HOUR_PX}px">${x}:00</span>`)}</div>
+      ${days.map(col)}
+    </div></div></div>
+    <p class="hint">Нажмите на пустое место, чтобы запланировать занятие на это время; на занятие — чтобы провести, изменить или отменить.</p>`);
+  $('#add', view).addEventListener('click', () => lessonForm(ctx, { students }));
+  const L = byId(week);
+  $$('[data-ev]', view).forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const l = L[b.dataset.ev];
+    const m = modal({ title: `${S[l.student_id]?.name || 'Занятие'} · ${l.subject}`, body: h`<div class="list">${lessonCard(l, S[l.student_id]?.name)}</div>` });
+    $$('[data-conduct],[data-report],[data-ledit],[data-lcancel]', m.el).forEach((x) => x.addEventListener('click', () => m.close(), { capture: true }));
+    bindLessons(m.el, ctx, [l], students);
+  }));
+  $$('.wk-col', view).forEach((c) => c.addEventListener('click', (e) => {
+    if (e.target.closest('[data-ev]')) return;
+    const y = e.clientY - c.getBoundingClientRect().top;
+    const min = Math.max(0, Math.round((y / HOUR_PX) * 2) / 2) * 60;   // шаг 30 минут
+    const at = parseDay(c.dataset.day); at.setHours(h0, 0, 0, 0); at.setMinutes(min);
+    lessonForm(ctx, { students, at });
+  }));
+  // на узком экране — показать колонку «сегодня»
+  const sc = $('.wk-scroll', view), td = $('.wk-col.today', view);
+  if (sc && td && td.offsetLeft + td.offsetWidth > sc.clientWidth) sc.scrollLeft = td.offsetLeft - 56;   // только если «сегодня» не видно
+}
+
+async function schedulePage(view, [mode = 'week', day], ctx) {
+  if (mode === 'week') return scheduleWeek(view, ctx, day);
+  return scheduleList(view, mode, ctx);
+}
+
+async function scheduleList(view, mode, ctx) {
   await loadResponses(ctx.api);
   const [students, lessons] = await Promise.all([
     ctx.api.select('students', { order: 'name' }),
@@ -748,9 +865,7 @@ async function schedulePage(view, [mode = 'upcoming'], ctx) {
   }
   mount(view, h`
     ${pageHero({ eyebrow: 'Расписание', title: 'Календарь ', accent: 'занятий', actions: h`<button class="btn btn-primary" id="add">${I.plus}<span>Занятие</span></button>` })}
-    <div class="seg seg-inline">
-      <a href="#/schedule" class="${mode === 'upcoming' ? 'on' : ''}">Предстоящие</a>
-      <a href="#/schedule/past" class="${mode === 'past' ? 'on' : ''}">Прошедшие</a></div>
+    ${scheduleTabs(mode)}
     ${groups.length ? groups.map((g) => h`
       <div class="day-head ${g.d < t ? 'past' : ''}">${fmtDay(g.d)}${dayKey(g.d) === dayKey(Date.now()) ? h` <span class="badge info">сегодня</span>` : ''}</div>
       <div class="list card">${g.items.map((l) => lessonCard(l, S[l.student_id]?.name))}</div>`)
