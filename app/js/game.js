@@ -1,6 +1,6 @@
 // Геймификация: 🔥 серия, уровень (XP), дорожная карта ОГЭ (SVG), награды.
 // Все данные — одним вызовом game_state(student_id); считает база, страница только рисует.
-import { h, raw, $, $$, toast } from './ui.js?v=202610201513';
+import { h, raw, $, $$, toast } from './ui.js?v=202610201525';
 
 const LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -55,7 +55,7 @@ function roadmap(map, subject, linkBase) {
   let y = 16, prevModule = null, i = 0;
   const pts = [], labels = [];
   for (const n of nodes) {
-    if (n.module !== prevModule) { if (prevModule) y += MOD_GAP - STEP / 2; labels.push({ y, text: n.module }); y += 70; prevModule = n.module; }
+    if (n.module !== prevModule) { if (prevModule) y += MOD_GAP - STEP / 2; labels.push({ y, text: n.module }); y += 84; prevModule = n.module; }
     pts.push({ ...n, x: XS[i % XS.length] * W, y });
     y += STEP; i += 1;
   }
@@ -69,10 +69,10 @@ function roadmap(map, subject, linkBase) {
   const done = nodes.filter((n) => n.status === 'done').length;
 
   return h`<section class="card g-map">
-    <div class="g-map-head"><h3>${subject}: путь к ОГЭ</h3><span class="badge ok">${done} из ${nodes.length} закрыто</span></div>
+    <div class="g-map-head"><h3>${subject}: путь к ОГЭ</h3><span class="badge info">${done} из ${nodes.length} закрыто</span></div>
     <div class="g-legend"><span><i class="lg done"></i>закрыт</span><span><i class="lg active"></i>в работе</span><span><i class="lg locked"></i>не начат</span></div>
     <div class="g-map-body" style="--h:${H}px">
-      ${raw(`<svg class="g-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${paths}</svg>`)}
+      ${raw(`<svg class="g-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="g-path-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fd0ff"/><stop offset=".55" stop-color="#2b8ad8"/><stop offset="1" stop-color="#1f6fd1"/></linearGradient></defs>${paths}</svg>`)}
       ${labels.map((l) => h`<div class="g-module" style="top:${(l.y / H) * 100}%">${l.text}</div>`)}
       ${pts.map((n) => {
         const r = 22, c = 2 * Math.PI * r, acc = n.accuracy ?? 0;
@@ -99,7 +99,7 @@ function rewards(list, best, canClaim) {
         <div class="g-reward-ico">${r.icon}</div>
         <b>${r.title}</b>
         <p class="muted small">${r.description}</p>
-        ${r.claim ? h`<span class="badge ${r.claim === 'declined' ? 'bad' : 'ok'}">${CLAIM_LABEL[r.claim]}</span>`
+        ${r.claim ? h`<span class="badge ${r.claim === 'declined' ? 'bad' : 'info'}">${CLAIM_LABEL[r.claim]}</span>`
           : r.unlocked ? (canClaim ? h`<button class="btn btn-primary btn-sm" data-claim="${r.id}">Забрать</button>` : h`<span class="badge info">Открыта</span>`)
           : h`<div class="g-bar sm"><i style="width:${pct}%"></i></div><span class="hint">${r.need} ${word(r.need, 'день', 'дня', 'дней')} подряд · осталось ${r.need - best}</span>`}
       </div>`;
