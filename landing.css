@@ -196,3 +196,23 @@
 .l-nav-hi i::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--accent); animation: l-ping 2.4s var(--ease) infinite; }
 @keyframes l-ping { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .l-nav-hi i::after { animation: none; } }
+
+/* Реквизиты и документы в подвале */
+.l-foot { flex-wrap: wrap; }
+.l-legal { flex-basis: 100%; display: grid; gap: 4px; font-size: 12.5px; color: var(--text-3); line-height: 1.5; }
+.l-legal p { margin: 0; }
+.l-legal a { color: var(--text-2); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 2px; }
+.l-legal a:hover { color: var(--accent); }
+
+/* Юридические страницы */
+.legal { max-width: 780px; margin: 0 auto; padding: 24px 0 40px; line-height: 1.65; }
+.legal h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.15; margin: 8px 0 6px; }
+.legal h2 { font-size: 19px; margin: 28px 0 8px; }
+.legal p, .legal li { color: var(--text-2); }
+.legal b { color: var(--text); }
+.legal ul { padding-left: 20px; display: grid; gap: 4px; }
+.legal a { color: var(--accent); }
+.legal-meta { font-size: 14px; color: var(--text-3) !important; }
+.legal-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; display: block; overflow-x: auto; }
+.legal-table th, .legal-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; color: var(--text-2); }
+.legal-table th { background: var(--accent-softer); color: var(--text); }

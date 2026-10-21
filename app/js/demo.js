@@ -250,6 +250,8 @@ export function createDemoApi() {
           duration_min: subj === 'Математика' ? 235 : 180, finished_at: null, created_at: new Date().toISOString() };
         db.oge_sets.push(s); return s.id;
       }
+      if (fn === 'consent_state') return { version: 'demo', pd: me.role === 'tutor' || !!db.consents?.includes(me.id) };
+      if (fn === 'consent_accept') { (db.consents ||= []).push(me.id); return { ok: true }; }
       if (fn === 'mock_review') {
         const s = db.oge_sets.find((x) => x.id === args.p_set);
         return db.oge_tasks.filter((t) => s.task_ids.includes(t.id)).map((t) => ({ id: t.id, answer: t.answer.split('|')[0], solution: t.solution, solution_image_path: t.solution_image_path || null }));

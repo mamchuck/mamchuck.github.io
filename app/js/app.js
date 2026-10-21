@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js?v=202610202148';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610202148';
-import { tutorRoutes, tutorNav } from './tutor.js?v=202610202148';
-import { backupCard, bindBackup } from './backup.js?v=202610202148';
-import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610202148';
-import { familyRoutes, familyNav } from './family.js?v=202610202148';
+import { CONFIG, TUTOR } from './config.js?v=202610211150';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610211150';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202610211150';
+import { backupCard, bindBackup } from './backup.js?v=202610211150';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610211150';
+import { familyRoutes, familyNav } from './family.js?v=202610211150';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js?v=202610202148')).createApi(CONFIG)
-  : (await import('./demo.js?v=202610202148')).createDemoApi();
+  ? (await import('./api.js?v=202610211150')).createApi(CONFIG)
+  : (await import('./demo.js?v=202610211150')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };
@@ -37,6 +37,12 @@ async function start() {
     try { await api.rpc('redeem_invitation', { p_code: code }); toast('Доступ открыт'); ctx.me = await api.me(); }
     catch (e) { toast(e.message, 'error'); }
     store.set(CODE_KEY, null);
+  }
+  // Согласие на обработку ПДн (152-ФЗ): один раз на редакцию документа. Нет функции в базе — не блокируем вход.
+  if (ctx.me.role !== 'tutor') {
+    let st = null;
+    try { st = await api.rpc('consent_state'); } catch {}
+    if (st && !st.pd) return renderConsent();
   }
   if (ctx.me.role === 'pending') return renderJoin();
 
@@ -83,6 +89,7 @@ function renderAuth(tab = store.get(CODE_KEY) ? 'signup' : 'login') {
           <button class="btn btn-primary btn-block" type="submit">${tab === 'login' ? 'Войти' : 'Создать аккаунт'}</button>
           ${tab === 'login' ? h`<button type="button" class="link-btn" id="forgot">Забыли пароль?</button>` : ''}
         </form>`}
+      ${api.demo ? '' : h`<p class="hint auth-legal">Продолжая, вы соглашаетесь с <a href="../legal/privacy/" target="_blank" rel="noopener">Политикой обработки персональных данных</a>. <a href="../legal/offer/" target="_blank" rel="noopener">Договор-оферта</a>.</p>`}
       ${authorBar(TUTOR)}
     </div>
   </div>`);
@@ -118,6 +125,31 @@ function renderNewPassword() {
     e.preventDefault();
     try { await api.updatePassword(e.target.p.value); toast('Пароль изменён'); history.replaceState(null, '', location.pathname); start(); }
     catch (err) { toast(err.message, 'error'); }
+  });
+}
+
+// Отдельное согласие на обработку персональных данных — до входа в кабинет
+function renderConsent() {
+  const parent = ctx.me.role === 'parent';
+  mount(root, h`<div class="center-screen"><div class="auth-card card stack">
+    <div class="brand brand-lg"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></div>
+    <h1>Согласие на обработку данных</h1>
+    <p class="muted">Кабинет хранит расписание, домашние задания и результаты ученика. По закону для этого нужно ваше согласие.
+      Если ученику нет 18 лет, согласие даёт родитель.</p>
+    <form id="consent" class="stack">
+      <label class="consent-check"><input type="checkbox" name="ok" required>
+        <span>${parent ? 'Я родитель (законный представитель) ученика. ' : ''}Я ознакомлен(а) с
+          <a href="../legal/consent/" target="_blank" rel="noopener">Согласием на обработку персональных данных</a> и
+          <a href="../legal/privacy/" target="_blank" rel="noopener">Политикой</a> и даю согласие на обработку ${parent ? 'своих данных и данных ребёнка' : 'моих данных'}${parent ? '' : '. Мне есть 18 лет, либо мой родитель (законный представитель) знает о кабинете и согласен'}.</span></label>
+      <button class="btn btn-primary btn-block">Продолжить</button>
+      <button type="button" class="link-btn" id="lo">Выйти</button>
+    </form></div></div>`);
+  $('#lo').addEventListener('click', logout);
+  $('#consent').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('button.btn-primary', e.target); btn.disabled = true; btn.classList.add('loading');
+    try { await api.rpc('consent_accept', { p_kind: 'pd' }); start(); }
+    catch (err) { toast(err.message, 'error'); btn.disabled = false; btn.classList.remove('loading'); }
   });
 }
 

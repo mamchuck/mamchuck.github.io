@@ -1115,3 +1115,9 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 .wk-ev.short .wk-subj { display: none; }
 .wk-now { position: absolute; left: -1px; right: 0; height: 2px; background: var(--bad); z-index: 3; pointer-events: none; }
 .wk-now::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--bad); }
+
+/* Согласие на обработку данных */
+.consent-check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; color: var(--text-2); cursor: pointer; }
+.consent-check input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--accent); }
+.consent-check a, .auth-legal a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.auth-legal { text-align: center; margin: 0; }

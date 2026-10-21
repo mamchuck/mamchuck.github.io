@@ -24,8 +24,8 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css?v=202610202148">
-  <link rel="stylesheet" href="landing.css?v=202610202148">
+  <link rel="stylesheet" href="app/css/style.css?v=202610211150">
+  <link rel="stylesheet" href="landing.css?v=202610211150">
 </head>
 <body class="landing">
   <header class="l-head">
@@ -132,9 +132,14 @@
   <footer class="l-foot">
     <a href="./" class="brand"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></a>
     <nav><a href="oge/">Тренажёр ОГЭ</a><a href="https://t.me/mamchuck_formula">Канал</a><a href="https://t.me/mamchuck_bot">Бот</a><a href="app/">Кабинет</a></nav>
+    <div class="l-legal">
+      <p>© 2026 ИП Мамчук И. М. · г. Хабаровск · <a href="mailto:ilya27mam@gmail.com">ilya27mam@gmail.com</a></p>
+      <p><a href="legal/privacy/">Политика обработки персональных данных</a> · <a href="legal/consent/">Согласие на обработку данных</a> · <a href="legal/offer/">Договор-оферта</a> · <a href="legal/mailing/">Согласие на рассылку</a></p>
+      <p>Сайт не является официальным ресурсом ФИПИ. Задания авторские, составлены по структуре КИМ ОГЭ.</p>
+    </div>
   </footer>
 
   <a href="diag/" class="l-sticky btn l-cta-main"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-  <script src="landing.js?v=202610202148" defer></script>
+  <script src="landing.js?v=202610211150" defer></script>
 </body>
 </html>
