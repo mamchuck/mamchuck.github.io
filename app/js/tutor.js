@@ -2,15 +2,15 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610221052';
+} from './ui.js?v=202610221759';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610221052';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610221052';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610221052';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610221052';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610221052';
-import { leadsPage } from './leads.js?v=202610221052';
+} from './library.js?v=202610221759';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610221759';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610221759';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610221759';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610221759';
+import { leadsPage } from './leads.js?v=202610221759';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -424,13 +424,13 @@ const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); retur
 async function dashboard(view, _p, ctx) {
   const { api } = ctx;
   await loadResponses(api);
-  const [students, lessons, subs, hws, balances] = await Promise.all([
+  const [students, lessons, subs, balances] = await Promise.all([
     api.select('students', { order: 'name' }),
     api.select('lessons', { eq: { status: 'planned' }, order: 'starts_at' }),
-    api.select('submissions', { order: 'submitted_at' }),
-    api.select('homework'),
+    api.select('submissions', { isNull: ['reviewed_at'], order: 'submitted_at' }),   // только ждущие проверки, а не все за всё время
     api.select('student_balance'),
   ]);
+  const hws = subs.length ? await api.select('homework', { cols: 'id,title,subject', eq: { id: subs.map((x) => x.homework_id) } }) : [];
   const S = byId(students), H = byId(hws);
   const today = startOfToday();
   const upcoming = lessons.filter((l) => l.starts_at >= today).slice(0, 6);
@@ -768,7 +768,8 @@ async function scheduleWeek(view, ctx, dayParam) {
   const mon = mondayOf(parseDay(dayParam) || new Date());
   const next = new Date(mon); next.setDate(next.getDate() + 7);
   const prev = new Date(mon); prev.setDate(prev.getDate() - 7);
-  const [students, all] = await Promise.all([api.select('students', { order: 'name' }), api.select('lessons', { order: 'starts_at' })]);
+  const [students, all] = await Promise.all([api.select('students', { order: 'name' }),
+    api.select('lessons', { gte: { starts_at: mon.toISOString() }, lt: { starts_at: next.toISOString() }, order: 'starts_at' })]);   // только неделя
   const S = byId(students);
   const week = all.filter((l) => l.starts_at >= mon.toISOString() && l.starts_at < next.toISOString());
   const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
@@ -851,7 +852,9 @@ async function scheduleList(view, mode, ctx) {
   await loadResponses(ctx.api);
   const [students, lessons] = await Promise.all([
     ctx.api.select('students', { order: 'name' }),
-    ctx.api.select('lessons', { order: 'starts_at', asc: mode === 'upcoming' }),
+    mode === 'upcoming'
+      ? ctx.api.select('lessons', { eq: { status: 'planned' }, order: 'starts_at' })
+      : ctx.api.select('lessons', { eq: { status: ['done', 'cancelled'] }, lt: { starts_at: new Date().toISOString() }, order: 'starts_at', asc: false, limit: 60 }),
   ]);
   const S = byId(students), t = startOfToday();
   const list = mode === 'upcoming'
@@ -875,13 +878,14 @@ async function scheduleList(view, mode, ctx) {
 }
 
 async function reviewPage(view, _p, ctx) {
-  const [subs, hws, students] = await Promise.all([
-    ctx.api.select('submissions', { order: 'submitted_at', asc: false }),
-    ctx.api.select('homework'), ctx.api.select('students'),
+  const [pending, recent, students] = await Promise.all([
+    ctx.api.select('submissions', { isNull: ['reviewed_at'], order: 'submitted_at' }),
+    ctx.api.select('submissions', { notNull: ['reviewed_at'], order: 'reviewed_at', asc: false, limit: 10 }),
+    ctx.api.select('students', { cols: 'id,name' }),
   ]);
+  const subs = [...pending, ...recent];
+  const hws = subs.length ? await ctx.api.select('homework', { eq: { id: [...new Set(subs.map((x) => x.homework_id))] } }) : [];
   const H = byId(hws), S = byId(students);
-  const pending = subs.filter((s) => !s.reviewed_at).reverse();
-  const recent = subs.filter((s) => s.reviewed_at).slice(0, 10);
   const row = (s) => h`<div class="item"><div class="item-main">
       <div class="item-title">${H[s.homework_id]?.title}</div>
       <div class="item-meta"><b>${S[s.student_id]?.name}</b> · ${H[s.homework_id]?.subject} · сдано ${fmtDT(s.submitted_at)}${s.grade ? ` · оценка ${s.grade}` : ''}</div></div>

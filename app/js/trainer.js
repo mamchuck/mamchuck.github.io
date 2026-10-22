@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero, subjLabel,
-} from './ui.js?v=202610221052';
+} from './ui.js?v=202610221759';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22, 'Профильная математика': 20 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -33,17 +33,32 @@ async function uploadImage(api, file) {
   return path;
 }
 
-// Статистика по номерам из попыток: { num: {tasks:Set, ok:Set, tried:Set} }
-function statsByNum(attempts, tasksById) {
-  const s = {};
-  for (const a of attempts) {
-    const t = tasksById[a.task_id]; if (!t) continue;
-    const x = (s[`${t.subject}|${t.num}`] ||= { tried: new Set(), ok: new Set() });
-    x.tried.add(a.task_id);
-    if (a.is_correct || (a.points != null && a.points >= a.max_points)) x.ok.add(a.task_id);
+// Колонки задачи: META — для списков, CARD — для полной карточки в банке
+const META = 'id,subject,num,topic,body,image_path,max_points,answer_type';
+const CARD = 'id,subject,num,topic,answer_type,max_points,body,answer,solution,source,image_path,solution_image_path';
+// Быстрый путь — представление и функция в базе (миграция 033). Пока её нет — запасной путь из лёгких столбцов.
+const countRows = (rows) => {
+  const c = {}; for (const t of rows) c[`${t.subject}|${t.num}`] = (c[`${t.subject}|${t.num}`] || 0) + 1;
+  return Object.entries(c).map(([k, n]) => ({ subject: k.split('|')[0], num: +k.split('|')[1], n }));
+};
+const loadCounts = async (api) => {
+  try { return await api.select('oge_task_counts'); }
+  catch { return countRows(await api.select('oge_tasks_public', { cols: 'subject,num' })); }
+};
+const loadNumStats = async (api, sid) => {
+  try { return await api.rpc('oge_num_stats', { p_student: sid }); }
+  catch {
+    const atts = await api.select('oge_attempts', { cols: 'task_id,is_correct,points,max_points', eq: { student_id: sid } });
+    const meta = byId(await api.select('oge_tasks_public', { cols: 'id,subject,num', eq: { id: [...new Set(atts.map((a) => a.task_id))] } }));
+    const st = {};
+    for (const a of atts) {
+      const t = meta[a.task_id]; if (!t) continue;
+      const x = (st[`${t.subject}|${t.num}`] ||= { subject: t.subject, num: t.num, tried: new Set(), ok: new Set() });
+      x.tried.add(a.task_id); if (a.is_correct || (a.points != null && a.points >= a.max_points)) x.ok.add(a.task_id);
+    }
+    return Object.values(st).map((x) => ({ subject: x.subject, num: x.num, tried: x.tried.size, ok: x.ok.size }));
   }
-  return s;
-}
+};
 const levelCls = (p, tried) => (!tried ? '' : p >= 80 ? 'lv-ok' : p >= 50 ? 'lv-mid' : 'lv-bad');
 
 const subjectSeg = (cur, list = SUBJECTS) => h`<div class="seg seg-inline">${list.map((s) => h`<button type="button" data-subj="${s}" class="${s === cur ? 'on' : ''}">${subjLabel(s)}</button>`)}</div>`;
@@ -180,16 +195,22 @@ function importForm(ctx) {
 
 async function setForm(ctx, preset = {}) {
   const { api } = ctx;
-  const [students, tasks, templates, sets] = await Promise.all([
+  // Банк целиком не грузим: метаданные — только выбранных задач и результатов поиска, автоподбор — на сервере
+  const [students, counts, templates, sets] = await Promise.all([
     api.select('students', { eq: { status: 'active' }, order: 'name' }),
-    api.select('oge_tasks', { order: 'num' }),
+    loadCounts(api),
     api.select('oge_templates', { order: 'created_at', asc: false }).catch(() => []),
-    api.select('oge_sets', { order: 'created_at', asc: false }),
+    api.select('oge_sets', { cols: 'id,title,subject,student_id,task_ids,created_at,kind', order: 'created_at', asc: false }).then((r) => r.filter((x) => x.kind !== 'mock')),
   ]);
-  if (!tasks.length) { toast('Сначала добавьте задачи в банк', 'error'); return; }
+  if (!counts.length) { toast('Сначала добавьте задачи в банк', 'error'); return; }
   if (!students.length) { toast('Нет активных учеников', 'error'); return; }
   const S = byId(students);
-  const T = byId(tasks);
+  const T = {};                         // id → метаданные задачи (подгружаются по мере надобности)
+  const need = async (ids) => {
+    const miss = [...new Set(ids)].filter((id) => !T[id]);
+    if (miss.length) for (const t of await api.select('oge_tasks', { cols: META, eq: { id: miss } })) T[t.id] = t;
+  };
+  await need(preset.taskIds || []);
   let subject = preset.subject || T[preset.taskIds?.[0]]?.subject || SUBJECTS[0];
   let tried = {};          // task_id → 'ok' | 'bad' для выбранного ученика
   const m = modal({
@@ -218,13 +239,14 @@ async function setForm(ctx, preset = {}) {
         <button type="button" class="btn btn-soft btn-sm" id="pick">Подобрать</button>
       </div>
       <p class="hint">Например, 6 — 6 по 10: десять задач только на № 6. Сначала берутся задачи, которые ученик ещё не решал, потом те, где ошибался. Отметки: ✓ — решал верно, ✗ — ошибался.</p>
-      <div class="set-filter"><input type="search" placeholder="Фильтр: номер или тема" aria-label="Фильтр задач"></div>
+      <div class="set-filter"><input type="search" placeholder="Найти задачу: номер (например, 9) или слово из условия" aria-label="Поиск задач"></div>
       <div class="set-tasks lib-pick"></div>
       <p class="hint set-count"></p>
       <label class="switch"><input type="checkbox" name="save_tpl"><span>Сохранить набор как шаблон (чтобы потом выдавать другим)</span></label>`,
     onSubmit: async (d) => {
       const ids = [...checked];
       if (!ids.length) throw new Error('Отметьте задачи');
+      await need(ids);
       const ordered = ids.map((id) => T[id]).filter(Boolean).sort((a, b) => a.num - b.num).map((t) => t.id);
       await api.insert('oge_sets', { student_id: d.student_id, subject: d.subject, title: d.title, task_ids: ordered, due_at: d.due ? new Date(`${d.due}T20:00`).toISOString() : null });
       if (d.save_tpl) await api.insert('oge_templates', { subject: d.subject, title: d.title, task_ids: ordered }).catch(() => {});
@@ -234,22 +256,34 @@ async function setForm(ctx, preset = {}) {
   const checked = new Set(preset.taskIds || []);
   const box = $('.set-tasks', m.el);
   const filterEl = $('.set-filter input', m.el);
-  const render = () => {
-    subject = $('[name=subject]', m.el).value;
-    const q = filterEl.value.trim().toLowerCase();
-    const list = tasks.filter((t) => t.subject === subject
-      && (!q || String(t.num) === q || `№${t.num} ${t.topic} ${t.body}`.toLowerCase().includes(q)));
-    mount(box, list.length ? h`${list.map((t) => h`<label class="lib-row">
+  let req = 0;
+  const row = (t) => h`<label class="lib-row">
         <input type="checkbox" value="${t.id}" ${checked.has(t.id) ? 'checked' : ''}>
         <span class="num-pill">№${t.num}</span>
         <span class="item-main"><span class="item-title">${t.topic || 'Без темы'} ${tried[t.id] ? h`<span class="badge ${tried[t.id] === 'ok' ? 'ok' : 'bad'}">${tried[t.id] === 'ok' ? '✓ решал' : '✗ ошибался'}</span>` : ''}</span>
-          <span class="item-meta">${(t.body || 'задача со скриншотом').slice(0, 90)}${t.image_path ? ' 🖼' : ''}</span></span></label>`)}`
-      : empty('Нет задач по фильтру', I.target));
+          <span class="item-meta">${(t.body || 'задача со скриншотом').slice(0, 90)}${t.image_path ? ' 🖼' : ''}</span></span></label>`;
+  // Пустой поиск — выбранные задачи; число — задачи этого номера; текст — поиск по теме и условию (на сервере)
+  const render = async () => {
+    subject = $('[name=subject]', m.el).value;
+    const q = filterEl.value.trim(); const my = ++req;
+    let list;
+    if (!q) list = [...checked].map((id) => T[id]).filter((t) => t && t.subject === subject).sort((a, b) => a.num - b.num);
+    else {
+      mount(box, h`<div class="loading-block"><span class="spin"></span></div>`);
+      try {
+        const opts = /^\d{1,2}$/.test(q) ? { eq: { subject, num: +q } } : { eq: { subject }, search: { q, fields: ['topic', 'body'] } };
+        list = (await api.page('oge_tasks', { cols: META, ...opts, order: [['num', true], ['id', true]], from: 0, to: 79 })).rows;
+      } catch (e) { list = []; toast(e.message, 'error'); }
+      if (my !== req) return;                       // пришёл ответ на устаревший запрос
+      for (const t of list) T[t.id] ||= t;
+    }
+    mount(box, list.length ? h`${list.map(row)}${q && list.length === 80 ? h`<p class="hint">Показаны первые 80 — уточните запрос.</p>` : ''}`
+      : empty(q ? 'Ничего не нашлось' : 'Пока ничего не выбрано — подберите задачи автоматически или найдите по номеру', I.target));
     count();
   };
   const count = () => { $('.set-count', m.el).textContent = `Выбрано: ${plural(checked.size, 'задача', 'задачи', 'задач')}`; };
   const loadTried = async () => {
-    const atts = await api.select('oge_attempts', { eq: { student_id: $('[name=student_id]', m.el).value } });
+    const atts = await api.select('oge_attempts', { cols: 'task_id,is_correct,points,max_points', eq: { student_id: $('[name=student_id]', m.el).value } });
     tried = {};
     for (const a of atts) {
       const ok = a.is_correct || (a.points != null && a.points >= a.max_points);
@@ -258,36 +292,34 @@ async function setForm(ctx, preset = {}) {
     render();
   };
   box.addEventListener('change', (e) => { if (e.target.checked) checked.add(e.target.value); else checked.delete(e.target.value); count(); });
-  filterEl.addEventListener('input', render);
+  let timer; filterEl.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(render, 300); });
   $('[name=subject]', m.el).addEventListener('change', render);
   $('[name=student_id]', m.el).addEventListener('change', loadTried);
-  $('[name=from]', m.el)?.addEventListener('change', (e) => {
+  $('[name=from]', m.el)?.addEventListener('change', async (e) => {
     const [kind, id] = e.target.value.split(':');
     const src = kind === 'tpl' ? templates.find((t) => t.id === id) : sets.find((x) => x.id === id);
     if (!src) return;
+    await need(src.task_ids);
     checked.clear(); src.task_ids.forEach((tid) => T[tid] && checked.add(tid));
     $('[name=subject]', m.el).value = src.subject;
     if (!preset.title) $('[name=title]', m.el).value = src.title;
-    render();
+    filterEl.value = ''; render();
   });
-  $('#pick', m.el).addEventListener('click', () => {
-    const from = +$('[name=from_n]', m.el).value, to = +$('[name=to_n]', m.el).value;
-    const per = Math.max(1, Math.min(30, +$('[name=per_n]', m.el).value || 1));
-    const shuffle = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
-    let added = 0;
-    for (let n = Math.min(from, to); n <= Math.max(from, to); n++) {
-      const pool = tasks.filter((t) => t.subject === subject && t.num === n);
-      const need = per - pool.filter((t) => checked.has(t.id)).length;      // уже отмеченные засчитываются
-      if (need <= 0) continue;
-      const free = pool.filter((t) => !checked.has(t.id));
-      // приоритет: не решал → ошибался → решал верно
-      const order = [...shuffle(free.filter((t) => !tried[t.id])), ...shuffle(free.filter((t) => tried[t.id] === 'bad')),
-        ...shuffle(free.filter((t) => tried[t.id] === 'ok'))];
-      order.slice(0, need).forEach((t) => { checked.add(t.id); added += 1; });
-    }
-    if (from === to) filterEl.value = String(from);                         // один номер — сразу показать только его
-    render();
-    toast(added ? `Добавлено ${plural(added, 'задача', 'задачи', 'задач')}` : 'Новых номеров для подбора нет', added ? 'ok' : 'error');
+  $('#pick', m.el).addEventListener('click', async (e) => {
+    const btn = e.currentTarget; btn.disabled = true; btn.classList.add('loading');
+    try {
+      const from = +$('[name=from_n]', m.el).value, to = +$('[name=to_n]', m.el).value;
+      const per = Math.max(1, Math.min(30, +$('[name=per_n]', m.el).value || 1));
+      // сервер: сначала не решённые учеником, потом с ошибкой, потом решённые верно; уже отмеченные засчитываются
+      const ids = await api.rpc('oge_autopick', { p_subject: subject, p_from: from, p_to: to, p_per: per,
+        p_student: $('[name=student_id]', m.el).value, p_have: [...checked] }) || [];
+      await need(ids);
+      ids.forEach((id) => checked.add(id));
+      filterEl.value = from === to ? String(from) : '';     // один номер — сразу показать только его
+      await render();
+      toast(ids.length ? `Добавлено ${plural(ids.length, 'задача', 'задачи', 'задач')}` : 'Новых номеров для подбора нет', ids.length ? 'ok' : 'error');
+    } catch (err) { toast(/oge_autopick|function/i.test(err.message) ? 'Автоподбор включится после обновления базы (supabase/033_perf.sql)' : err.message, 'error'); }
+    finally { btn.disabled = false; btn.classList.remove('loading'); }
   });
   loadTried();
 }
@@ -322,9 +354,11 @@ export function lazyImages(root, api) {
     if (el.dataset.loaded) return; el.dataset.loaded = '1';
     mount(el, await img(api, el.dataset.img));
   };
-  if (!('IntersectionObserver' in window)) { $$('[data-img]', root).forEach(load); return; }
-  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); load(e.target); } }), { rootMargin: '400px' });
-  $$('[data-img]', root).forEach((el) => io.observe(el));
+  // только новые элементы и один наблюдатель на контейнер (раньше на каждую догрузку создавался новый)
+  const els = $$('[data-img]:not([data-obs])', root); els.forEach((el) => { el.dataset.obs = '1'; });
+  if (!('IntersectionObserver' in window)) { els.forEach(load); return; }
+  root._lazyIO ||= new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { root._lazyIO.unobserve(e.target); load(e.target); } }), { rootMargin: '400px' });
+  els.forEach((el) => root._lazyIO.observe(el));
 }
 
 function bindRevealButtons(root) {
@@ -340,70 +374,87 @@ function bindRevealButtons(root) {
 
 async function tutorBank(view, ctx) {
   const { api } = ctx;
-  const [tasks, sets] = await Promise.all([api.select('oge_tasks', { order: 'num' }), api.select('oge_sets').then((r) => r.filter((x) => x.kind !== 'mock'))]);
-  const used = {}; for (const x of sets) for (const tid of x.task_ids) used[tid] = (used[tid] || 0) + 1;
-  const T = byId(tasks);
+  // Банк не грузится целиком: счётчики по номерам — из базы, лента — страницами по 25 с сервера
+  const [counts, sets] = await Promise.all([loadCounts(api), api.select('oge_sets', { cols: 'task_ids,kind' })]);
+  const used = {}; for (const x of sets) if (x.kind !== 'mock') for (const tid of x.task_ids) used[tid] = (used[tid] || 0) + 1;
+  const T = {};                       // загруженные карточки (для «Изменить»)
   const sel = new Set();
   let subj = store.get('trainer-subj') || SUBJECTS[0];
   let num = store.get('trainer-num') || '';
-  let shown = 0, list = [];
+  let shown = 0, total = 0, req = 0, loading = false, io = null;
   const PAGE = 25;
-
-  const more = () => {
+  const grandTotal = counts.reduce((x, c) => x + c.n, 0);
+  const query = () => {
+    const q = ($('#tq', view)?.value || '').trim();
+    return { cols: CARD, eq: num ? { subject: subj, num: +num } : { subject: subj },
+      search: q ? { q, fields: ['topic', 'body', 'source'] } : undefined, order: [['num', true], ['id', true]] };
+  };
+  const put = (rows) => {
     const feed = $('#feed', view); if (!feed) return;
-    const part = list.slice(shown, shown + PAGE); shown += part.length;
-    feed.insertAdjacentHTML('beforeend', part.map((t) => taskCard(t, { used: used[t.id], selected: sel.has(t.id) }).s).join(''));
+    for (const t of rows) T[t.id] = t;
+    feed.insertAdjacentHTML('beforeend', rows.map((t) => taskCard(t, { used: used[t.id], selected: sel.has(t.id) }).s).join(''));
+    shown += rows.length;
     lazyImages(feed, api);
-    $('#feed-more', view).hidden = shown >= list.length;
-    $('#feed-count', view).textContent = `Показано ${shown} из ${list.length}`;
+    $('#feed-more', view).hidden = shown >= total;
+    $('#feed-count', view).textContent = `Показано ${shown} из ${total}`;
+  };
+  const more = async () => {
+    if (loading || shown >= total) return;
+    loading = true; const my = req;
+    try {
+      const { rows } = await api.page('oge_tasks', { ...query(), from: shown, to: shown + PAGE - 1 });
+      if (my === req) put(rows);                 // ответ устарел (сменили фильтр) — выбрасываем
+    } catch (e) { toast(e.message, 'error'); } finally { loading = false; }
   };
 
-  const draw = () => {
-    const q = ($('#tq', view)?.value || '').toLowerCase();
-    list = tasks.filter((t) => t.subject === subj && (!num || t.num === +num)
-      && (!q || `${t.topic} ${t.body} ${t.source}`.toLowerCase().includes(q)));
-    const counts = {};
-    for (const t of tasks.filter((x) => x.subject === subj)) counts[t.num] = (counts[t.num] || 0) + 1;
+  const draw = async () => {
+    const my = ++req; shown = 0; total = 0; loading = false;
+    io?.disconnect(); io = null;
+    const sc = {}; for (const c of counts) if (c.subject === subj) sc[c.num] = c.n;
+    const subjTotal = Object.values(sc).reduce((x, n) => x + n, 0);
     mount($('#bank', view), h`
       <div class="num-grid num-grid-sm">
-        <button type="button" class="num-tile ${!num ? 'on' : ''}" data-num=""><b>Все</b><small>${tasks.filter((t) => t.subject === subj).length}</small></button>
+        <button type="button" class="num-tile ${!num ? 'on' : ''}" data-num=""><b>Все</b><small>${subjTotal}</small></button>
         ${Array.from({ length: MAX_NUM[subj] || 25 }, (_, i) => i + 1).map((n) => h`
-        <button type="button" class="num-tile ${+num === n ? 'on' : ''} ${counts[n] ? '' : 'empty'}" data-num="${n}"><b>${n}</b><small>${counts[n] || 0}</small></button>`)}</div>
-      ${list.length ? h`
-        <div class="feed-head"><h2>${num ? `${subj}: задание № ${num}` : `${subj}: все задания`}</h2>
+        <button type="button" class="num-tile ${+num === n ? 'on' : ''} ${sc[n] ? '' : 'empty'}" data-num="${n}"><b>${n}</b><small>${sc[n] || 0}</small></button>`)}</div>
+      <div id="feed-box"><div class="loading-block"><span class="spin"></span></div></div>`);
+    $$('[data-num]', view).forEach((b) => b.addEventListener('click', () => {
+      num = b.dataset.num; store.set('trainer-num', num); draw();
+      $('#feed-box', view)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    let res;
+    try { res = await api.page('oge_tasks', { ...query(), from: 0, to: PAGE - 1 }); }
+    catch (e) { if (my === req) mount($('#feed-box', view), h`<div class="card error-card"><p>${e.message}</p><button class="btn btn-soft" id="retry-bank">Повторить</button></div>`); $('#retry-bank', view)?.addEventListener('click', draw); return; }
+    if (my !== req) return;
+    total = res.count;
+    mount($('#feed-box', view), total ? h`
+        <div class="feed-head"><h2>${num ? `${subjLabel(subj)}: задание № ${num}` : `${subjLabel(subj)}: все задания`}</h2>
           <span class="muted small" id="feed-count"></span>
           <button type="button" class="btn btn-ghost btn-sm" id="reveal-all">Показать все ответы</button></div>
         <div id="feed" class="feed"></div>
         <button type="button" class="btn btn-soft btn-block" id="feed-more">Показать ещё</button>
         <div id="feed-sentinel"></div>`
-      : empty(tasks.length ? 'Нет задач с таким фильтром' : 'Банк пуст — добавьте задачи или загрузите из Excel', I.target)}`);
-    shown = 0;
-    if (list.length) {
-      more();
-      $('#feed-more', view).addEventListener('click', more);
-      // автодогрузка при прокрутке вниз
-      if ('IntersectionObserver' in window) {
-        const io = new IntersectionObserver((es) => { if (es[0].isIntersecting && shown < list.length) more(); }, { rootMargin: '600px' });
-        io.observe($('#feed-sentinel', view));
-      }
-      $('#reveal-all', view).addEventListener('click', (e) => {
-        const on = e.target.dataset.on !== '1'; e.target.dataset.on = on ? '1' : '';
-        e.target.textContent = on ? 'Скрыть все ответы' : 'Показать все ответы';
-        $$('#feed [data-answer]', view).forEach((x) => { x.hidden = !on; });
-        $$('#feed [data-toggle="answer"]', view).forEach((b) => { b.textContent = on ? 'Скрыть ответ' : 'Показать ответ'; b.classList.toggle('on', on); });
-      });
+      : empty(grandTotal ? 'Нет задач с таким фильтром' : 'Банк пуст — добавьте задачи или загрузите из Excel', I.target));
+    if (!total) return;
+    put(res.rows);
+    $('#feed-more', view).addEventListener('click', more);
+    if ('IntersectionObserver' in window) {     // автодогрузка при прокрутке (один наблюдатель, отключается при смене фильтра)
+      io = new IntersectionObserver((es) => { if (es[0].isIntersecting) more(); }, { rootMargin: '600px' });
+      io.observe($('#feed-sentinel', view));
     }
-    $$('[data-num]', view).forEach((b) => b.addEventListener('click', () => {
-      num = b.dataset.num; store.set('trainer-num', num); draw();
-      $('.feed-head', view)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }));
+    $('#reveal-all', view).addEventListener('click', (e) => {
+      const on = e.target.dataset.on !== '1'; e.target.dataset.on = on ? '1' : '';
+      e.target.textContent = on ? 'Скрыть все ответы' : 'Показать все ответы';
+      $$('#feed [data-answer]', view).forEach((x) => { x.hidden = !on; });
+      $$('#feed [data-toggle="answer"]', view).forEach((b) => { b.textContent = on ? 'Скрыть ответ' : 'Показать ответ'; b.classList.toggle('on', on); });
+    });
   };
 
   mount($('#tab-body', view), h`
     <div class="toolbar">${subjectSeg(subj)}<input type="search" id="tq" placeholder="Поиск по теме и условию" aria-label="Поиск">
       <button class="btn btn-ghost" id="imp">${I.upload} Импорт из Excel</button>
       <button class="btn btn-primary" id="addt">${I.plus} Задача</button></div>
-    <p class="hint">Всего в банке: ${plural(tasks.length, 'задача', 'задачи', 'задач')}. Выберите номер — откроется лента задач с полными условиями. Ответ и решение — по кнопкам. Отмечайте галочками, чтобы составить вариант.</p>
+    <p class="hint">Всего в банке: ${plural(grandTotal, 'задача', 'задачи', 'задач')}. Выберите номер — откроется лента задач с полными условиями. Ответ и решение — по кнопкам. Отмечайте галочками, чтобы составить вариант.</p>
     <div id="bank"></div>
     <div class="select-bar" id="bbar" hidden><span id="bbar-n"></span>
       <button class="btn btn-primary btn-sm" id="bmake">${I.target} Составить вариант</button>
@@ -428,7 +479,7 @@ async function tutorBank(view, ctx) {
     subj = b.dataset.subj; store.set('trainer-subj', subj); num = ''; store.set('trainer-num', '');
     $$('[data-subj]', view).forEach((x) => x.classList.toggle('on', x === b)); draw();
   }));
-  let timer; $('#tq', view).addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(draw, 200); });
+  let timer; $('#tq', view).addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(draw, 300); });
   $('#addt', view).addEventListener('click', () => taskForm(ctx, null, { subject: subj, num: +num || undefined }));
   $('#imp', view).addEventListener('click', () => importForm(ctx));
   draw();
@@ -437,7 +488,8 @@ async function tutorBank(view, ctx) {
 async function tutorSets(view, ctx, filterSid = '') {
   const { api } = ctx;
   const [sets, students, attempts, templates] = await Promise.all([
-    api.select('oge_sets', { order: 'created_at', asc: false }), api.select('students', { order: 'name' }), api.select('oge_attempts'),
+    api.select('oge_sets', { order: 'created_at', asc: false }), api.select('students', { order: 'name' }),
+    api.select('oge_attempts', { cols: 'id,task_id,set_id,points,created_at', notNull: ['set_id'] }),
     api.select('oge_templates', { order: 'created_at', asc: false }).catch(() => []),
   ]);
   const S = byId(students);
@@ -483,33 +535,32 @@ async function tutorResults(view, ctx, sidParam) {
   const students = await api.select('students', { eq: { status: 'active' }, order: 'name' });
   const sid = sidParam || store.get('trainer-res') || students[0]?.id;
   if (!sid) { mount($('#tab-body', view), empty('Нет учеников', I.users)); return; }
-  const [tasks, attempts] = await Promise.all([api.select('oge_tasks'), api.select('oge_attempts', { eq: { student_id: sid } })]);
+  const [counts, numStats] = await Promise.all([loadCounts(api), loadNumStats(api, sid)]);
   mount($('#tab-body', view), h`
     <div class="toolbar"><select id="rs" aria-label="Ученик">${students.map((s) => h`<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${s.name}</option>`)}</select></div>
     <div id="res"></div>`);
   $('#rs', view).addEventListener('change', (e) => { store.set('trainer-res', e.target.value); location.hash = `#/trainer/results/${e.target.value}`; });
-  mount($('#res', view), statsBlock(tasks, attempts, true));
+  mount($('#res', view), statsBlock(counts, numStats, true));
 }
 
 // Сетка номеров со статистикой (для преподавателя и ученика)
-function statsBlock(tasks, attempts, forTutor = false, linkFor = null) {
-  const T = byId(tasks);
-  const st = statsByNum(attempts, T);
-  const subjects = SUBJECTS.filter((s) => tasks.some((t) => t.subject === s));
+function statsBlock(counts, numStats, forTutor = false, linkFor = null, only = null) {
+  const total = {}; for (const c of counts) total[`${c.subject}|${c.num}`] = c.n;
+  const st = {}; for (const x of numStats) st[`${x.subject}|${x.num}`] = x;
+  const subjects = SUBJECTS.filter((s) => (!only || only.includes(s)) && counts.some((c) => c.subject === s));
   if (!subjects.length) return empty('В банке пока нет задач', I.target);
   return h`${subjects.map((subj) => {
-    const total = {}; for (const t of tasks.filter((x) => x.subject === subj)) total[t.num] = (total[t.num] || 0) + 1;
-    const nums = Array.from({ length: MAX_NUM[subj] || 25 }, (_, i) => i + 1).filter((n) => total[n] || st[`${subj}|${n}`]);
-    const all = Object.entries(st).filter(([k]) => k.startsWith(subj + '|'));
-    const tried = all.reduce((x, [, v]) => x + v.tried.size, 0), ok = all.reduce((x, [, v]) => x + v.ok.size, 0);
+    const nums = Array.from({ length: MAX_NUM[subj] || 25 }, (_, i) => i + 1).filter((n) => total[`${subj}|${n}`] || st[`${subj}|${n}`]);
+    const mine = numStats.filter((x) => x.subject === subj);
+    const tried = mine.reduce((x, v) => x + v.tried, 0), ok = mine.reduce((x, v) => x + v.ok, 0);
     return h`<section class="card trainer-card">
       <div class="card-head"><h2>${subjLabel(subj)}</h2><span class="muted small">${tried ? `решено верно ${ok} из ${tried} · ${pct(ok, tried)}%` : 'ещё не решал(а)'}</span></div>
       <div class="num-grid">${nums.map((n) => {
-        const x = st[`${subj}|${n}`]; const tr = x?.tried.size || 0; const p = pct(x?.ok.size || 0, tr);
-        const inner = h`<b>№${n}</b><small>${tr ? `${p}%` : `${total[n] || 0} задач`}</small>${tr ? h`<i>${x.ok.size}/${tr}</i>` : ''}`;
-        return linkFor && total[n]
+        const x = st[`${subj}|${n}`], tot = total[`${subj}|${n}`] || 0; const tr = x?.tried || 0; const p = pct(x?.ok || 0, tr);
+        const inner = h`<b>№${n}</b><small>${tr ? `${p}%` : `${tot} задач`}</small>${tr ? h`<i>${x.ok}/${tr}</i>` : ''}`;
+        return linkFor && tot
           ? h`<a class="num-tile ${levelCls(p, tr)}" href="${linkFor(subj, n)}">${inner}</a>`
-          : h`<div class="num-tile ${levelCls(p, tr)} ${total[n] ? '' : 'empty'}">${inner}</div>`;
+          : h`<div class="num-tile ${levelCls(p, tr)} ${tot ? '' : 'empty'}">${inner}</div>`;
       })}</div>
       ${forTutor ? h`<p class="hint">Зелёный — ≥80% верно, жёлтый — 50–79%, красный — меньше 50%. В плитке: % верных и сколько задач решено.</p>` : ''}
     </section>`;
@@ -518,10 +569,11 @@ function statsBlock(tasks, attempts, forTutor = false, linkFor = null) {
 
 async function tutorSetDetail(view, ctx, id) {
   const { api } = ctx;
-  const [[s], tasks, attempts, students] = await Promise.all([
-    api.select('oge_sets', { eq: { id } }), api.select('oge_tasks'), api.select('oge_attempts', { eq: { set_id: id } }), api.select('students'),
+  const [[s], attempts, students] = await Promise.all([
+    api.select('oge_sets', { eq: { id } }), api.select('oge_attempts', { eq: { set_id: id } }), api.select('students', { cols: 'id,name' }),
   ]);
   if (!s) return mount(view, empty('Вариант не найден', I.target));
+  const tasks = await api.select('oge_tasks', { cols: 'id,num,topic,answer_type,answer,max_points', eq: { id: s.task_ids } });
   const T = byId(tasks), S = byId(students);
   const last = {}; for (const a of attempts.sort((x, y) => (x.created_at > y.created_at ? 1 : -1))) last[a.task_id] = a;
   const pts = s.task_ids.reduce((x, tid) => x + (last[tid]?.points || 0), 0);
@@ -565,13 +617,20 @@ export async function trainerTutor(view, params, ctx) {
 // Развёрнутые решения на проверку — блок для страницы «Проверка»
 export async function trainerReviewBlock(ctx) {
   try {
-    const [atts, tasks, students, sets] = await Promise.all([
-      ctx.api.select('oge_attempts', { order: 'created_at' }), ctx.api.select('oge_tasks'), ctx.api.select('students'), ctx.api.select('oge_sets'),
+    // Только попытки без баллов (частичный индекс), а не все попытки всех учеников
+    const atts = await ctx.api.select('oge_attempts', { isNull: ['points'], order: 'created_at' });
+    if (!atts.length) return null;
+    const setIds = [...new Set(atts.map((a) => a.set_id).filter(Boolean))];
+    const [tasks, students, sets] = await Promise.all([
+      ctx.api.select('oge_tasks', { cols: CARD, eq: { id: [...new Set(atts.map((a) => a.task_id))] } }),
+      ctx.api.select('students', { cols: 'id,name' }),
+      setIds.length ? ctx.api.select('oge_sets', { cols: 'id,kind', eq: { id: setIds } }) : [],
     ]);
-    // в пробнике ученик мог отправить решение заново — проверяем только последнее
-    const newer = new Set(atts.map((a, k) => atts.slice(k + 1).some((b) => b.set_id && b.set_id === a.set_id && b.task_id === a.task_id) ? a.id : null));
+    // в пробнике ученик мог отправить решение заново — проверяем только последнее (один проход, O(n))
     const mock = new Set(sets.filter((x) => x.kind === 'mock').map((x) => x.id));
-    const pending = atts.filter((a) => a.points == null && !(mock.has(a.set_id) && newer.has(a.id)));
+    const latest = {};
+    for (const a of atts) if (mock.has(a.set_id)) latest[`${a.set_id}|${a.task_id}`] = a.id;   // atts отсортированы по времени
+    const pending = atts.filter((a) => !mock.has(a.set_id) || latest[`${a.set_id}|${a.task_id}`] === a.id);
     if (!pending.length) return null;
     const T = byId(tasks), S = byId(students);
     return {
@@ -618,13 +677,13 @@ async function familyHome(view, ctx) {
   const { api } = ctx;
   const sid = ctx.studentId;
   const student = ctx.students.find((s) => s.id === sid);
-  const [tasks, sets, attempts] = await Promise.all([
-    api.select('oge_tasks_public', { order: 'num' }),
+  // Счётчики по номерам и статистика — с сервера (раньше сюда грузился весь банк, ~6 МБ)
+  const [counts, numStats, sets, attempts] = await Promise.all([
+    loadCounts(api), loadNumStats(api, sid),
     api.select('oge_sets', { eq: { student_id: sid }, order: 'created_at', asc: false }).then((r) => r.filter((x) => x.kind !== 'mock')),
-    api.select('oge_attempts', { eq: { student_id: sid } }),
+    api.select('oge_attempts', { cols: 'task_id,set_id', eq: { student_id: sid }, notNull: ['set_id'] }),
   ]);
-  const subs = (student?.subjects || SUBJECTS).filter((s) => tasks.some((t) => t.subject === s));
-  const visible = tasks.filter((t) => subs.includes(t.subject));
+  const subs = (student?.subjects?.length ? student.subjects : SUBJECTS).filter((s) => counts.some((c) => c.subject === s));
   mount(view, h`
     ${pageHero({ eyebrow: 'Банк задач', title: isStudent(ctx) ? 'Решай и ' : 'Банк задач: ', accent: isStudent(ctx) ? 'тренируйся' : student?.name || '',
       sub: isStudent(ctx) ? 'Краткий ответ проверяется сразу, после попытки откроется решение.' : 'Здесь видно, какие номера получаются, а какие нужно подтянуть.' })}
@@ -637,7 +696,7 @@ async function familyHome(view, ctx) {
         <span class="badge ${done === n ? 'ok' : s.due_at && new Date(s.due_at) < new Date() ? 'bad' : done ? 'info' : 'warn'}">${done === n ? 'готово' : `${done}/${n}`}</span></a>`;
     })}</div>` : empty('Пока ничего не задано', I.target)}
     <div class="section-head"><h2>Тренировка по номерам</h2></div>
-    ${statsBlock(visible, attempts, false, (subj, n) => `#/trainer/num/${encodeURIComponent(subj)}/${n}`)}
+    ${statsBlock(counts, numStats, false, (subj, n) => `#/trainer/num/${encodeURIComponent(subj)}/${n}`, subs)}
     <p class="hint">Цвет плитки: зелёный — ≥80% верно, жёлтый — 50–79%, красный — меньше 50%.</p>`);
 }
 
@@ -703,7 +762,7 @@ async function solver(view, ctx, { list, setId, title, back, startIndex = 0 }) {
     } catch (e) { toast(e.message, 'error'); if (btn) { btn.disabled = false; btn.classList.remove('loading'); } }
   };
   const showResult = async (zone, t, a) => {
-    let rev = a._reveal;
+    let rev = a._reveal?.pending ? null : a._reveal;   // развёрнутое решение на проверке — ответ пока не показываем
     if (!rev && a.points != null) { try { rev = await api.rpc('trainer_reveal', { p_task: t.id }); } catch { rev = null; } }
     const ok = a.is_correct || (a.points != null && a.points >= a.max_points);
     mount(zone, h`

@@ -119,6 +119,20 @@ export function createDemoApi() {
       : db.student_memberships.filter((m) => m.user_id === me.id).map((m) => m.student_id);
   const isParentOf = (sid) => db.student_memberships.some((m) => m.user_id === me.id && m.student_id === sid && m.role === 'parent');
 
+  // Те же фильтры, что у настоящего API: eq, isNull, notNull, search (без учёта регистра), order
+  function filterRows(table, { eq = {}, isNull = [], notNull = [], gte = {}, gt = {}, lt = {}, lte = {}, search, order, asc = true } = {}) {
+    const q = search?.q?.trim().toLowerCase();
+    let rows = visible(table).filter((r) =>
+      Object.entries(eq).every(([k, v]) => (Array.isArray(v) ? v.includes(r[k]) : r[k] === v))
+      && isNull.every((c) => r[c] == null) && notNull.every((c) => r[c] != null)
+      && Object.entries(gte).every(([c, v]) => r[c] >= v) && Object.entries(gt).every(([c, v]) => r[c] > v)
+      && Object.entries(lt).every(([c, v]) => r[c] < v) && Object.entries(lte).every(([c, v]) => r[c] <= v)
+      && (!q || search.fields.some((f) => String(r[f] ?? '').toLowerCase().includes(q))));
+    const ord = Array.isArray(order) ? order : order ? [[order, asc]] : [];
+    if (ord.length) rows = [...rows].sort((a, b) => { for (const [c, up] of ord) { if ((a[c] ?? '') > (b[c] ?? '')) return up ? 1 : -1; if ((a[c] ?? '') < (b[c] ?? '')) return up ? -1 : 1; } return 0; });
+    return rows;
+  }
+
   function visible(table) {
     if (table === 'lessons_public') {
       return db.lessons.map((l) => ({ ...l, plan: undefined, report: l.report_published ? l.report : '' }))
@@ -132,6 +146,10 @@ export function createDemoApi() {
       }).filter((b) => me.role === 'tutor' || isParentOf(b.student_id));
     }
     if (table === 'oge_tasks_public') return db.oge_tasks.map(({ answer, solution, solution_image_path, source, ...t }) => t);
+    if (table === 'oge_task_counts') {
+      const c = {}; for (const t of db.oge_tasks) c[`${t.subject}|${t.num}`] = (c[`${t.subject}|${t.num}`] || 0) + 1;
+      return Object.entries(c).map(([k, n]) => ({ subject: k.split('|')[0], num: +k.split('|')[1], n }));
+    }
     const rows = db[table];
     if (!rows) throw new Error(`Нет таблицы ${table}`);
     if (table === 'app_settings') return rows;
@@ -160,13 +178,17 @@ export function createDemoApi() {
     async updatePassword() { await tick(); },
     async me() { return me && clone(me); },
 
-    async select(table, { eq = {}, order, asc = true, limit } = {}) {
+    async select(table, opts = {}) {
       await tick();
-      let rows = visible(table).filter((r) =>
-        Object.entries(eq).every(([k, v]) => (Array.isArray(v) ? v.includes(r[k]) : r[k] === v)));
-      if (order) rows = [...rows].sort((a, b) => ((a[order] ?? '') > (b[order] ?? '') ? 1 : -1) * (asc ? 1 : -1));
+      const { limit } = opts;
+      let rows = filterRows(table, opts);
       if (limit) rows = rows.slice(0, limit);
       return clone(rows);
+    },
+    async page(table, { from = 0, to = 24, ...opts } = {}) {
+      await tick();
+      const rows = filterRows(table, opts);
+      return { rows: clone(rows.slice(from, to + 1)), count: rows.length };
     },
     async insertMany(table, rows) { const out = []; for (const r of rows) out.push(await this.insert(table, r)); return out; },
     async dumpAll(table) { return clone(visible(table)); },
@@ -249,6 +271,24 @@ export function createDemoApi() {
         const s = { id: uid(), student_id: sid, subject: subj, kind: 'mock', title: 'Пробник ОГЭ (демо)', task_ids: ids,
           duration_min: subj === 'Математика' ? 235 : 180, finished_at: null, created_at: new Date().toISOString() };
         db.oge_sets.push(s); return s.id;
+      }
+      if (fn === 'oge_num_stats') {
+        const st = {};
+        for (const a of db.oge_attempts.filter((x) => x.student_id === args.p_student)) {
+          const t = db.oge_tasks.find((x) => x.id === a.task_id); if (!t) continue;
+          const k = `${t.subject}|${t.num}`; const v = (st[k] ||= { subject: t.subject, num: t.num, tried: new Set(), ok: new Set() });
+          v.tried.add(a.task_id); if (a.is_correct || (a.points != null && a.points >= a.max_points)) v.ok.add(a.task_id);
+        }
+        return Object.values(st).map((v) => ({ subject: v.subject, num: v.num, tried: v.tried.size, ok: v.ok.size }));
+      }
+      if (fn === 'oge_autopick') {
+        const have = new Set(args.p_have || []); const out = [];
+        for (let n = Math.min(args.p_from, args.p_to); n <= Math.max(args.p_from, args.p_to); n++) {
+          const pool = db.oge_tasks.filter((t) => t.subject === args.p_subject && t.num === n);
+          const need = args.p_per - pool.filter((t) => have.has(t.id)).length;
+          pool.filter((t) => !have.has(t.id)).sort(() => Math.random() - 0.5).slice(0, Math.max(0, need)).forEach((t) => out.push(t.id));
+        }
+        return out;
       }
       if (fn === 'consent_state') return { version: 'demo', pd: me.role === 'tutor' || !!db.consents?.includes(me.id) };
       if (fn === 'consent_accept') { (db.consents ||= []).push(me.id); return { ok: true }; }

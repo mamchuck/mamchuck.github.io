@@ -1,5 +1,5 @@
 // Заявки: лиды из диагностики ОГЭ (таблица xray_sessions). Статус, контакт, готовое сообщение.
-import { h, mount, $, $$, I, toast, fmtDT, empty, pageHero } from './ui.js?v=202610221052';
+import { h, mount, $, $$, I, toast, fmtDT, empty, pageHero } from './ui.js?v=202610221759';
 
 const STATUS = [
   ['new', 'Новый'], ['contacted', 'Написал'], ['trial', 'Пробное'], ['student', 'Ученик'], ['lost', 'Отказ'],
@@ -18,7 +18,9 @@ function message(s) {
 export async function leadsPage(view, _p, ctx) {
   let rows;
   try {
-    rows = await ctx.api.select('xray_sessions', { order: 'created_at', asc: false });
+    // только завершённые и без тяжёлого поля answers; последние 1000 — список не растёт бесконечно
+    rows = await ctx.api.select('xray_sessions', { cols: 'id,created_at,finished_at,subject,result,tg_chat_id,tg_name,tg_username,lead_status,trial_requested_at',
+      notNull: ['finished_at'], order: 'created_at', asc: false, limit: 1000 });
   } catch {
     mount(view, h`${pageHero({ eyebrow: 'Заявки', title: 'Лиды из ', accent: 'диагностики' })}
       ${empty('Раздел включится после обновления базы (supabase/013_leads.sql).', I.inbox)}`);
