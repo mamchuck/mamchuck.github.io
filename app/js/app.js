@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js?v=202610221759';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610221759';
-import { tutorRoutes, tutorNav } from './tutor.js?v=202610221759';
-import { backupCard, bindBackup } from './backup.js?v=202610221759';
-import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610221759';
-import { familyRoutes, familyNav } from './family.js?v=202610221759';
+import { CONFIG, TUTOR } from './config.js?v=202610221803';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610221803';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202610221803';
+import { backupCard, bindBackup } from './backup.js?v=202610221803';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610221803';
+import { familyRoutes, familyNav } from './family.js?v=202610221803';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js?v=202610221759')).createApi(CONFIG)
-  : (await import('./demo.js?v=202610221759')).createDemoApi();
+  ? (await import('./api.js?v=202610221803')).createApi(CONFIG)
+  : (await import('./demo.js?v=202610221803')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };
@@ -269,6 +269,7 @@ const settingsView = async (view) => {
   }));
 };
 
+let routeSeq = 0;
 export async function route() {
   if (!ctx.me || ctx.me.role === 'pending') return;
   const view = $('#view');
@@ -278,16 +279,22 @@ export async function route() {
   const fn = routes[name] || routes[''];
   const navName = routes[name] ? ({ student: 'students', hw: 'homework' }[name] ?? name) : '';
   $$('[data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === navName));
-  mount(view, spinner());
+  // Каждый переход рисует в свой контейнер: запоздавший ответ прошлого раздела попадёт в отключённый
+  // контейнер и не перерисует уже открытый раздел (гонка при быстром переключении).
+  const my = ++routeSeq;
+  const box = document.createElement('div');
+  view.replaceChildren(box);
+  mount(box, spinner());
   try {
-    await fn(view, params, ctx);
+    await fn(box, params, ctx);
   } catch (e) {
+    if (my !== routeSeq) return;
     console.error(e);
-    mount(view, h`<div class="card error-card"><h2>Не удалось загрузить</h2><p class="muted">${e.message}</p>
+    mount(box, h`<div class="card error-card"><h2>Не удалось загрузить</h2><p class="muted">${e.message}</p>
       <button class="btn btn-soft" id="retry">Повторить</button></div>`);
-    $('#retry').addEventListener('click', route);
+    $('#retry', box).addEventListener('click', route);
   }
-  view.scrollTop = 0; window.scrollTo(0, 0);
+  if (my === routeSeq) { view.scrollTop = 0; window.scrollTo(0, 0); }
 }
 ctx.refresh = route;
 
