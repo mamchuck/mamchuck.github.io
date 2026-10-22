@@ -156,7 +156,10 @@ export const LEVELS = [
 ];
 export const levelLabel = (v) => [...LEVELS].reverse().find(([n]) => v >= n)[1];
 
-export const SUBJECTS = ['Математика', 'Физика'];
+export const SUBJECTS = ['Математика', 'Физика', 'Профильная математика'];
+// Экзамен по предмету: ОГЭ — математика и физика, ЕГЭ — профильная математика
+export const EXAM = { 'Математика': 'ОГЭ', 'Физика': 'ОГЭ', 'Профильная математика': 'ЕГЭ' };
+export const subjLabel = (s) => ({ 'Математика': 'ОГЭ · Математика', 'Физика': 'ОГЭ · Физика', 'Профильная математика': 'ЕГЭ · Профиль' }[s] || s);
 
 export function safeFileName(file) {
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);

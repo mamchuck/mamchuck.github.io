@@ -1,10 +1,10 @@
-// Тренажёр ОГЭ: банк задач (преподаватель), решение по номерам и варианты (ученик), статистика.
+// Банк задач ОГЭ (математика, физика) и ЕГЭ (профильная математика): банк (преподаватель), решение по номерам и варианты (ученик), статистика.
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
-  h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero,
-} from './ui.js?v=202610211150';
+  h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero, subjLabel,
+} from './ui.js?v=202610221052';
 
-const MAX_NUM = { 'Математика': 25, 'Физика': 22 };
+const MAX_NUM = { 'Математика': 25, 'Физика': 22, 'Профильная математика': 20 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
 const pct = (a, b) => (b ? Math.round((100 * a) / b) : 0);
 const isStudent = (ctx) => ctx.me.role === 'student';
@@ -16,7 +16,7 @@ const store = {
 async function tableReady(api) {
   try { await api.select('oge_sets', { limit: 1 }); return true; } catch { return false; }
 }
-const notReady = (view) => mount(view, h`${pageHero({ eyebrow: 'Тренажёр ОГЭ', title: 'Скоро ', accent: 'здесь' })}
+const notReady = (view) => mount(view, h`${pageHero({ eyebrow: 'Банк задач', title: 'Скоро ', accent: 'здесь' })}
   ${empty('Тренажёр включится после обновления базы (supabase/005_trainer.sql).', I.target)}`);
 
 export async function img(api, path, cls = 'task-img') {
@@ -46,7 +46,7 @@ function statsByNum(attempts, tasksById) {
 }
 const levelCls = (p, tried) => (!tried ? '' : p >= 80 ? 'lv-ok' : p >= 50 ? 'lv-mid' : 'lv-bad');
 
-const subjectSeg = (cur, list = SUBJECTS) => h`<div class="seg seg-inline">${list.map((s) => h`<button type="button" data-subj="${s}" class="${s === cur ? 'on' : ''}">${s}</button>`)}</div>`;
+const subjectSeg = (cur, list = SUBJECTS) => h`<div class="seg seg-inline">${list.map((s) => h`<button type="button" data-subj="${s}" class="${s === cur ? 'on' : ''}">${subjLabel(s)}</button>`)}</div>`;
 
 // ============================================================
 // Преподаватель
@@ -503,7 +503,7 @@ function statsBlock(tasks, attempts, forTutor = false, linkFor = null) {
     const all = Object.entries(st).filter(([k]) => k.startsWith(subj + '|'));
     const tried = all.reduce((x, [, v]) => x + v.tried.size, 0), ok = all.reduce((x, [, v]) => x + v.ok.size, 0);
     return h`<section class="card trainer-card">
-      <div class="card-head"><h2>${subj}</h2><span class="muted small">${tried ? `решено верно ${ok} из ${tried} · ${pct(ok, tried)}%` : 'ещё не решал(а)'}</span></div>
+      <div class="card-head"><h2>${subjLabel(subj)}</h2><span class="muted small">${tried ? `решено верно ${ok} из ${tried} · ${pct(ok, tried)}%` : 'ещё не решал(а)'}</span></div>
       <div class="num-grid">${nums.map((n) => {
         const x = st[`${subj}|${n}`]; const tr = x?.tried.size || 0; const p = pct(x?.ok.size || 0, tr);
         const inner = h`<b>№${n}</b><small>${tr ? `${p}%` : `${total[n] || 0} задач`}</small>${tr ? h`<i>${x.ok.size}/${tr}</i>` : ''}`;
@@ -554,7 +554,7 @@ export async function trainerTutor(view, params, ctx) {
   if (tab === 'set') return tutorSetDetail(view, ctx, arg);
   const TABS = [['bank', 'Банк задач'], ['sets', 'Варианты'], ['results', 'Результаты учеников']];
   mount(view, h`
-    ${pageHero({ eyebrow: 'Тренажёр ОГЭ', title: 'Банк задач и ', accent: 'варианты', sub: 'Краткие ответы проверяются автоматически, развёрнутые — в разделе «Проверка».' })}
+    ${pageHero({ eyebrow: 'ОГЭ · ЕГЭ', title: 'Банк задач и ', accent: 'варианты', sub: 'ОГЭ — математика и физика, ЕГЭ — профильная математика. Краткие ответы проверяются автоматически, развёрнутые — в разделе «Проверка».' })}
     <nav class="tabs">${TABS.map(([t, l]) => h`<a href="#/trainer${t === 'bank' ? '' : '/' + t}" class="${t === tab ? 'on' : ''}">${l}</a>`)}</nav>
     <div id="tab-body">${h`<div class="loading-block"><span class="spin"></span></div>`}</div>`);
   if (tab === 'sets') return tutorSets(view, ctx);
@@ -575,7 +575,7 @@ export async function trainerReviewBlock(ctx) {
     if (!pending.length) return null;
     const T = byId(tasks), S = byId(students);
     return {
-      html: h`<div class="section-head"><h2>Тренажёр: развёрнутые решения · ${pending.length}</h2></div>
+      html: h`<div class="section-head"><h2>Банк задач: развёрнутые решения · ${pending.length}</h2></div>
         <div class="list card">${pending.map((a) => h`<div class="item"><span class="num-pill">№${T[a.task_id]?.num}</span>
           <div class="item-main"><div class="item-title">${S[a.student_id]?.name} · ${T[a.task_id]?.subject}</div>
             <div class="item-meta">${mock.has(a.set_id) ? '🧪 пробник · ' : ''}${T[a.task_id]?.topic || ''} · ${fmtDT(a.created_at)}</div></div>
@@ -626,14 +626,14 @@ async function familyHome(view, ctx) {
   const subs = (student?.subjects || SUBJECTS).filter((s) => tasks.some((t) => t.subject === s));
   const visible = tasks.filter((t) => subs.includes(t.subject));
   mount(view, h`
-    ${pageHero({ eyebrow: 'Тренажёр ОГЭ', title: isStudent(ctx) ? 'Решай и ' : 'Тренажёр: ', accent: isStudent(ctx) ? 'тренируйся' : student?.name || '',
-      sub: isStudent(ctx) ? 'Краткий ответ проверяется сразу, после попытки откроется решение.' : 'Здесь видно, какие номера ОГЭ получаются, а какие нужно подтянуть.' })}
+    ${pageHero({ eyebrow: 'Банк задач', title: isStudent(ctx) ? 'Решай и ' : 'Банк задач: ', accent: isStudent(ctx) ? 'тренируйся' : student?.name || '',
+      sub: isStudent(ctx) ? 'Краткий ответ проверяется сразу, после попытки откроется решение.' : 'Здесь видно, какие номера получаются, а какие нужно подтянуть.' })}
     <div class="section-head"><h2>Задано преподавателем</h2></div>
     ${sets.length ? h`<div class="list card">${sets.map((s) => {
       const done = new Set(attempts.filter((a) => a.set_id === s.id).map((a) => a.task_id)).size, n = s.task_ids.length;
       return h`<a class="item item-link" href="#/trainer/set/${s.id}"><div class="item-main">
         <div class="item-title">${s.title}</div>
-        <div class="item-meta">${s.subject} · ${plural(n, 'задача', 'задачи', 'задач')}${s.due_at ? ` · до ${fmtD(s.due_at)}` : ''}</div></div>
+        <div class="item-meta">${subjLabel(s.subject)} · ${plural(n, 'задача', 'задачи', 'задач')}${s.due_at ? ` · до ${fmtD(s.due_at)}` : ''}</div></div>
         <span class="badge ${done === n ? 'ok' : s.due_at && new Date(s.due_at) < new Date() ? 'bad' : done ? 'info' : 'warn'}">${done === n ? 'готово' : `${done}/${n}`}</span></a>`;
     })}</div>` : empty('Пока ничего не задано', I.target)}
     <div class="section-head"><h2>Тренировка по номерам</h2></div>
@@ -656,7 +656,7 @@ async function solver(view, ctx, { list, setId, title, back, startIndex = 0 }) {
     const t = list[i];
     const a = lastBy[t.id];
     mount(view, h`
-      <a href="${back}" class="back">${I.back} Тренажёр</a>
+      <a href="${back}" class="back">${I.back} Банк задач</a>
       <div class="page-head"><div><h1>${title}</h1><p class="muted">Задача ${i + 1} из ${list.length}</p></div></div>
       ${list.length > 1 ? h`<div class="steps">${list.map(chip)}</div>` : ''}
       <section class="card task-card">
@@ -725,7 +725,7 @@ async function solver(view, ctx, { list, setId, title, back, startIndex = 0 }) {
     $('[data-prev]', zone)?.addEventListener('click', () => { i--; draw(); });
     $('[data-next]', zone)?.addEventListener('click', () => { i++; draw(); });
   };
-  if (!list.length) return mount(view, h`<a href="${back}" class="back">${I.back} Тренажёр</a>${empty('Задач нет', I.target)}`);
+  if (!list.length) return mount(view, h`<a href="${back}" class="back">${I.back} Банк задач</a>${empty('Задач нет', I.target)}`);
   draw();
 }
 

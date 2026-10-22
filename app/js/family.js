@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610211150';
-import { TUTOR } from './config.js?v=202610211150';
-import { trainerFamily } from './trainer.js?v=202610211150';
-import { mockView } from './mock.js?v=202610211150';
-import { mountTelegramBanner } from './telegram.js?v=202610211150';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610211150';
+} from './ui.js?v=202610221052';
+import { TUTOR } from './config.js?v=202610221052';
+import { trainerFamily } from './trainer.js?v=202610221052';
+import { mockView } from './mock.js?v=202610221052';
+import { mountTelegramBanner } from './telegram.js?v=202610221052';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610221052';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -15,13 +15,13 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'payments', label: 'Оплаты', icon: I.wallet },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
-  { path: 'trainer', label: 'Тренажёр ОГЭ', short: 'Тренажёр', icon: I.target },
+  { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
   { path: 'materials', label: 'Материалы', icon: I.folder },
 ] : [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
-  { path: 'trainer', label: 'Тренажёр ОГЭ', short: 'Тренажёр', icon: I.target },
+  { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'progress', label: 'Прогресс', icon: I.chart },

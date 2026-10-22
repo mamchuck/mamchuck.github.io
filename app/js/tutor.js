@@ -2,15 +2,15 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610211150';
+} from './ui.js?v=202610221052';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610211150';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610211150';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610211150';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610211150';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610211150';
-import { leadsPage } from './leads.js?v=202610211150';
+} from './library.js?v=202610221052';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610221052';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610221052';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610221052';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610221052';
+import { leadsPage } from './leads.js?v=202610221052';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -18,7 +18,7 @@ export const tutorNav = [
   { path: 'students', label: 'Ученики', icon: I.users },
   { path: 'schedule', label: 'Расписание', icon: I.calendar },
   { path: 'review', label: 'Проверка', icon: I.check },
-  { path: 'trainer', label: 'Тренажёр ОГЭ', short: 'Тренажёр', icon: I.target },
+  { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'library', label: 'Библиотека', icon: I.folder },
 ];
 
@@ -740,7 +740,7 @@ const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const HOUR_PX = 56;
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-const subjCls = (s) => ({ 'Математика': 'math', 'Физика': 'phys' }[s] || 'other');
+const subjCls = (s) => ({ 'Математика': 'math', 'Физика': 'phys', 'Профильная математика': 'ege' }[s] || 'other');
 function mondayOf(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
 function parseDay(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
 function weekTitle(mon) {
