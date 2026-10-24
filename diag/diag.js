@@ -1,7 +1,7 @@
 // «Диагностика ОГЭ и ЕГЭ»: 10 задач без регистрации → прогноз (оценка ОГЭ / тестовые баллы ЕГЭ) → разбор в Telegram.
 // Проверка ответов — только в базе (xray_submit), ответы на страницу не приходят.
 import { CONFIG } from '../app/js/config.js';
-import { startFx } from './fx.js?v=202610241923';
+import { startFx } from './fx.js?v=202610242111';
 
 const fx = startFx();                         // шейдерный фон (без WebGL — просто пропускается)
 const EGE = 'Профильная математика';
@@ -197,10 +197,16 @@ function resultView(r) {
   });
   // Компьютер: QR-код, чтобы открыть план на телефоне
   if (matchMedia('(pointer: fine) and (min-width: 720px)').matches) showQr(startLink);
-  // Липкая кнопка видна, только пока основная за экраном
+  // Липкая кнопка видна, только пока основная за экраном и подвал (договор, оферта) ещё не показался
   const main = root.querySelector('.x-tg-btn:not(.x-sticky)'), sticky = root.querySelector('.x-sticky');
+  const foot = document.querySelector('.l-foot');
   if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([e]) => sticky.classList.toggle('show', !e.isIntersecting)).observe(main);
+    const seen = new Map();
+    const io = new IntersectionObserver((es) => {
+      for (const e of es) seen.set(e.target, e.isIntersecting);
+      sticky.classList.toggle('show', !seen.get(main) && !seen.get(foot));
+    }, { rootMargin: '0px 0px 40px 0px' });
+    io.observe(main); if (foot) io.observe(foot);
   }
 
   root.querySelector('[data-again]').addEventListener('click', () => { history.replaceState(null, '', location.pathname + location.search); pickView(); });

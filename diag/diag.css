@@ -133,3 +133,14 @@
 .x-ring { transition: filter .45s; }
 .x-result:hover .x-ring { filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--c, var(--accent)) 35%, transparent)); }
 #x .card, .x-card { backdrop-filter: saturate(1.2); }
+
+/* Шапка диагностики — плавающая «таблетка» из стекла поверх сияния */
+.l-head.l-float { top: 12px; margin: 12px 0 0; padding: 10px 10px 10px 18px; border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 40%, transparent) inset, 0 10px 30px rgba(15, 40, 70, .10); }
+.l-head.l-float .btn { border-radius: 14px; }
+@media (max-width: 560px) { .l-head.l-float { top: 8px; margin-top: 8px; padding: 8px 8px 8px 14px; border-radius: 18px; } }
+/* Подвал с запасом снизу, чтобы липкая кнопка не налезала на ссылки при уезде */
+body:has(.x-sticky) .l-foot { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
