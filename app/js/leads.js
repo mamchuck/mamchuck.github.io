@@ -1,16 +1,19 @@
 // Заявки: лиды из диагностики ОГЭ (таблица xray_sessions). Статус, контакт, готовое сообщение.
-import { h, mount, $, $$, I, toast, fmtDT, empty, pageHero } from './ui.js?v=202610221803';
+import { h, mount, $, $$, I, toast, fmtDT, empty, pageHero } from './ui.js?v=202610241923';
 
 const STATUS = [
   ['new', 'Новый'], ['contacted', 'Написал'], ['trial', 'Пробное'], ['student', 'Ученик'], ['lost', 'Отказ'],
 ];
 const GRADE_CLS = { 2: 'bad', 3: 'warn', 4: 'info', 5: 'ok' };
+// ЕГЭ — прогноз в тестовых баллах, ОГЭ — оценка
+const isEge = (s) => s.subject === 'Профильная математика';
+const score = (s) => (isEge(s) ? `≈ ${s.result?.test} баллов` : `«${s.result?.grade}»`);
 const weak = (s) => (s.result?.items || []).filter((i) => !i.ok).map((i) => i.num);
 
 function message(s) {
   const w = weak(s);
-  return `Привет! Это Илья, репетитор по математике и физике. Посмотрел твою диагностику ОГЭ по предмету «${s.subject}»: `
-    + `прогноз «${s.result?.grade}»${w.length ? `, просели задания № ${w.join(', ')}` : ', ошибок нет — отличный результат'}. `
+  return `Привет! Это Илья, репетитор по математике и физике. Посмотрел твою диагностику ${isEge(s) ? 'ЕГЭ' : 'ОГЭ'} по предмету «${s.subject}»: `
+    + `прогноз ${score(s)}${w.length ? `, просели задания № ${w.join(', ')}` : ', ошибок нет — отличный результат'}. `
     + `${w.length ? 'Это закрывается за 2–3 недели. ' : ''}Давай разберём на бесплатном пробном занятии — 30 минут онлайн. `
     + 'Когда удобно: завтра или послезавтра вечером?';
 }
@@ -41,8 +44,8 @@ export async function leadsPage(view, _p, ctx) {
         const contact = s.tg_username ? `https://t.me/${s.tg_username}` : s.tg_chat_id ? `tg://user?id=${s.tg_chat_id}` : null;
         return h`<div class="card lead" data-id="${s.id}">
           <div class="lead-top">
-            <span class="badge ${GRADE_CLS[g] || ''}">прогноз «${g}»</span>
-            <b>ОГЭ · ${s.subject}</b>
+            <span class="badge ${GRADE_CLS[g] || ''}">прогноз ${score(s)}</span>
+            <b>${isEge(s) ? 'ЕГЭ' : 'ОГЭ'} · ${s.subject}</b>
             ${s.trial_requested_at ? h`<span class="badge warn">🔥 хочет пробное</span>` : ''}
             <span class="hint lead-date">${fmtDT(s.created_at)}</span>
           </div>

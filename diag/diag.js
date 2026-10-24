@@ -1,6 +1,11 @@
-// «Диагностика ОГЭ»: 10 задач без регистрации → прогноз оценки → полный разбор в Telegram.
+// «Диагностика ОГЭ и ЕГЭ»: 10 задач без регистрации → прогноз (оценка ОГЭ / тестовые баллы ЕГЭ) → разбор в Telegram.
 // Проверка ответов — только в базе (xray_submit), ответы на страницу не приходят.
 import { CONFIG } from '../app/js/config.js';
+import { startFx } from './fx.js?v=202610241923';
+
+const fx = startFx();                         // шейдерный фон (без WebGL — просто пропускается)
+const EGE = 'Профильная математика';
+const examOf = (subject) => (subject === EGE ? 'ЕГЭ' : 'ОГЭ');
 
 const BOT = 'mamchuck_bot';
 const KEY = 'diag';
@@ -31,14 +36,28 @@ async function rpc(fn, args) {
 function pickView() {
   render(`
     <span class="l-chip">● Бесплатно · без регистрации · 12 минут</span>
-    <h1 class="x-title">Диагностика ОГЭ</h1>
-    <p class="x-sub">10 задач от простых к сложным. В конце — прогноз оценки и номера, на которых ты теряешь баллы.</p>
+    <h1 class="x-title">Диагностика <span class="x-grad">ОГЭ и ЕГЭ</span></h1>
+    <p class="x-sub">10 задач от простых к сложным. В конце — прогноз результата и номера, на которых ты теряешь баллы.</p>
+    <p class="x-group">ОГЭ · 9 класс</p>
     <div class="x-pick">
       <button class="x-card" data-s="Математика"><span class="x-ico">📐</span><span><b>Математика</b><span class="muted">Алгебра и геометрия, № 6–18</span></span><span class="x-arrow">→</span></button>
       <button class="x-card" data-s="Физика"><span class="x-ico">⚡</span><span><b>Физика</b><span class="muted">Механика, тепло, электричество, оптика</span></span><span class="x-arrow">→</span></button>
     </div>
+    <p class="x-group">ЕГЭ · 11 класс</p>
+    <div class="x-pick">
+      <button class="x-card x-card-ege" data-s="${EGE}"><span class="x-ico">📈</span><span><b>Профильная математика</b><span class="muted">Планиметрия, вероятность, производная · № 1–12 · прогноз в баллах</span></span><span class="x-arrow">→</span></button>
+    </div>
     <div class="x-perks"><span>✓ Не знаешь — жми «Не знаю»</span><span>✓ Калькулятор не нужен</span><span>✓ Можно с телефона</span></div>`);
   root.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => start(b.dataset.s)));
+  spotlight(root.querySelectorAll('.x-card'));
+}
+
+// Подсветка карточки за курсором (координаты — в CSS-переменные)
+function spotlight(els) {
+  els.forEach((el) => el.addEventListener('pointermove', (e) => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', `${e.clientX - r.left}px`); el.style.setProperty('--my', `${e.clientY - r.top}px`);
+  }));
 }
 
 async function start(subject) {
@@ -55,7 +74,7 @@ async function start(subject) {
 function taskView(st) {
   const t = st.tasks[st.i], n = st.tasks.length, last = st.i === n - 1;
   render(`
-    <div class="x-top"><span>${st.i + 1} из ${n}</span><div class="x-bar"><i style="width:${(100 * st.i) / n}%"></i></div><span>${esc(st.subject)}</span></div>
+    <div class="x-top"><span>${st.i + 1} из ${n}</span><div class="x-bar"><i style="width:${(100 * st.i) / n}%"></i></div><span>${examOf(st.subject)} · ${esc(st.subject)}</span></div>
     <form class="card x-q" autocomplete="off">
       <span class="x-num">Задание № ${t.num} · ${esc(t.topic)}</span>
       <div class="x-body">${esc(t.body)}</div>
@@ -92,6 +111,13 @@ async function finish(st) {
 
 // ---------- 3. Результат ----------
 const GRADE_COLOR = { 2: 'var(--bad)', 3: 'var(--warn)', 4: 'var(--accent)', 5: 'var(--ok)' };
+const BAND_HEX = { 2: '#dc2626', 3: '#d97706', 4: '#2b8ad8', 5: '#16a34a' };
+const EGE_TEXT = {
+  2: 'Пока ниже порога ЕГЭ (27 баллов). Порог закрывают первые 5–6 номеров первой части — это реально за 4–6 недель.',
+  3: 'Порог пройден. Следующая цель — 50+: доводим первую часть до автоматизма и берём № 13 и № 16.',
+  4: 'Хороший задел: 50–69 баллов. Для 70+ нужна стабильная первая часть и 2–3 задачи второй.',
+  5: 'Сильный результат: 70+. Для 80–90 добираем вторую часть — экономику, неравенства, планиметрию.',
+};
 const GRADE_TEXT = {
   2: 'Сейчас ОГЭ не сдаётся. Хорошая новость: обычно мешают 2–3 конкретные дыры, и они закрываются за 4–6 недель.',
   3: 'Тройка есть, но с запасом в пару баллов. Основные потери — на ошибках, а не на незнании.',
@@ -102,7 +128,8 @@ const GRADE_TEXT = {
 const TG_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.6 19.8c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L5.9 13.3l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.4 2.8c.9-.3 1.7.2 1.5 1.5z"/></svg>';
 
 function resultView(r) {
-  const pct = Math.round((100 * r.correct) / r.total);
+  const ege = r.exam === 'ЕГЭ' || r.subject === EGE;
+  const pct = ege ? Math.min(100, r.test || 0) : Math.round((100 * r.correct) / r.total);
   const startLink = `https://t.me/${BOT}?start=diag_${r.id.replace(/-/g, '')}`;
   const bad = r.items.filter((i) => !i.ok);
   const weakNums = bad.map((i) => i.num).join(', ');
@@ -114,10 +141,11 @@ function resultView(r) {
     </ol>
 
     <div class="card x-result">
-      <p class="l-eyebrow">Диагностика ОГЭ · ${esc(r.subject)}</p>
-      <div class="x-ring" style="--p:${pct};--c:${GRADE_COLOR[r.grade]}"><div><span class="x-grade">${r.grade}</span><small>прогноз оценки</small></div></div>
+      <p class="l-eyebrow">Диагностика ${ege ? 'ЕГЭ' : 'ОГЭ'} · ${esc(r.subject)}</p>
+      <div class="x-ring" style="--p:0;--c:${GRADE_COLOR[r.grade]}" data-p="${pct}"><div><span class="x-grade ${ege ? 'x-grade-ege' : ''}" data-v="${ege ? r.test : r.grade}">${ege ? 0 : r.grade}</span><small>${ege ? 'прогноз, тестовых баллов' : 'прогноз оценки'}</small></div></div>
       <p class="x-score">Верно <b>${r.correct} из ${r.total}</b> · ориентировочно <b>${r.primary} из ${r.max}</b> первичных баллов</p>
-      <p class="muted" style="margin-top:10px">${GRADE_TEXT[r.grade]}</p>
+      <p class="muted" style="margin-top:10px">${(ege ? EGE_TEXT : GRADE_TEXT)[r.grade]}</p>
+      ${ege ? '<p class="hint" style="margin-top:8px">Порог ЕГЭ — 27 баллов, для вузов обычно от 39. Прогноз ориентировочный: по 10 задачам первой части.</p>' : ''}
       ${r.geometry_fail ? '<div class="x-note">⚠️ Не решена ни одна задача по геометрии. На ОГЭ без 2 баллов за геометрию ставят «2», даже если остальное решено.</div>' : ''}
     </div>
 
@@ -136,7 +164,7 @@ function resultView(r) {
       <p class="x-tg-free">Бесплатно · придёт за 5 секунд</p>
       <ol class="x-tg-how">
         <li>Откроется бот <b>@${BOT}</b> — нажми <b>«Запустить»</b></li>
-        <li>Подпишись на канал <b>@mamchuck_formula</b> — там разборы задач ОГЭ</li>
+        <li>Подпишись на канал <b>@mamchuck_formula</b> — там разборы задач ОГЭ и ЕГЭ</li>
         <li>Бот сразу пришлёт разбор и план</li>
       </ol>
       <div class="x-qr" hidden><div id="qr"></div><span>С телефона удобнее —<br>наведи камеру на код</span></div>
@@ -145,7 +173,7 @@ function resultView(r) {
 
     <div class="card x-result x-result-grid">
       <div class="x-grid">${r.items.map((i) => `<div class="x-cell ${i.ok ? 'ok' : 'bad'}">${i.num}<small>${i.ok ? 'верно' : 'мимо'}</small></div>`).join('')}</div>
-      <p class="hint">Номера заданий ОГЭ</p>
+      <p class="hint">Номера заданий ${ege ? 'ЕГЭ' : 'ОГЭ'}</p>
       ${r.strong ? `<p class="x-strong">💪 Сильная сторона: <b>${esc(r.strong)}</b></p>` : ''}
     </div>
 
@@ -154,6 +182,11 @@ function resultView(r) {
       <button class="link-btn small" data-share>Поделиться результатом</button>
     </div>
     <a class="x-tg-btn x-sticky" href="${startLink}" target="_blank" rel="noopener" data-tg>${TG_ICON}<span>Забрать план в Telegram</span></a>`);
+
+  // Кольцо «набегает» до результата, фон вспыхивает цветом результата
+  animateRing(root.querySelector('.x-ring'));
+  fx.burst(BAND_HEX[r.grade]);
+  spotlight(root.querySelectorAll('.x-result, .x-tg'));
 
   // Клик → если вкладка не ушла в Telegram, через пару секунд подсказываем запасной путь
   root.querySelectorAll('[data-tg]').forEach((a) => a.addEventListener('click', () => {
@@ -172,10 +205,26 @@ function resultView(r) {
 
   root.querySelector('[data-again]').addEventListener('click', () => { history.replaceState(null, '', location.pathname + location.search); pickView(); });
   root.querySelector('[data-share]').addEventListener('click', async () => {
-    const text = `Мой прогноз на ОГЭ по предмету «${r.subject}» — ${r.grade}. Проверь себя за 12 минут:`;
+    const text = ege ? `Мой прогноз на ЕГЭ по профильной математике — ≈ ${r.test} баллов. Проверь себя за 12 минут:`
+      : `Мой прогноз на ОГЭ по предмету «${r.subject}» — ${r.grade}. Проверь себя за 12 минут:`;
     const url = location.origin + location.pathname;
     try { if (navigator.share) await navigator.share({ text, url }); else { await navigator.clipboard.writeText(`${text} ${url}`); alert('Ссылка скопирована'); } } catch {}
   });
+}
+
+function animateRing(ring) {
+  if (!ring) return;
+  const target = +ring.dataset.p, num = ring.querySelector('[data-v]'), to = +num.dataset.v;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (still) { ring.style.setProperty('--p', target); num.textContent = to; return; }
+  const t0 = performance.now(), dur = 1400, ease = (x) => 1 - (1 - x) ** 3;
+  const tick = (now) => {
+    const k = ease(Math.min(1, (now - t0) / dur));
+    ring.style.setProperty('--p', (target * k).toFixed(1));
+    if (num.classList.contains('x-grade-ege')) num.textContent = Math.round(to * k);
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 function errorView(msg, retry) {
@@ -206,13 +255,22 @@ function showQr(text) {
 })();
 
 // ---------- Демо (?demo) — для проверки вёрстки без базы ----------
+let DEMO_SUBJ = null;
 function demo(fn, args) {
+  if (fn === 'xray_start') DEMO_SUBJ = args.p_subject;
   const nums = [6, 8, 9, 10, 12, 13, 15, 16, 17, 18];
   if (fn === 'xray_start') return { id: '00000000-0000-4000-8000-000000000000', subject: args.p_subject,
     tasks: nums.map((n) => ({ id: `t${n}`, num: n, topic: 'Демо-тема', body: `Найдите значение выражения ${n} · 2 + 1.`, image_path: n === 18 ? 'img/tasks/m7-1.svg' : null })) };
   const ans = args.p_answers || {};
   const items = nums.map((n) => ({ num: n, ok: String(n * 2 + 1) === ans[`t${n}`] }));
   const correct = items.filter((i) => i.ok).length;
+  if (DEMO_SUBJ === EGE) {
+    const prim = Math.round(correct * 1.2) + (correct >= 9 ? 4 : correct >= 7 ? 2 : 0);
+    const test = [0, 6, 11, 17, 22, 27, 34, 40, 46, 52, 58, 64, 70, 72, 74, 76, 78][Math.min(prim, 16)];
+    return { id: '00000000-0000-4000-8000-000000000000', subject: EGE, exam: 'ЕГЭ', finished: true, correct, total: 10, primary: prim, max: 32, test,
+      grade: test >= 70 ? 5 : test >= 50 ? 4 : test >= 27 ? 3 : 2, geometry_fail: false, strong: correct ? 'Демо-тема' : null, weak_count: 10 - correct,
+      items: items.map((i, k) => ({ ...i, num: [1, 3, 4, 5, 6, 7, 8, 9, 11, 12][k] })) };
+  }
   return { id: '00000000-0000-4000-8000-000000000000', subject: 'Математика', finished: true, correct, total: 10,
     primary: Math.round(correct * 1.9), max: 31, grade: correct >= 9 ? 5 : correct >= 7 ? 4 : correct >= 4 ? 3 : 2,
     geometry_fail: !items.slice(6).some((i) => i.ok) && correct >= 4, strong: correct ? 'Демо-тема' : null, weak_count: 10 - correct, items };

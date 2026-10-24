@@ -116,3 +116,20 @@
   .x-steps li + li::before { width: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .x-tg > .x-tg-btn { animation: none; } }
+
+/* ---------- Шейдерный фон и эффекты ---------- */
+.x-fx { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+.x-grad { background: linear-gradient(90deg, var(--accent), #8b5cf6 55%, #0d9488); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.x-group { margin: 26px 0 -14px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.x-card, #x .x-result, #x .x-tg { position: relative; isolation: isolate; }
+.x-card::before, #x .x-result::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none;
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%);
+  transition: opacity .45s cubic-bezier(.22, .8, .24, 1); }
+.x-card:hover::before, #x .x-result:hover::before { opacity: 1; }
+.x-card-ege { border-color: color-mix(in srgb, #8b5cf6 40%, var(--line)); }
+.x-card-ege .x-ico { background: color-mix(in srgb, #8b5cf6 16%, var(--surface)); }
+.x-card-ege:hover { border-color: #8b5cf6; }
+.x-grade-ege { font-size: 50px; letter-spacing: -.03em; }
+.x-ring { transition: filter .45s; }
+.x-result:hover .x-ring { filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--c, var(--accent)) 35%, transparent)); }
+#x .card, .x-card { backdrop-filter: saturate(1.2); }
