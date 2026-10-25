@@ -1,7 +1,7 @@
 // «Диагностика ОГЭ и ЕГЭ»: 10 задач без регистрации → прогноз (оценка ОГЭ / тестовые баллы ЕГЭ) → разбор в Telegram.
 // Проверка ответов — только в базе (xray_submit), ответы на страницу не приходят.
 import { CONFIG } from '../app/js/config.js';
-import { startFx } from './fx.js?v=202610242111';
+import { startFx } from './fx.js?v=202610251033';
 
 const fx = startFx();                         // шейдерный фон (без WebGL — просто пропускается)
 const EGE = 'Профильная математика';
@@ -10,6 +10,7 @@ const examOf = (subject) => (subject === EGE ? 'ЕГЭ' : 'ОГЭ');
 const BOT = 'mamchuck_bot';
 const KEY = 'diag';
 const DEMO = new URLSearchParams(location.search).has('demo');
+const EGE_FIRST = new URLSearchParams(location.search).has('ege');   // пришли из тренажёра ЕГЭ — ЕГЭ первым
 const root = document.getElementById('x');
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -34,19 +35,22 @@ async function rpc(fn, args) {
 
 // ---------- 1. Выбор предмета ----------
 function pickView() {
-  render(`
-    <span class="l-chip">● Бесплатно · без регистрации · 12 минут</span>
-    <h1 class="x-title">Диагностика <span class="x-grad">ОГЭ и ЕГЭ</span></h1>
-    <p class="x-sub">10 задач от простых к сложным. В конце — прогноз результата и номера, на которых ты теряешь баллы.</p>
+  const ogeGroup = `
     <p class="x-group">ОГЭ · 9 класс</p>
     <div class="x-pick">
       <button class="x-card" data-s="Математика"><span class="x-ico">📐</span><span><b>Математика</b><span class="muted">Алгебра и геометрия, № 6–18</span></span><span class="x-arrow">→</span></button>
       <button class="x-card" data-s="Физика"><span class="x-ico">⚡</span><span><b>Физика</b><span class="muted">Механика, тепло, электричество, оптика</span></span><span class="x-arrow">→</span></button>
-    </div>
+    </div>`;
+  const egeGroup = `
     <p class="x-group">ЕГЭ · 11 класс</p>
     <div class="x-pick">
       <button class="x-card x-card-ege" data-s="${EGE}"><span class="x-ico">📈</span><span><b>Профильная математика</b><span class="muted">Планиметрия, вероятность, производная · № 1–12 · прогноз в баллах</span></span><span class="x-arrow">→</span></button>
-    </div>
+    </div>`;
+  render(`
+    <span class="l-chip">● Бесплатно · без регистрации · 12 минут</span>
+    <h1 class="x-title">Диагностика <span class="x-grad">ОГЭ и ЕГЭ</span></h1>
+    <p class="x-sub">10 задач от простых к сложным. В конце — прогноз результата и номера, на которых ты теряешь баллы.</p>
+    ${EGE_FIRST ? egeGroup + ogeGroup : ogeGroup + egeGroup}
     <div class="x-perks"><span>✓ Не знаешь — жми «Не знаю»</span><span>✓ Калькулятор не нужен</span><span>✓ Можно с телефона</span></div>`);
   root.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => start(b.dataset.s)));
   spotlight(root.querySelectorAll('.x-card'));

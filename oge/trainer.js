@@ -1,10 +1,11 @@
-// Открытый тренажёр ОГЭ: 5 задач номера → проверка → решение → итог и диагностика.
+// Открытый тренажёр ОГЭ и ЕГЭ: 5 задач номера → проверка → решение → итог и диагностика.
 import { CONFIG } from '../app/js/config.js';
 
 const main = document.querySelector('[data-num]');
 const box = document.getElementById('tasks');
 const SUBJECT = main.dataset.subject, NUM = +main.dataset.num;
 const PART2 = main.dataset.part === '2';   // вторая часть: решение на бумаге → сравнение с эталоном
+const EXAM = main.dataset.exam || 'ОГЭ';   // ОГЭ | ЕГЭ
 const UP = '../../../';
 const seen = [];
 let score = { ok: 0, done: 0, total: 0 };
@@ -54,7 +55,7 @@ function taskCard(t, i) {
     <div class="x-body">${esc(t.body)}</div>
     ${t.image_path ? `<img class="x-img" src="${esc(imgSrc(t.image_path))}" alt="Рисунок к задаче" loading="lazy">` : ''}
     <div class="o-answer">
-      <input class="x-input" name="a" inputmode="decimal" placeholder="Ответ" aria-label="Ответ к задаче ${i}">
+      <input class="x-input" name="a" inputmode="${EXAM === 'ЕГЭ' ? 'text' : 'decimal'}" placeholder="Ответ" aria-label="Ответ к задаче ${i}">
       <button class="btn btn-primary">Проверить</button>
     </div>
     <button type="button" class="link-btn small o-show" data-show>Не знаю — показать решение</button>
@@ -158,7 +159,7 @@ function summary() {
         : PART2 ? `Вторая часть — это про оформление и обоснования. На занятии разберём, за что эксперт снимает баллы.`
         : `Задание ${NUM} пока проседает — это нормально, его можно закрыть за пару недель.`}</p>
       <div class="o-sum-actions">
-        <a class="btn btn-primary" href="${UP}diag/">Узнать прогноз на ОГЭ</a>
+        <a class="btn btn-primary" href="${UP}diag/${EXAM === 'ЕГЭ' ? '?ege' : ''}">Узнать прогноз на ${EXAM}</a>
         <button class="btn btn-ghost" data-more>Ещё 5 задач</button>
       </div>
     </div>`;
