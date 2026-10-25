@@ -221,7 +221,13 @@ export function createDemoApi() {
       }
       if (fn === 'game_state' || fn === 'game_claim') {
         const titles = { 6: 'Действия с дробями', 7: 'Числовая прямая', 8: 'Степени и корни', 9: 'Уравнения', 10: 'Вероятность', 11: 'Графики функций', 12: 'Расчёты по формулам', 13: 'Неравенства', 14: 'Прогрессии', 15: 'Треугольники', 16: 'Окружность', 17: 'Четырёхугольники', 18: 'Фигуры на клетках', 19: 'Верные утверждения', 20: 'Уравнения и системы', 21: 'Текстовая задача' };
-        const st = { 6: ['done', 92], 7: ['done', 85], 8: ['done', 80], 9: ['active', 60], 10: ['active', 40], 15: ['active', 70] };
+        // [уровень 0–3, попыток, точность, точность за 20, потускнело] и подтемы: [тема, верных, попыток]
+        const st = { 6: [3, 31, 100, 95], 7: [3, 27, 90, 92, true], 8: [2, 18, 90, 85], 9: [1, 9, 70, 66], 10: [0, 3, 33, 33], 15: [1, 7, 71, 71] };
+        const TOP = { 6: [['Обыкновенные дроби', 6, 6], ['Десятичные дроби', 5, 5]], 8: [['Степени', 5, 5], ['Корни', 4, 5]],
+          9: [['Линейные уравнения', 4, 4], ['Квадратные уравнения', 2, 4], ['Дробно-рациональные', 0, 1], ['Неполные квадратные', 0, 0]],
+          10: [['Монеты и кубики', 1, 2], ['Выбор из группы', 0, 1], ['Противоположное событие', 0, 0]],
+          15: [['Углы треугольника', 3, 3], ['Пифагор', 1, 2], ['Площадь', 0, 2], ['Равнобедренный', 0, 0]],
+          16: [['Вписанные углы', 0, 0], ['Касательная', 0, 0], ['Хорды', 0, 0]] };
         db.game_claims = db.game_claims || [];
         if (fn === 'game_claim') db.game_claims.push({ id: uid(), reward_id: args.p_reward, status: 'requested' });
         const claimOf = (id) => db.game_claims.find((c) => c.reward_id === id)?.status || null;
@@ -230,7 +236,10 @@ export function createDemoApi() {
           xp: { total: 340, level: 3, level_from: 200, level_to: 450 },
           map: Object.entries(titles).map(([n, t]) => ({ subject: 'Математика', num: +n, title: t,
             module: n <= 14 ? 'Алгебра' : n <= 19 ? 'Геометрия' : 'Вторая часть',
-            status: st[n]?.[0] || 'locked', accuracy: st[n]?.[1] ?? null, attempts: st[n] ? 8 : 0, correct: st[n] ? 6 : 0 })),
+            level: st[n] ? (st[n][4] ? 2 : st[n][0]) : 0, stale: !!st[n]?.[4], attempts: st[n]?.[1] || 0, accuracy: st[n]?.[2] ?? null, acc20: st[n]?.[3] ?? null,
+            correct: st[n] ? Math.round((st[n][1] * st[n][2]) / 100) : 0,
+            status: st[n]?.[0] === 3 && !st[n][4] ? 'done' : st[n] ? 'active' : 'locked',
+            topics: (TOP[n] || []).map(([topic, correct, attempts]) => ({ topic, correct, attempts, done: correct >= 3 && correct >= attempts - 1 })) })),
           rewards: [['warmup', 'Разогрев', 'Значок: 3 дня подряд', '🔥', 3], ['freepass', 'Free Pass', 'ДЗ на день позже без штрафа', '🎟️', 7],
             ['extra', 'Разбор вне урока', '10 минут разбора в Telegram', '💬', 14], ['lesson', 'Бонусное занятие', '30 минут бесплатно', '🏆', 30]]
             .map(([id, title, description, icon, need]) => ({ id, code: id, title, description, icon, need, unlocked: 8 >= need, claim: claimOf(id) })),

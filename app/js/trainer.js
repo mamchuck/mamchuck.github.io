@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero, subjLabel,
-} from './ui.js?v=202610251335';
+} from './ui.js?v=202610251455';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22, 'Профильная математика': 20 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -794,16 +794,16 @@ async function solver(view, ctx, { list, setId, title, back, startIndex = 0 }) {
 export async function trainerFamily(view, params, ctx) {
   if (!ctx.studentId) return mount(view, empty('Кабинет не подключён', I.users));
   if (!(await tableReady(ctx.api))) return notReady(view);
-  const [mode, a1, a2] = params;
+  const [mode, a1, a2, a3] = params;
   if (mode === 'num') {
-    const subj = decodeURIComponent(a1), num = +a2;
+    const subj = decodeURIComponent(a1), num = +a2, topic = a3 ? decodeURIComponent(a3) : '';   // подтема — с камня дорожной карты
     const [tasks, attempts] = await Promise.all([
-      ctx.api.select('oge_tasks_public', { eq: { subject: subj, num } }),
+      ctx.api.select('oge_tasks_public', { eq: topic ? { subject: subj, num, topic } : { subject: subj, num } }),
       ctx.api.select('oge_attempts', { eq: { student_id: ctx.studentId } }),
     ]);
     const tried = new Set(attempts.map((x) => x.task_id));
     const list = [...tasks.filter((t) => !tried.has(t.id)), ...tasks.filter((t) => tried.has(t.id))];
-    return solver(view, ctx, { list, title: `${subj}: задание №${num}`, back: '#/trainer' });
+    return solver(view, ctx, { list, title: `${subj}: задание №${num}${topic ? ` · ${topic}` : ''}`, back: topic ? '#/progress' : '#/trainer' });
   }
   if (mode === 'set') {
     const [s] = await ctx.api.select('oge_sets', { eq: { id: a1 } });

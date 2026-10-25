@@ -1,6 +1,6 @@
-// Геймификация: 🔥 серия, уровень (XP), дорожная карта ОГЭ (SVG), награды.
+// Геймификация: 🔥 серия, уровень (XP), дорожная карта (SVG: подтемы + медали номеров), награды.
 // Все данные — одним вызовом game_state(student_id); считает база, страница только рисует.
-import { h, raw, $, $$, toast } from './ui.js?v=202610251335';
+import { h, raw, $, $$, toast } from './ui.js?v=202610251455';
 
 const LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -43,50 +43,75 @@ function levelCard(x) {
   </section>`;
 }
 
-// ---------- 🗺 Дорожная карта (SVG-линия + узлы) ----------
-const STEP = 92, MOD_GAP = 64, W = 360;
-const XS = [0.5, 0.78, 0.5, 0.22];
+// ---------- 🗺 Дорожная карта: подтемы-«камни» + номер с тремя уровнями (бронза → серебро → золото) ----------
+const W = 360, STEP = 138, STONE = 62, MOD_GAP = 64;
+const MEDAL = ['', 'бронза', 'серебро', 'золото'];
+const MEDAL_ICO = ['', '🥉', '🥈', '🥇'];
+// Прогресс к следующему уровню (0…1) — те же пороги, что в game_state (supabase/039)
+function nextPct(n) {
+  const t = n.topics || [], td = t.filter((x) => x.done).length;
+  const acc = n.accuracy ?? 0, acc20 = n.acc20 ?? 0, a = n.attempts;
+  const v = n.level === 0 ? Math.min(a / 5, acc / 60)
+    : n.level === 1 ? Math.min(a / 12, acc / 80, t.length ? td / t.length : 1)
+    : n.level === 2 ? (n.stale ? 0.9 : Math.min(a / 25, acc20 / 90, acc / 80, t.length ? td / t.length : 1)) : 1;
+  return Math.max(0, Math.min(1, v));
+}
 
 function roadmap(map, subject, linkFor) {
   const nodes = map.filter((n) => n.subject === subject);
   if (!nodes.length) return '';
-  // фокус — первый «в работе», иначе первый закрытый замком
-  const focus = (nodes.find((n) => n.status === 'active') || nodes.find((n) => n.status === 'locked'))?.num;
-  let y = 16, prevModule = null, i = 0;
+  const focus = goalNode(nodes);
+  let y = 16, prevModule = null, k = 0;
   const pts = [], labels = [];
+  const wave = () => 0.5 + 0.27 * Math.sin(k++ * 0.82);
   for (const n of nodes) {
-    if (n.module !== prevModule) { if (prevModule) y += MOD_GAP - STEP / 2; labels.push({ y, text: n.module }); y += 84; prevModule = n.module; }
-    pts.push({ ...n, x: XS[i % XS.length] * W, y });
-    y += STEP; i += 1;
+    if (n.module !== prevModule) { if (prevModule) y += MOD_GAP - STONE / 2; labels.push({ y, text: n.module }); y += 80; prevModule = n.module; }
+    for (const t of n.topics || []) { pts.push({ stone: true, n, t, x: wave() * W, y }); y += STONE; }
+    if (n.topics?.length) y += 16;                                    // большой кружок номера не наезжает на последний камень
+    pts.push({ n, x: wave() * W, y }); y += STEP;
   }
-  const H = y - STEP + 60;
+  const H = y - STEP + 70;
   const seg = (a, b) => `M${a.x} ${a.y} C${a.x} ${(a.y + b.y) / 2}, ${b.x} ${(a.y + b.y) / 2}, ${b.x} ${b.y}`;
-  const paths = pts.slice(1).map((b, k) => {
-    const a = pts[k];
-    const lit = a.status !== 'locked' && b.status !== 'locked';
-    return `<path d="${seg(a, b)}" class="g-path ${lit ? 'lit' : ''}"/>`;
-  }).join('');
-  const done = nodes.filter((n) => n.status === 'done').length;
+  const litPt = (p) => (p.stone ? p.t.attempts > 0 : p.n.attempts > 0);
+  const paths = pts.slice(1).map((b, i) => `<path d="${seg(pts[i], b)}" class="g-path ${litPt(pts[i]) && litPt(b) ? 'lit' : ''}"/>`).join('');
+  const gold = nodes.filter((n) => n.status === 'done').length;
+  const stars = nodes.reduce((s, n) => s + (n.level || 0), 0);
+  const exam = subject === 'Профильная математика' ? 'ЕГЭ' : 'ОГЭ';
 
   return h`<section class="card g-map">
-    <div class="g-map-head"><h3>${subject}: путь к ОГЭ</h3><span class="badge info">${done} из ${nodes.length} закрыто</span></div>
-    <div class="g-legend"><span><i class="lg done"></i>закрыт</span><span><i class="lg active"></i>в работе</span><span><i class="lg locked"></i>не начат</span></div>
+    <div class="g-map-head"><h3>${subject}: путь к ${exam}</h3>
+      <span class="g-map-score"><span class="badge info">🥇 ${gold} из ${nodes.length}</span><span class="hint">медалей ${stars} из ${nodes.length * 3}</span></span></div>
+    <div class="g-legend"><span><i class="lg m1"></i>бронза</span><span><i class="lg m2"></i>серебро</span><span><i class="lg m3"></i>золото — номер закрыт</span><span><i class="lg stone"></i>подтема</span></div>
     <div class="g-map-body" style="--h:${H}px">
       ${raw(`<svg class="g-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="g-path-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fd0ff"/><stop offset=".55" stop-color="#2b8ad8"/><stop offset="1" stop-color="#1f6fd1"/></linearGradient></defs>${paths}</svg>`)}
       ${labels.map((l) => h`<div class="g-module" style="top:${(l.y / H) * 100}%">${l.text}</div>`)}
-      ${pts.map((n) => {
-        const r = 22, c = 2 * Math.PI * r, acc = n.accuracy ?? 0;
-        return h`<a class="g-node ${n.status} ${n.num === focus ? 'focus' : ''}" href="${linkFor(n)}" style="left:${(n.x / W) * 100}%;top:${(n.y / H) * 100}%"
-          title="№ ${n.num} · ${n.title}${n.attempts ? ` · ${n.correct} из ${n.attempts} верно` : ''}">
-          <span class="g-dot">
-            ${n.status === 'active' ? raw(`<svg class="g-ring" viewBox="0 0 52 52"><circle cx="26" cy="26" r="${r}"/><circle cx="26" cy="26" r="${r}" style="stroke-dasharray:${(c * acc) / 100} ${c}"/></svg>`) : ''}
-            ${n.status === 'done' ? raw(CHECK) : n.status === 'locked' ? raw(LOCK) : h`<b>${n.num}</b>`}
-          </span>
-          <span class="g-cap"><b>№ ${n.num}</b>${n.title}${n.status === 'active' && n.accuracy != null ? h` · <em>${n.accuracy}%</em>` : ''}</span>
-        </a>`;
-      })}
+      ${pts.map((p) => (p.stone ? stone(p, H, linkFor) : bigNode(p, H, linkFor, p.n === focus)))}
     </div>
   </section>`;
+}
+
+function stone(p, H, linkFor) {
+  const { n, t } = p;
+  const cls = t.done ? 'done' : t.attempts ? 'tried' : 'new';
+  return h`<a class="g-stone ${cls} ${p.x > W / 2 ? 'left' : 'right'}" href="${linkFor(n, t.topic)}" style="left:${(p.x / W) * 100}%;top:${(p.y / H) * 100}%"
+    title="№ ${n.num} · ${t.topic}${t.attempts ? ` · ${t.correct} из ${t.attempts} верно` : ' · ещё не решал'}">
+    <span class="g-sdot">${t.done ? raw(CHECK) : t.attempts ? h`<b>${Math.min(t.correct, 3)}/3</b>` : ''}</span>
+    <span class="g-scap">${t.topic}</span>
+  </a>`;
+}
+
+function bigNode(p, H, linkFor, isFocus) {
+  const n = p.n, r = 24, c = 2 * Math.PI * r, pct = nextPct(n);
+  const medal = n.level ? `m${n.level}` : '';
+  return h`<a class="g-node ${n.status} ${medal} ${n.stale ? 'stale' : ''} ${isFocus ? 'focus' : ''}" href="${linkFor(n)}" style="left:${(p.x / W) * 100}%;top:${(p.y / H) * 100}%"
+    title="№ ${n.num} · ${n.title}${n.attempts ? ` · ${n.correct} из ${n.attempts} верно` : ''}">
+    <span class="g-dot">
+      ${n.attempts && n.status !== 'done' ? raw(`<svg class="g-ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}"/><circle cx="28" cy="28" r="${r}" style="stroke-dasharray:${c * pct} ${c}"/></svg>`) : ''}
+      ${n.status === 'done' ? raw(CHECK) : n.attempts ? h`<b>${n.num}</b>` : raw(LOCK)}
+    </span>
+    <span class="g-pips" aria-label="Уровень ${n.level} из 3">${[1, 2, 3].map((i) => h`<i class="${i <= n.level ? 'on' : ''}"></i>`)}</span>
+    <span class="g-cap"><b>№ ${n.num}</b>${n.title}${n.stale ? h` · <em>↻ повтори</em>` : n.level ? h` · <em>${MEDAL[n.level]}</em>` : n.accuracy != null ? h` · <em>${n.accuracy}%</em>` : ''}</span>
+  </a>`;
 }
 
 // ---------- 🎟 Награды ----------
@@ -108,32 +133,45 @@ function rewards(list, best, canClaim) {
 }
 
 // ---------- 🎯 Следующая цель ----------
-function nextGoal(map, linkFor, isStudent) {
-  const n = map.find((x) => x.status === 'active') || map.find((x) => x.status === 'locked');
-  if (!n) return h`<section class="g-goal done"><span class="g-goal-ico">🏁</span><div><b>Все номера закрыты!</b><p>Теперь — полные варианты на время.</p></div></section>`;
-  let text;
-  if (n.status === 'locked') text = `Начни № ${n.num} · ${n.title}: реши 5 задач, чтобы увидеть точность`;
-  else {
-    const len = Math.min(n.attempts, 10), ok = Math.round(((n.accuracy || 0) * len) / 100);
-    const more = Math.max(0, 5 - n.attempts);
-    const need = Math.min(10, Math.max(0, Math.ceil((0.8 * len - ok) / 0.2)));
-    const k = Math.max(more, need);
-    text = k ? `Закрой № ${n.num} · ${n.title}: ещё ${k} ${word(k, 'верная задача', 'верные задачи', 'верных задач')} подряд` : `№ ${n.num} почти закрыт — реши ещё одну`;
+// Сначала «потускневшее» золото, потом номер в работе, потом первый не начатый
+function goalNode(nodes) {
+  return nodes.find((n) => n.stale) || nodes.find((n) => n.status === 'active') || nodes.find((n) => n.status === 'locked');
+}
+
+function goalText(n) {
+  const name = `№ ${n.num} · ${n.title}`, a = n.attempts, acc = n.accuracy ?? 0;
+  const open = (n.topics || []).find((t) => !t.done);
+  const more = (min) => (a < min ? `ещё ${min - a} ${word(min - a, 'задача', 'задачи', 'задач')}` : '');
+  const join = (...x) => x.filter(Boolean).join(' и ');
+  if (n.stale) return { text: `↻ Повтори ${name} — золото тускнеет без практики. Реши пару задач`, topic: null };
+  if (n.level === 0) return a ? { text: `${name} до 🥉: ${join(more(5), acc < 60 ? `точность от 60% (сейчас ${acc}%)` : '')}`, topic: null }
+    : { text: `Начни ${name}: 5 задач — и будет 🥉 бронза`, topic: null };
+  if (n.level === 1) {
+    if (open) return { text: `${name} до 🥈: закрой подтему «${open.topic}» — ${open.correct >= 3 ? 'точность 4 из последних 5' : `ещё ${3 - open.correct} ${word(3 - open.correct, 'верная', 'верные', 'верных')}`}`, topic: open.topic };
+    return { text: `${name} до 🥈: ${join(more(12), acc < 80 ? `точность от 80% (сейчас ${acc}%)` : '')}`, topic: null };
   }
-  return h`<section class="g-goal"><span class="g-goal-ico">🎯</span><div><span class="g-label">Следующая цель</span><b>${text}</b></div>
-    ${isStudent ? h`<a class="btn btn-primary g-goal-btn" href="${linkFor(n)}">Решать № ${n.num} →</a>` : ''}</section>`;
+  if (open) return { text: `${name} до 🥇: подтема «${open.topic}» просела — подтяни`, topic: open.topic };
+  return { text: `${name} до 🥇: ${join(more(25), (n.acc20 ?? 0) < 90 ? `90% из последних 20 (сейчас ${n.acc20 ?? 0}%)` : '', acc < 80 ? 'держи 80% в последних 10' : '') || 'ещё одна верная'}`, topic: null };
+}
+
+function nextGoal(map, linkFor, isStudent) {
+  const n = goalNode(map);
+  if (!n) return h`<section class="g-goal done"><span class="g-goal-ico">🏁</span><div><b>Все номера в золоте!</b><p>Теперь — полные варианты на время.</p></div></section>`;
+  const g = goalText(n);
+  return h`<section class="g-goal"><span class="g-goal-ico">🎯</span><div><span class="g-label">Следующая цель</span><b>${g.text}</b></div>
+    ${isStudent ? h`<a class="btn btn-primary g-goal-btn" href="${linkFor(n, g.topic)}">Решать № ${n.num} →</a>` : ''}</section>`;
 }
 
 // ---------- 🎉 Праздник: новый закрытый номер или уровень (сравнение с прошлым визитом) ----------
 function celebrate(state, key) {
   let prev = null;
   try { prev = JSON.parse(localStorage.getItem(key)); } catch {}
-  const done = state.map.filter((n) => n.status === 'done').map((n) => `${n.subject}|${n.num}`);
-  try { localStorage.setItem(key, JSON.stringify({ done, level: state.xp.level })); } catch {}
-  if (!prev) return;
-  const fresh = state.map.filter((n) => n.status === 'done' && !prev.done.includes(`${n.subject}|${n.num}`));
+  const lv = Object.fromEntries(state.map.map((n) => [`${n.subject}|${n.num}`, n.level || 0]));
+  try { localStorage.setItem(key, JSON.stringify({ lv, level: state.xp.level })); } catch {}
+  if (!prev?.lv) return;
+  const up = state.map.filter((n) => (n.level || 0) > (prev.lv[`${n.subject}|${n.num}`] ?? 0));
   const msg = state.xp.level > prev.level ? `Новый уровень — ${state.xp.level}!`
-    : fresh.length ? `№ ${fresh.map((n) => n.num).join(', ')} ${fresh.length > 1 ? 'закрыты' : 'закрыт'}!` : null;
+    : up.length ? up.map((n) => `№ ${n.num} — ${MEDAL_ICO[n.level]} ${MEDAL[n.level]}`).join(', ') + '!' : null;
   if (!msg) return;
   const el = document.createElement('div');
   el.className = 'g-party';
@@ -148,9 +186,11 @@ function celebrate(state, key) {
 // Полный блок: для ученика (с кнопкой «Забрать»), родителя и преподавателя
 export function gameBlock(state, { canClaim = false, studentId = '' } = {}) {
   if (!state) return '';
+  // база ещё без миграции 039 — уровней и подтем нет: считаем «закрыт» золотом, «в работе» бронзой
+  for (const n of state.map) { n.level ??= n.status === 'done' ? 3 : n.attempts >= 5 ? 1 : 0; n.topics ??= []; n.stale ??= false; }
   const subjects = [...new Set(state.map.map((n) => n.subject))];
-  const linkFor = canClaim ? (n) => `#/trainer/num/${encodeURIComponent(n.subject)}/${n.num}` : () => '#/trainer';
-  if (canClaim && studentId) setTimeout(() => celebrate(state, `game:${studentId}`), 400);
+  const linkFor = canClaim ? (n, topic) => `#/trainer/num/${encodeURIComponent(n.subject)}/${n.num}${topic ? '/' + encodeURIComponent(topic) : ''}` : () => '#/trainer';
+  if (canClaim && studentId) setTimeout(() => celebrate(state, `game2:${studentId}`), 400);
   return h`<div class="g-wrap">
     <div class="g-top">${streakCard(state.streak)}${levelCard(state.xp)}</div>
     ${nextGoal(state.map, linkFor, canClaim)}

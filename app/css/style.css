@@ -1122,3 +1122,39 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 .consent-check a, .auth-legal a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .auth-legal { text-align: center; margin: 0; }
 .wk-ev.s-ege { --ev: #0d9488; }
+
+/* Дорожная карта 2.0: медали номеров, подтемы-«камни», уровни (game.js · roadmap) */
+.g-map-score { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.g-legend { flex-wrap: wrap; gap: 6px 14px; }
+.lg.stone { width: 9px; height: 9px; background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent-2); }
+.g-node.m1 .g-dot { background: radial-gradient(circle at 35% 30%, #f3c79b, #c07a3f 70%); box-shadow: 0 8px 20px rgba(192, 122, 63, .35), inset 0 1px 0 rgba(255, 255, 255, .4); }
+.g-node.m2 .g-dot { background: radial-gradient(circle at 35% 30%, #ffffff, #aab6c6 72%); box-shadow: 0 8px 20px rgba(150, 168, 190, .4), inset 0 1px 0 rgba(255, 255, 255, .6); }
+.g-node.m3 .g-dot { background: radial-gradient(circle at 35% 30%, #fff1b8, #e0a91a 72%); box-shadow: 0 8px 24px rgba(224, 169, 26, .45), inset 0 1px 0 rgba(255, 255, 255, .55); }
+.g-node.stale .g-dot { filter: saturate(.35) brightness(.95); }
+.g-node.stale .g-dot::after { content: "↻"; position: absolute; right: -4px; top: -4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  font-size: 13px; font-weight: 800; color: #fff; background: var(--warn, #e0a91a); }
+.g-node.m1 .g-dot, .g-node.m2 .g-dot { color: #1d2a3a; }
+.g-node.m3 .g-dot { color: #fff; }
+.g-node.m1 .g-dot b, .g-node.m2 .g-dot b { text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+.lg.m1 { background: #c07a3f; } .lg.m2 { background: #aab6c6; } .lg.m3 { background: #e0a91a; }
+.g-node .g-ring { z-index: 0; }
+.g-pips { display: flex; gap: 4px; margin-top: -2px; }
+.g-pips i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); }
+.g-node.m1 .g-pips i.on { background: #c07a3f; }
+.g-node.m2 .g-pips i.on { background: #9aa8ba; }
+.g-node.m3 .g-pips i.on { background: #e0a91a; }
+
+.g-stone { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; z-index: 1; }
+.g-sdot { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; flex: none; font-size: 10px;
+  background: var(--surface); box-shadow: inset 0 0 0 2px var(--line-2); color: var(--text-3); transition: transform .3s cubic-bezier(.22, .8, .24, 1); }
+.g-sdot svg { width: 15px; height: 15px; }
+.g-stone:hover .g-sdot { transform: scale(1.12); }
+.g-stone.tried .g-sdot { box-shadow: inset 0 0 0 2px var(--accent-2); color: var(--accent-strong); }
+.g-stone.done .g-sdot { background: var(--g-blue); color: #fff; box-shadow: 0 4px 12px var(--g-glow); }
+.g-scap { position: absolute; top: 50%; transform: translateY(-50%); width: max-content; max-width: 140px; font-size: 12px; line-height: 1.25;
+  color: var(--text-2); padding: 2px 7px; border-radius: 8px; background: var(--surface); }
+.g-stone.right .g-scap { left: 38px; }
+.g-stone.left .g-scap { right: 38px; text-align: right; }
+.g-stone.new .g-scap { color: var(--text-3); }
+.g-stone.done .g-scap { color: var(--accent-strong); }
+@media (max-width: 560px) { .g-scap { max-width: 110px; font-size: 11px; } .g-sdot { width: 26px; height: 26px; } }
