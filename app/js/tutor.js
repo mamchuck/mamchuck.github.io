@@ -1,16 +1,16 @@
 // Кабинет преподавателя
 import {
-  h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, fmtMoney, dayKey, toLocalInput,
+  h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610251033';
+} from './ui.js?v=202610251335';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610251033';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610251033';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610251033';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610251033';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610251033';
-import { leadsPage } from './leads.js?v=202610251033';
+} from './library.js?v=202610251335';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610251335';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610251335';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610251335';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610251335';
+import { leadsPage } from './leads.js?v=202610251335';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -72,7 +72,7 @@ function studentForm(ctx, s) {
     m.close();
     modal({
       title: `Удалить «${s.name}»?`, submit: 'Удалить навсегда', danger: true,
-      body: h`<p>Будут удалены <b>все</b> данные ученика: занятия, отчёты, ДЗ и ответы, прогресс, оплаты, заметки.
+      body: h`<p>Будут удалены <b>все</b> данные ученика: занятия, отчёты, ДЗ и ответы, прогресс, заметки.
         Ученик и родитель потеряют доступ к кабинету. Отменить это нельзя.</p>
         <p class="hint">Совет: перед удалением скачайте резервную копию в Настройках.</p>
         <label class="field"><span>Для подтверждения введите имя: ${s.name}</span><input name="confirm" autocomplete="off" required></label>`,
@@ -326,25 +326,6 @@ function progressForm(ctx, student, row) {
   });
 }
 
-function paymentForm(ctx, student) {
-  modal({
-    title: 'Новая оплата',
-    body: h`
-      <div class="row-2">
-        <label class="field"><span>Сумма, ₽</span><input name="amount" type="number" min="1" step="0.01" required inputmode="decimal"></label>
-        <label class="field"><span>Занятий в пакете</span><input name="lessons" type="number" min="0" step="1" value="4" required></label>
-      </div>
-      <label class="field"><span>Дата</span><input name="paid_at" type="date" value="${new Date().toISOString().slice(0, 10)}" required></label>
-      <label class="field"><span>Комментарий</span><input name="comment" placeholder="Например: пакет на октябрь"></label>`,
-    onSubmit: async (d) => {
-      const k = Math.round(parseFloat(String(d.amount).replace(',', '.')) * 100);
-      if (!(k > 0)) throw new Error('Укажите сумму');
-      await ctx.api.insert('payments', { student_id: student.id, amount_kopecks: k, lessons_count: +d.lessons, paid_at: d.paid_at, comment: d.comment || '' });
-      toast('Оплата записана'); ctx.refresh();
-    },
-  });
-}
-
 async function invite(ctx, student, role) {
   try {
     const code = await ctx.api.rpc('create_invitation', { p_student_id: student.id, p_role: role, p_days: 7 });
@@ -424,18 +405,16 @@ const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); retur
 async function dashboard(view, _p, ctx) {
   const { api } = ctx;
   await loadResponses(api);
-  const [students, lessons, subs, balances] = await Promise.all([
+  const [students, lessons, subs] = await Promise.all([
     api.select('students', { order: 'name' }),
     api.select('lessons', { eq: { status: 'planned' }, order: 'starts_at' }),
     api.select('submissions', { isNull: ['reviewed_at'], order: 'submitted_at' }),   // только ждущие проверки, а не все за всё время
-    api.select('student_balance'),
   ]);
   const hws = subs.length ? await api.select('homework', { cols: 'id,title,subject', eq: { id: subs.map((x) => x.homework_id) } }) : [];
   const S = byId(students), H = byId(hws);
   const today = startOfToday();
   const upcoming = lessons.filter((l) => l.starts_at >= today).slice(0, 6);
   const toReview = subs.filter((s) => !s.reviewed_at);
-  const lowBal = balances.filter((b) => S[b.student_id]?.status === 'active' && b.lessons_left <= 1);
   const todayCount = lessons.filter((l) => dayKey(l.starts_at) === dayKey(Date.now())).length;
   const moveReq = lessons.filter((l) => l.starts_at >= today && RESP[l.id]?.some((r) => r.response === 'move'));
 
@@ -466,10 +445,6 @@ async function dashboard(view, _p, ctx) {
           <span class="badge warn">${lastBackup() ? `последняя ${fmtD(lastBackup())}` : 'ещё не делали'}</span></div>
           <p class="muted small">Скачайте копию всех данных на компьютер — на бесплатном тарифе база сама копии не делает.</p>
           <button class="btn btn-soft" data-backup>${I.folder} Скачать всё</button><p class="hint backup-step"></p></section>` : ''}
-        ${lowBal.length ? h`<section class="card"><div class="card-head"><h2>Заканчиваются оплаченные занятия</h2></div>
-          <div class="list">${lowBal.map((b) => h`<a class="item item-link" href="#/student/${b.student_id}/payments">
-            <div class="item-main"><div class="item-title">${S[b.student_id].name}</div></div>
-            <span class="badge ${b.lessons_left < 0 ? 'bad' : 'warn'}">${b.lessons_left < 0 ? `долг ${-b.lessons_left}` : `осталось ${b.lessons_left}`}</span></a>`)}</div></section>` : ''}
       </div>
     </div>`);
   $('#add-lesson').addEventListener('click', () => lessonForm(ctx, { students }));
@@ -479,21 +454,14 @@ async function dashboard(view, _p, ctx) {
 }
 
 async function studentsPage(view, _p, ctx) {
-  const [students, balances] = await Promise.all([
-    ctx.api.select('students', { order: 'name' }), ctx.api.select('student_balance'),
-  ]);
-  const B = Object.fromEntries(balances.map((b) => [b.student_id, b]));
+  const students = await ctx.api.select('students', { order: 'name' });
   const render = (q = '', st = 'active') => {
     const list = students.filter((s) => (st === 'all' || s.status === st) && s.name.toLowerCase().includes(q.toLowerCase()));
-    mount($('#slist', view), list.length ? h`${list.map((s) => {
-      const b = B[s.id];
-      return h`<a class="student-card card" href="#/student/${s.id}">
+    mount($('#slist', view), list.length ? h`${list.map((s) => h`<a class="student-card card" href="#/student/${s.id}">
         <span class="avatar avatar-lg">${s.name[0]}</span>
         <div class="item-main"><div class="item-title">${s.name}</div>
           <div class="item-meta">${s.grade ? `${s.grade} класс · ` : ''}${s.subjects.join(', ')}</div></div>
-        ${b ? h`<span class="badge ${b.lessons_left < 0 ? 'bad' : b.lessons_left <= 1 ? 'warn' : 'ok'}">${b.lessons_left < 0 ? `долг ${-b.lessons_left}` : `${b.lessons_left} опл.`}</span>` : ''}
-      </a>`;
-    })}` : empty(students.length ? 'Никого не найдено' : 'Добавьте первого ученика', I.users));
+      </a>`)}` : empty(students.length ? 'Никого не найдено' : 'Добавьте первого ученика', I.users));
   };
   mount(view, h`
     ${pageHero({ eyebrow: 'Ученики', title: 'Мои ', accent: 'ученики', actions: h`<button class="btn btn-primary" id="add">${I.plus}<span>Ученик</span></button>` })}
@@ -510,11 +478,12 @@ async function studentsPage(view, _p, ctx) {
 
 const TABS = [
   ['', 'Обзор'], ['lessons', 'Занятия'], ['homework', 'ДЗ'], ['materials', 'Материалы'],
-  ['progress', 'Прогресс'], ['payments', 'Оплаты'], ['notes', 'Заметки'], ['access', 'Доступ'],
+  ['progress', 'Прогресс'], ['notes', 'Заметки'], ['access', 'Доступ'],
 ];
 
 async function studentPage(view, [id, tab = ''], ctx) {
   const { api } = ctx;
+  if (tab === 'payments') { location.hash = `#/student/${id}`; return; }   // старые ссылки из бота: раздел оплат убран
   const [s] = await api.select('students', { eq: { id } });
   if (!s) { mount(view, empty('Ученик не найден', I.users)); return; }
   const shell = (content) => h`
@@ -527,21 +496,20 @@ async function studentPage(view, [id, tab = ''], ctx) {
   const done = (content) => { mount(view, shell(content)); $('#edit', view).addEventListener('click', () => studentForm(ctx, s)); };
 
   if (tab === '') {
-    const [bal, lessons, hws, subs, prog] = await Promise.all([
-      api.select('student_balance', { eq: { student_id: id } }),
+    const [lessons, hws, subs, prog] = await Promise.all([
       api.select('lessons', { eq: { student_id: id }, order: 'starts_at' }),
       api.select('homework', { eq: { student_id: id } }),
       api.select('submissions', { eq: { student_id: id } }),
       api.select('topic_progress', { eq: { student_id: id } }),
     ]);
-    const b = bal[0] || { lessons_left: 0, lessons_paid: 0, lessons_done: 0 };
+    const doneCount = lessons.filter((l) => l.status === 'done').length;
     const next = lessons.find((l) => l.status === 'planned' && l.starts_at >= startOfToday());
     const subBy = Object.fromEntries(subs.map((x) => [x.homework_id, x]));
     const open = hws.filter((x) => !subBy[x.id]).length;
     const avg = prog.length ? Math.round(prog.reduce((a, p) => a + p.level, 0) / prog.length) : 0;
     done(h`
       <div class="stats">
-        <a class="stat" href="#/student/${id}/payments"><span>Осталось оплаченных</span><b class="${b.lessons_left < 0 ? 'text-bad' : ''}">${b.lessons_left}</b></a>
+        <a class="stat" href="#/student/${id}/lessons"><span>Проведено занятий</span><b>${doneCount}</b></a>
         <a class="stat" href="#/student/${id}/homework"><span>ДЗ не сдано</span><b>${open}</b></a>
         <a class="stat" href="#/student/${id}/progress"><span>Средний прогресс</span><b>${avg}%</b></a>
       </div>
@@ -653,29 +621,6 @@ async function studentPage(view, [id, tab = ''], ctx) {
     $('#add', view).addEventListener('click', () => progressForm(ctx, s));
     bindTutorClaims(view, ctx);
     $$('[data-pedit]', view).forEach((b) => b.addEventListener('click', () => progressForm(ctx, s, R[b.dataset.pedit])));
-  }
-
-  if (tab === 'payments') {
-    const [pays, bal] = await Promise.all([
-      api.select('payments', { eq: { student_id: id }, order: 'paid_at', asc: false }),
-      api.select('student_balance', { eq: { student_id: id } }),
-    ]);
-    const b = bal[0] || { lessons_paid: 0, lessons_done: 0, lessons_left: 0 };
-    const total = pays.reduce((a, p) => a + p.amount_kopecks, 0);
-    done(h`
-      <div class="stats">
-        <div class="stat"><span>Оплачено занятий</span><b>${b.lessons_paid}</b></div>
-        <div class="stat"><span>Проведено</span><b>${b.lessons_done}</b></div>
-        <div class="stat"><span>${b.lessons_left < 0 ? 'Задолженность' : 'Осталось'}</span><b class="${b.lessons_left < 0 ? 'text-bad' : ''}">${Math.abs(b.lessons_left)}</b></div>
-      </div>
-      <div class="section-head"><h2>История оплат <span class="muted small">· всего ${fmtMoney(total)}</span></h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Оплата</button></div>
-      ${pays.length ? h`<div class="list card">${pays.map((p) => h`
-        <div class="item"><div class="item-main"><div class="item-title">${fmtMoney(p.amount_kopecks, p.currency)}</div>
-          <div class="item-meta">${fmtD(p.paid_at)} · ${plural(p.lessons_count, 'занятие', 'занятия', 'занятий')}${p.comment ? ` · ${p.comment}` : ''}</div></div>
-          <button class="icon-btn" data-pdel="${p.id}" aria-label="Удалить">${I.trash}</button></div>`)}</div>` : empty('Оплат пока нет', I.wallet)}`);
-    $('#add', view).addEventListener('click', () => paymentForm(ctx, s));
-    $$('[data-pdel]', view).forEach((x) => x.addEventListener('click', () =>
-      confirmDialog('Удалить запись об оплате?', async () => { await api.remove('payments', x.dataset.pdel); toast('Удалено'); ctx.refresh(); })));
   }
 
   if (tab === 'notes') {

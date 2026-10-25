@@ -1,5 +1,5 @@
 // Резервная копия: все данные кабинета в один ZIP (JSON для восстановления + таблицы для Excel)
-import { h, $, I, toast, fmtD } from './ui.js?v=202610251033';
+import { h, $, I, toast, fmtD } from './ui.js?v=202610251335';
 
 const TABLES = [
   ['students', 'Ученики'], ['lessons', 'Занятия'], ['homework', 'Домашние задания'],
@@ -78,7 +78,7 @@ export const backupCard = () => {
   const t = lastBackup();
   return h`<section class="card stack backup-card"><div class="card-head"><h2>Резервная копия</h2>
       ${t ? h`<span class="badge ${backupOverdue() ? 'warn' : 'ok'}">последняя ${fmtD(t)}</span>` : h`<span class="badge warn">ещё не делали</span>`}</div>
-    <p class="muted">Все данные кабинета одним архивом: ученики, занятия, отчёты, ДЗ, ответы, прогресс, оплаты, заметки. Внутри есть таблицы для Excel. Скачивайте раз в 1–2 недели и храните на компьютере.</p>
+    <p class="muted">Все данные кабинета одним архивом: ученики, занятия, отчёты, ДЗ, ответы, прогресс, заметки. Внутри есть таблицы для Excel. Скачивайте раз в 1–2 недели и храните на компьютере.</p>
     <button type="button" class="btn btn-primary" data-backup>${I.folder} Скачать всё</button>
     <p class="hint backup-step"></p></section>`;
 };

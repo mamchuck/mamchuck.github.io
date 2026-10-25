@@ -74,10 +74,6 @@ function seed() {
   P1(A, 'Физика', 'Законы Ньютона', 75);
   P1(A, 'Физика', 'Работа и мощность', 0);
   P1(M, 'Математика', 'Формулы сокращённого умножения', 50);
-  db.payments.push(
-    { id: uid(), student_id: A, amount_kopecks: 800000, currency: 'RUB', lessons_count: 4, paid_at: at(-10).slice(0, 10), comment: 'Пакет 4 занятия' },
-    { id: uid(), student_id: M, amount_kopecks: 200000, currency: 'RUB', lessons_count: 1, paid_at: at(-4).slice(0, 10), comment: '' },
-  );
   db.private_notes.push({ id: uid(), student_id: A, lesson_id: null, body: 'Теряется на задачах с параметром — вернуться после квадратных уравнений.', created_at: at(-2) });
   const TK = (subject, num, topic, body, answer, solution, answer_type = 'short', max_points = 1) => {
     const x = { id: uid(), subject, num, topic, body, answer, solution, answer_type, max_points, image_path: null, source: 'демо', created_at: at(-10) };
@@ -137,13 +133,6 @@ export function createDemoApi() {
     if (table === 'lessons_public') {
       return db.lessons.map((l) => ({ ...l, plan: undefined, report: l.report_published ? l.report : '' }))
         .filter((l) => myStudents().includes(l.student_id));
-    }
-    if (table === 'student_balance') {
-      return db.students.map((s) => {
-        const paid = db.payments.filter((p) => p.student_id === s.id).reduce((a, p) => a + p.lessons_count, 0);
-        const done = db.lessons.filter((l) => l.student_id === s.id && l.status === 'done').length;
-        return { student_id: s.id, lessons_paid: paid, lessons_done: done, lessons_left: paid - done };
-      }).filter((b) => me.role === 'tutor' || isParentOf(b.student_id));
     }
     if (table === 'oge_tasks_public') return db.oge_tasks.map(({ answer, solution, solution_image_path, source, ...t }) => t);
     if (table === 'oge_task_counts') {

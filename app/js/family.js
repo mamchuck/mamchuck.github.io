@@ -1,19 +1,18 @@
 // Кабинеты ученика и родителя
 import {
-  h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, fmtMoney, plural, empty, hwStatus, levelLabel, safeFileName,
+  h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610251033';
-import { TUTOR } from './config.js?v=202610251033';
-import { trainerFamily } from './trainer.js?v=202610251033';
-import { mockView } from './mock.js?v=202610251033';
-import { mountTelegramBanner } from './telegram.js?v=202610251033';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610251033';
+} from './ui.js?v=202610251335';
+import { TUTOR } from './config.js?v=202610251335';
+import { trainerFamily } from './trainer.js?v=202610251335';
+import { mockView } from './mock.js?v=202610251335';
+import { mountTelegramBanner } from './telegram.js?v=202610251335';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610251335';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
-  { path: 'payments', label: 'Оплаты', icon: I.wallet },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
@@ -83,18 +82,16 @@ async function home(view, _p, ctx) {
   if (!sid) return noChild(view, ctx);
   const { api } = ctx;
   const student = ctx.students.find((s) => s.id === sid);
-  const [lessons, hws, subs, bal] = await Promise.all([
+  const [lessons, hws, subs] = await Promise.all([
     api.select('lessons_public', { eq: { student_id: sid }, order: 'starts_at' }),
     api.select('homework', { eq: { student_id: sid }, order: 'due_at' }),
     api.select('submissions', { eq: { student_id: sid } }),
-    isStudent(ctx) ? [] : api.select('student_balance', { eq: { student_id: sid } }),
   ]);
   const nowIso = new Date().toISOString();
   const next = lessons.find((l) => l.status === 'planned' && l.starts_at >= nowIso);
   const subBy = Object.fromEntries(subs.map((s) => [s.homework_id, s]));
   const open = hws.filter((x) => !subBy[x.id]);
   const reports = lessons.filter((l) => l.status === 'done' && l.report).reverse().slice(0, 3);
-  const b = bal[0];
   const first = isStudent(ctx) ? (ctx.me.full_name || '').split(' ')[0] : '';
 
   mount(view, h`
@@ -110,8 +107,6 @@ async function home(view, _p, ctx) {
     <div class="stats">
       <a class="stat" href="#/homework"><span>ДЗ не сдано</span><b class="${open.length ? 'text-warn' : ''}">${open.length}</b></a>
       <a class="stat" href="#/lessons"><span>Занятий проведено</span><b>${lessons.filter((l) => l.status === 'done').length}</b></a>
-      ${b ? h`<a class="stat" href="#/payments"><span>${b.lessons_left < 0 ? 'Задолженность' : 'Оплачено вперёд'}</span>
-        <b class="${b.lessons_left < 0 ? 'text-bad' : ''}">${plural(Math.abs(b.lessons_left), 'занятие', 'занятия', 'занятий')}</b></a>` : ''}
     </div>
     <div class="grid-2">
       <section class="card"><div class="card-head"><h2>Домашние задания</h2><a href="#/homework" class="link">Все</a></div>
@@ -278,27 +273,4 @@ async function progress(view, _p, ctx) {
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
-async function payments(view, _p, ctx) {
-  const sid = ctx.studentId;
-  if (!sid) return noChild(view, ctx);
-  if (isStudent(ctx)) { location.hash = '#/'; return; }
-  const [pays, bal] = await Promise.all([
-    ctx.api.select('payments', { eq: { student_id: sid }, order: 'paid_at', asc: false }),
-    ctx.api.select('student_balance', { eq: { student_id: sid } }),
-  ]);
-  const b = bal[0] || { lessons_paid: 0, lessons_done: 0, lessons_left: 0 };
-  mount(view, h`
-    ${pageHero({ eyebrow: 'Оплаты', title: 'Оплаченные ', accent: 'занятия' })}
-    <div class="stats">
-      <div class="stat"><span>Оплачено занятий</span><b>${b.lessons_paid}</b></div>
-      <div class="stat"><span>Проведено</span><b>${b.lessons_done}</b></div>
-      <div class="stat"><span>${b.lessons_left < 0 ? 'Задолженность' : 'Осталось'}</span><b class="${b.lessons_left < 0 ? 'text-bad' : ''}">${plural(Math.abs(b.lessons_left), 'занятие', 'занятия', 'занятий')}</b></div>
-    </div>
-    <div class="section-head"><h2>История оплат</h2></div>
-    ${pays.length ? h`<div class="list card">${pays.map((p) => h`
-      <div class="item"><div class="item-main"><div class="item-title">${fmtMoney(p.amount_kopecks, p.currency)}</div>
-        <div class="item-meta">${fmtD(p.paid_at)} · ${plural(p.lessons_count, 'занятие', 'занятия', 'занятий')}${p.comment ? ` · ${p.comment}` : ''}</div></div></div>`)}</div>`
-    : empty('Оплат пока нет', I.wallet)}`);
-}
-
-export const familyRoutes = { trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress, payments };
+export const familyRoutes = { trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };
