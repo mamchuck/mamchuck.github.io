@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610261907';
-import { TUTOR } from './config.js?v=202610261907';
-import { trainerFamily } from './trainer.js?v=202610261907';
-import { mockView } from './mock.js?v=202610261907';
-import { mountTelegramBanner } from './telegram.js?v=202610261907';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610261907';
+} from './ui.js?v=202610262002';
+import { TUTOR } from './config.js?v=202610262002';
+import { trainerFamily } from './trainer.js?v=202610262002';
+import { mockView } from './mock.js?v=202610262002';
+import { mountTelegramBanner } from './telegram.js?v=202610262002';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610262002';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -21,6 +21,7 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
+  { path: 'razminka', label: 'Разминка', icon: I.bolt },
   { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
@@ -275,4 +276,7 @@ async function progress(view, _p, ctx) {
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
-export const familyRoutes = { trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };
+// «Разминка» — отдельная страница сайта; replace, чтобы «Назад» оттуда не возвращал сюда же
+const razminka = () => location.replace('../razminka/');
+
+export const familyRoutes = { razminka, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };
