@@ -119,7 +119,7 @@
 
 /* ---------- Шейдерный фон и эффекты ---------- */
 .x-fx { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
-.x-grad { background: linear-gradient(90deg, var(--accent), #8b5cf6 55%, #0d9488); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.x-grad { background: linear-gradient(90deg, #5cb3f2, var(--accent) 50%, #1f6fd1); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .x-group { margin: 26px 0 -14px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .x-card, #x .x-result, #x .x-tg { position: relative; isolation: isolate; }
 .x-card::before, #x .x-result::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none;

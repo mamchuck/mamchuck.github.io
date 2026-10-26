@@ -1,8 +1,8 @@
 // Разминка: раунды по 60 секунд на автоматизм (счёт, дроби, степени, тригонометрия, формулы физики).
 // Задания генерирует drills.js. Рекорды — в браузере; вошедшему ученику раунд засчитывается в XP и 🔥 серию (drill_finish).
-import { CONFIG } from '../app/js/config.js?v=202610262002';
-import { startFx } from '../diag/fx.js?v=202610262002';
-import { SKILLS, parseAns, same, fmt } from './drills.js?v=202610262002';
+import { CONFIG } from '../app/js/config.js?v=202610262005';
+import { startFx } from '../diag/fx.js?v=202610262005';
+import { SKILLS, parseAns, same, fmt } from './drills.js?v=202610262005';
 
 const ROUND = 60;
 const root = document.getElementById('rz');

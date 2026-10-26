@@ -19,7 +19,7 @@
 .rz-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: var(--shadow-hover); }
 .rz-card:hover::before { opacity: 1; }
 .rz-card-mix { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), color-mix(in srgb, #8b5cf6 10%, var(--surface))); }
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--accent) 5%, var(--surface))); }
 .rz-ico { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 14px; font-size: 20px; font-weight: 800;
   color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
 .rz-card-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
