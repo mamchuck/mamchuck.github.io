@@ -156,7 +156,7 @@ select { appearance: none; padding-right: 34px; cursor: pointer;
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); min-width: 0; }
 .card + .card, .card + .section-head, .grid-2 + .card, .grid-2 + .section-head { margin-top: 16px; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
 .page-head > div > p { margin-top: 4px; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 28px 0 12px; }
 .section-head:first-child, .tabs + .section-head { margin-top: 0; }
@@ -221,7 +221,7 @@ a.stat:hover { border-color: #D3DFEE; }
 .tabs a { padding: 10px 12px; color: var(--text-2); font-weight: 500; font-size: 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .tabs a:hover { color: var(--text); }
 .tabs a.on { color: var(--accent-strong); border-bottom-color: var(--accent); }
-.back { display: inline-flex; align-items: center; gap: 4px; color: var(--text-2); font-size: 14px; margin-bottom: 14px; }
+.back { display: inline-flex; align-items: center; gap: 4px; color: var(--text-2); font-size: 14px; margin-bottom: 16px; }
 .back svg { width: 16px; height: 16px; }
 .back:hover { color: var(--text); }
 .who { display: flex; align-items: center; gap: 14px; min-width: 0; }
@@ -337,7 +337,7 @@ h3 { font-weight: 800; text-transform: uppercase; letter-spacing: .04em; font-si
 /* Шапка страницы */
 .page-hero {
   position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-  margin-bottom: 20px; padding: 26px 30px; border-radius: 24px; border: 1px solid var(--line);
+  margin-bottom: 16px; padding: 26px 30px; border-radius: 24px; border: 1px solid var(--line);
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); box-shadow: var(--shadow);
 }
 .page-hero::after {
@@ -758,7 +758,6 @@ input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus
 .tg-banner .item-main p { margin-top: 2px; }
 .tg-banner-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: #2aabee; color: #fff; flex: none; }
 .tg-banner-icon svg { width: 24px; height: 24px; }
-.page-hero + .tg-banner { margin-top: -4px; }
 
 .resp { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .resp .badge { text-transform: none; letter-spacing: 0; font-size: 12px; }
@@ -1076,12 +1075,12 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 @media (max-width: 560px) { .mock-review-head .seg-inline { width: 100%; overflow-x: auto; } }
 
 /* ---------- Календарь: неделя ---------- */
-.wk-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.wk-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .wk-toolbar .icon-btn { font-size: 22px; line-height: 1; }
 .wk-title { margin: 0 8px 0 6px; font-size: 18px; flex: 1; min-width: 180px; }
 .wk-card { padding: 0; overflow: hidden; }
 .wk-scroll { overflow-x: auto; }
-.wk { display: grid; grid-template-columns: 56px repeat(7, minmax(104px, 1fr)); min-width: 780px; }
+.wk { display: grid; grid-template-columns: 52px repeat(7, minmax(84px, 1fr)); min-width: 640px; }
 .wk-corner, .wk-head { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); }
 .wk-corner { left: 0; z-index: 3; }
 .wk-head { display: grid; justify-items: center; gap: 2px; padding: 10px 4px 8px; border-left: 1px solid var(--line); }
@@ -1204,5 +1203,47 @@ a.dr-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, 
 .dr-empty span { font-size: 26px; }
 .dr-empty p { flex: 1 1 220px; margin: 0; color: var(--text-2); }
 .rz-cta-link { display: grid; gap: 4px; color: inherit; }
-.rz-root .page-hero { margin-bottom: 4px; }
+.rz-root .page-hero { margin-bottom: 16px; }
+.rz-root .rz-filters { margin: 0 0 16px; }
+.rz-root .rz-note { margin-top: 16px; }
 @media (max-width: 640px) { .dr-week { grid-template-columns: 1fr; } .dr-week > div { grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; } }
+
+/* Ритм вкладок: 16px до и после (с учётом места под тень активной вкладки) */
+.tabs { padding: 4px 2px 6px; margin: -4px 0 10px; }
+.wk-card + .hint, .card + p.hint, .grid-2 + p.hint, .stats + p.hint { margin-top: 12px; }
+
+/* Телефон: переключатели в одну строку с прокруткой, шапки групп библиотеки, кнопки файла — под названием */
+@media (max-width: 760px) {
+  .seg > * { flex: none; white-space: nowrap; }
+  .toolbar .seg-inline { scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toolbar .seg-inline::-webkit-scrollbar { display: none; }
+  .lib-group { flex-wrap: wrap; row-gap: 6px; }
+  .lib-group span { flex: 1 0 100%; margin-right: 0; }
+  .lib-group .link-btn { white-space: nowrap; padding: 0; }
+  .lib-item { display: grid; grid-template-columns: auto auto minmax(0, 1fr); column-gap: 12px; row-gap: 8px; }
+  .lib-item .actions { grid-column: 3; justify-self: start; }
+  .page-head { margin-bottom: 14px; }
+}
+
+/* Телефон: карточки с кнопками (занятия, ДЗ) — статус под описанием, главная кнопка во всю ширину, остальные пополам */
+@media (max-width: 760px) {
+  .item-side:has(.actions > *) { flex-direction: column; align-items: stretch; width: 100%; margin-left: 0; gap: 10px; }
+  .item-side:has(.actions > *) > .badge { align-self: flex-start; }
+  .item-side .actions:has(> *) { display: flex; flex-wrap: wrap; gap: 8px; }
+  .item-side .actions > .btn { flex: 1 1 0; justify-content: center; white-space: nowrap; }
+  .item-side .actions > .btn-primary { flex-basis: 100%; }
+  .tg-banner .actions { flex: 1 0 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tg-banner .actions .btn { width: 100%; justify-content: center; }
+}
+@media (max-width: 520px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stats > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .item > .btn { flex: 1 0 100%; justify-content: center; }           /* одиночная кнопка в строке списка — во всю ширину, как у соседей */
+  .toolbar > input, .toolbar > input[type=search], .toolbar > select, .toolbar > .seg-inline { flex: 1 0 100%; }
+  .toolbar > .btn { flex: 1 1 0; justify-content: center; }
+  .lead-actions { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .lead-actions > * { width: 100%; }
+  .lead-actions .btn { justify-content: center; white-space: normal; }
+}

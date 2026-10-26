@@ -273,3 +273,12 @@
 @media (max-width: 1080px) { .l-head nav { gap: 18px; } }
 @media (max-width: 900px) { .l-bank-grid { grid-template-columns: 1fr; } .l-bank { padding: 28px 22px; } .l-exam::before { font-size: 72px; } }
 @media (max-width: 640px) { .l-bank { padding: 24px 16px; border-radius: 22px; } .l-bank-skill { flex-wrap: wrap; } .l-bank-skill .l-exam-go { margin-left: 52px; } }
+
+/* Шапка публичных страниц (кроме главной) — плавающая «таблетка» из стекла */
+.l-head.l-float { top: 12px; margin: 12px 0 0; padding: 10px 10px 10px 18px; border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 40%, transparent) inset, 0 10px 30px rgba(15, 40, 70, .10); }
+.l-head.l-float .btn { border-radius: 14px; }
+@media (max-width: 560px) { .l-head.l-float { top: 8px; margin-top: 8px; padding: 8px 8px 8px 14px; border-radius: 18px; } }
