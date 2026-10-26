@@ -1158,3 +1158,7 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 .g-stone.new .g-scap { color: var(--text-3); }
 .g-stone.done .g-scap { color: var(--accent-strong); }
 @media (max-width: 560px) { .g-scap { max-width: 110px; font-size: 11px; } .g-sdot { width: 26px; height: 26px; } }
+
+/* Ссылка на «Разминку» на главной ученика */
+.rz-link { color: inherit; margin-bottom: 4px; transition: transform .3s cubic-bezier(.22, .8, .24, 1); }
+.rz-link:hover { transform: translateY(-2px); }

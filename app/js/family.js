@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610251455';
-import { TUTOR } from './config.js?v=202610251455';
-import { trainerFamily } from './trainer.js?v=202610251455';
-import { mockView } from './mock.js?v=202610251455';
-import { mountTelegramBanner } from './telegram.js?v=202610251455';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610251455';
+} from './ui.js?v=202610261907';
+import { TUTOR } from './config.js?v=202610261907';
+import { trainerFamily } from './trainer.js?v=202610261907';
+import { mockView } from './mock.js?v=202610261907';
+import { mountTelegramBanner } from './telegram.js?v=202610261907';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610261907';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -108,6 +108,8 @@ async function home(view, _p, ctx) {
       <a class="stat" href="#/homework"><span>ДЗ не сдано</span><b class="${open.length ? 'text-warn' : ''}">${open.length}</b></a>
       <a class="stat" href="#/lessons"><span>Занятий проведено</span><b>${lessons.filter((l) => l.status === 'done').length}</b></a>
     </div>
+    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="../razminka/"><span class="g-goal-ico">⚡</span><div><span class="g-label">Разминка · 60 секунд</span>
+      <b>Счёт, дроби, тригонометрия, формулы физики — на автомат</b></div><span class="btn btn-primary g-goal-btn">Размяться →</span></a>` : ''}
     <div class="grid-2">
       <section class="card"><div class="card-head"><h2>Домашние задания</h2><a href="#/homework" class="link">Все</a></div>
         ${open.length ? h`<div class="list">${open.slice(0, 5).map((x) => hwItem(x, null))}</div>` : empty('Всё сдано 🎉', I.check)}</section>

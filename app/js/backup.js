@@ -1,5 +1,5 @@
 // Резервная копия: все данные кабинета в один ZIP (JSON для восстановления + таблицы для Excel)
-import { h, $, I, toast, fmtD } from './ui.js?v=202610251455';
+import { h, $, I, toast, fmtD } from './ui.js?v=202610261907';
 
 const TABLES = [
   ['students', 'Ученики'], ['lessons', 'Занятия'], ['homework', 'Домашние задания'],
