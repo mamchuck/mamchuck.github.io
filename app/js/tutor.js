@@ -2,16 +2,16 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610262146';
+} from './ui.js?v=202610262156';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610262146';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262146';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262146';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262146';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262146';
-import { loadDrill, drillBlock } from './drill.js?v=202610262146';
-import { leadsPage } from './leads.js?v=202610262146';
+} from './library.js?v=202610262156';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262156';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262156';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262156';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262156';
+import { loadDrill, drillBlock } from './drill.js?v=202610262156';
+import { leadsPage } from './leads.js?v=202610262156';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -329,20 +329,20 @@ function progressForm(ctx, student, row) {
 
 async function invite(ctx, student, role) {
   try {
-    const code = await ctx.api.rpc('create_invitation', { p_student_id: student.id, p_role: role, p_days: 7 });
+    const code = await ctx.api.rpc('create_invitation', { p_student_id: student.id, p_role: role, p_days: 3 });
     const link = `${location.origin}${location.pathname}#/join/${code}`;
     const who = role === 'student' ? 'ученика' : 'родителя';
     const m = modal({
       title: `Приглашение для ${who}`,
       body: h`
-        <p>Отправьте ссылку ${who}. Она одноразовая и действует 7 дней. Код показывается только сейчас.</p>
+        <p>Отправьте ссылку ${who} лично. Это не пароль, а одноразовый ключ: сработает один раз и действует 3 дня. Когда по ней войдут, вам придёт уведомление в Telegram — если это чужой человек, отзовите доступ во вкладке «Доступ».</p>
         <div class="code-box">${code}</div>
         <div class="copy-row"><input readonly value="${link}" aria-label="Ссылка"><button type="button" class="btn btn-primary" id="copy">Копировать</button></div>
         <p class="hint">Человек откроет ссылку, зарегистрируется, и доступ к кабинету «${student.name}» откроется автоматически.</p>
         <p class="hint">После входа на главной появится предложение подключить Telegram-уведомления.</p>`,
     });
     $('#copy', m.el).addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(`Вход в личный кабинет mamchuck: ${link}`); toast('Скопировано'); }
+      try { await navigator.clipboard.writeText(`Приглашение в личный кабинет mamchuck (одноразовая ссылка, действует 3 дня):\n${link}`); toast('Скопировано'); }
       catch { $('.copy-row input', m.el).select(); }
     });
     ctx.refresh();

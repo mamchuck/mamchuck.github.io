@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'sha256-Yz1LgdxFv8V1Nb5KNTbLVNo9XEyGj4k2dklOA2xhfc0='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bjnnazomdmhlvrxdqdbu.supabase.co; media-src 'self' blob: https://bjnnazomdmhlvrxdqdbu.supabase.co; connect-src 'self' https://bjnnazomdmhlvrxdqdbu.supabase.co wss://bjnnazomdmhlvrxdqdbu.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/ https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/ https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/ 'sha256-Yz1LgdxFv8V1Nb5KNTbLVNo9XEyGj4k2dklOA2xhfc0='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bjnnazomdmhlvrxdqdbu.supabase.co; media-src 'self' blob: https://bjnnazomdmhlvrxdqdbu.supabase.co; connect-src 'self' https://bjnnazomdmhlvrxdqdbu.supabase.co wss://bjnnazomdmhlvrxdqdbu.supabase.co; object-src 'none'; worker-src 'none'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Подготовка к ОГЭ и ЕГЭ по математике и физике — онлайн и в Хабаровске | mamchuck</title>
@@ -24,8 +24,8 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css?v=202610262146">
-  <link rel="stylesheet" href="landing.css?v=202610262146">
+  <link rel="stylesheet" href="app/css/style.css?v=202610262156">
+  <link rel="stylesheet" href="landing.css?v=202610262156">
 </head>
 <body class="landing">
   <header class="l-head">
@@ -164,6 +164,6 @@
   </footer>
 
   <a href="diag/" class="l-sticky btn l-cta-main"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-  <script src="landing.js?v=202610262146" defer></script>
+  <script src="landing.js?v=202610262156" defer></script>
 </body>
 </html>

@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js?v=202610262146';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610262146';
-import { tutorRoutes, tutorNav } from './tutor.js?v=202610262146';
-import { backupCard, bindBackup } from './backup.js?v=202610262146';
-import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610262146';
-import { familyRoutes, familyNav } from './family.js?v=202610262146';
+import { CONFIG, TUTOR } from './config.js?v=202610262156';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610262156';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202610262156';
+import { backupCard, bindBackup } from './backup.js?v=202610262156';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610262156';
+import { familyRoutes, familyNav } from './family.js?v=202610262156';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js?v=202610262146')).createApi(CONFIG)
-  : (await import('./demo.js?v=202610262146')).createDemoApi();
+  ? (await import('./api.js?v=202610262156')).createApi(CONFIG)
+  : (await import('./demo.js?v=202610262156')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };
@@ -34,7 +34,10 @@ async function start() {
 
   const code = store.get(CODE_KEY);
   if (code && ctx.me.role !== 'tutor') {
-    try { await api.rpc('redeem_invitation', { p_code: code }); toast('Доступ открыт'); ctx.me = await api.me(); }
+    try {
+      if (!(await api.rpc('redeem_invitation', { p_code: code }))) throw new Error('Ссылка недействительна: истекла или уже использована. Попросите новую.');
+      toast('Доступ открыт'); ctx.me = await api.me();
+    }
     catch (e) { toast(e.message, 'error'); }
     store.set(CODE_KEY, null);
   }
@@ -84,7 +87,7 @@ function renderAuth(tab = store.get(CODE_KEY) ? 'signup' : 'login') {
         <form id="auth-form" class="stack">
           ${tab === 'signup' ? h`<label class="field"><span>Имя</span><input name="name" required autocomplete="name" placeholder="Как к вам обращаться"></label>` : ''}
           <label class="field"><span>Email</span><input name="email" type="email" required autocomplete="email"></label>
-          <label class="field"><span>Пароль</span><input name="password" type="password" required minlength="6"
+          <label class="field"><span>Пароль</span><input name="password" type="password" required minlength="${tab === 'login' ? 6 : 8}"
             autocomplete="${tab === 'login' ? 'current-password' : 'new-password'}"></label>
           <button class="btn btn-primary btn-block" type="submit">${tab === 'login' ? 'Войти' : 'Создать аккаунт'}</button>
           ${tab === 'login' ? h`<button type="button" class="link-btn" id="forgot">Забыли пароль?</button>` : ''}
@@ -119,7 +122,7 @@ function renderAuth(tab = store.get(CODE_KEY) ? 'signup' : 'login') {
 function renderNewPassword() {
   mount(root, h`<div class="center-screen"><div class="auth-card card">
     <h1>Новый пароль</h1>
-    <form id="np" class="stack"><label class="field"><span>Пароль</span><input name="p" type="password" minlength="6" required autocomplete="new-password"></label>
+    <form id="np" class="stack"><label class="field"><span>Пароль</span><input name="p" type="password" minlength="8" required autocomplete="new-password"></label>
     <button class="btn btn-primary btn-block">Сохранить</button></form></div></div>`);
   $('#np').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -160,14 +163,17 @@ function renderJoin() {
     <h1>Введите код приглашения</h1>
     <p class="muted">Код выдаёт преподаватель. Он одноразовый и действует ограниченное время.</p>
     <form id="join" class="stack">
-      <label class="field"><span>Код</span><input name="code" required autocomplete="off" class="code-input" placeholder="A1B2C3D4E5F6" maxlength="12"></label>
+      <label class="field"><span>Код</span><input name="code" required autocomplete="off" class="code-input" placeholder="A1B2C3D4E5F6A7B8" maxlength="32"></label>
       <button class="btn btn-primary btn-block">Подключиться</button>
       <button type="button" class="link-btn" id="lo">Выйти</button>
     </form></div></div>`);
   $('#lo').addEventListener('click', logout);
   $('#join').addEventListener('submit', async (e) => {
     e.preventDefault();
-    try { await api.rpc('redeem_invitation', { p_code: e.target.code.value.trim() }); toast('Готово!'); start(); }
+    try {
+      if (!(await api.rpc('redeem_invitation', { p_code: e.target.code.value.trim() }))) throw new Error('Код неверный, истёк или уже использован');
+      toast('Готово!'); start();
+    }
     catch (err) { toast(err.message, 'error'); }
   });
 }
@@ -237,7 +243,7 @@ const settingsView = async (view) => {
         <p class="muted small">${ctx.me.email}</p>
         <button class="btn btn-primary">Сохранить</button></form>
       <form class="card stack" id="f-pass"><h2>Пароль</h2>
-        <label class="field"><span>Новый пароль</span><input name="p" type="password" minlength="6" required autocomplete="new-password"></label>
+        <label class="field"><span>Новый пароль</span><input name="p" type="password" minlength="8" required autocomplete="new-password"></label>
         <button class="btn btn-primary">Изменить пароль</button></form>
     </div>
     <section class="card stack theme-card"><h2>Оформление</h2>
