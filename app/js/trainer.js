@@ -2,7 +2,7 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero, subjLabel,
-} from './ui.js?v=202610262010';
+} from './ui.js?v=202610262146';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22, 'Профильная математика': 20 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -690,7 +690,7 @@ async function familyHome(view, ctx) {
   mount(view, h`
     ${pageHero({ eyebrow: 'Банк задач', title: isStudent(ctx) ? 'Решай и ' : 'Банк задач: ', accent: isStudent(ctx) ? 'тренируйся' : student?.name || '',
       sub: isStudent(ctx) ? 'Краткий ответ проверяется сразу, после попытки откроется решение.' : 'Здесь видно, какие номера получаются, а какие нужно подтянуть.' })}
-    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="../razminka/"><span class="g-goal-ico">⚡</span><div><span class="g-label">Тренировка навыков · 60 секунд</span>
+    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="#/razminka"><span class="g-goal-ico">⚡</span><div><span class="g-label">Тренировка навыков · 60 секунд</span>
       <b>Перед задачами — минута на счёт, дроби и формулы</b></div><span class="btn btn-primary g-goal-btn">Начать →</span></a>` : ''}
     <div class="section-head"><h2>Задано преподавателем</h2></div>
     ${sets.length ? h`<div class="list card">${sets.map((s) => {

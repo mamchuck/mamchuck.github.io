@@ -245,6 +245,35 @@ export function createDemoApi() {
             .map(([id, title, description, icon, need]) => ({ id, code: id, title, description, icon, need, unlocked: 8 >= need, claim: claimOf(id) })),
         };
       }
+      // Тренировка навыков: раунды в памяти, у Ани — немного истории для красивого прогресса
+      if (fn === 'drill_state' || fn === 'drill_finish' || fn === 'drill_stats') {
+        if (!db.drill_rounds) {
+          const ago = (d) => new Date(now - d * day).toISOString();
+          db.drill_rounds = [[ 'mul', [14, 17, 16, 21, 24, 23, 27] ], [ 'frac', [6, 8, 7, 11] ], [ 'derive', [5, 9, 12] ], [ 'trig', [9] ]]
+            .flatMap(([skill, arr]) => arr.map((score, i) => ({ student_id: 's-anya', skill, score, total: score + 3, created_at: ago(arr.length - i) })));
+        }
+        const sid = fn === 'drill_stats' ? args.p_student : myStudents()[0];
+        if (fn === 'drill_finish') {
+          if (me.role !== 'student') return null;
+          db.drill_rounds.push({ student_id: sid, skill: args.p_skill, score: args.p_score, total: args.p_total, created_at: new Date().toISOString() });
+        }
+        const mine = db.drill_rounds.filter((r) => r.student_id === sid);
+        const bySkill = {};
+        for (const r of mine) (bySkill[r.skill] ||= []).push(r);
+        const best = (k) => Math.max(...bySkill[k].map((r) => r.score));
+        if (fn === 'drill_state') return Object.fromEntries(Object.keys(bySkill).map((k) => [k, best(k)]));
+        if (fn === 'drill_finish') return { best: best(args.p_skill), xp: Math.min(args.p_score, 20), streak: args.p_score >= 5, capped: false };
+        const week = mine.filter((r) => r.created_at >= new Date(now - 7 * day).toISOString());
+        return {
+          skills: Object.entries(bySkill).map(([skill, rs]) => {
+            const last = rs.slice(-12);
+            return { skill, best: best(skill), rounds: rs.length, last_at: rs[rs.length - 1].created_at, recent: last.map((r) => r.score),
+              acc: Math.round((100 * last.reduce((a, r) => a + r.score, 0)) / last.reduce((a, r) => a + r.total, 0)) };
+          }).sort((a, b) => b.last_at.localeCompare(a.last_at)),
+          week_rounds: week.length, week_correct: week.reduce((a, r) => a + r.score, 0),
+          week_days: new Set(week.map((r) => r.created_at.slice(0, 10))).size, total_rounds: mine.length,
+        };
+      }
       if (fn === 'tg_create_link') {
         // демо: «пользователь нажал Start» через 4 секунды
         setTimeout(() => {

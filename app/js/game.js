@@ -1,6 +1,6 @@
 // Геймификация: 🔥 серия, уровень (XP), дорожная карта (SVG: подтемы + медали номеров), награды.
 // Все данные — одним вызовом game_state(student_id); считает база, страница только рисует.
-import { h, raw, $, $$, toast } from './ui.js?v=202610262010';
+import { h, raw, $, $$, toast } from './ui.js?v=202610262146';
 
 const LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -184,7 +184,7 @@ function celebrate(state, key) {
 }
 
 // Полный блок: для ученика (с кнопкой «Забрать»), родителя и преподавателя
-export function gameBlock(state, { canClaim = false, studentId = '' } = {}) {
+export function gameBlock(state, { canClaim = false, studentId = '', afterGoal = '' } = {}) {
   if (!state) return '';
   // база ещё без миграции 039 — уровней и подтем нет: считаем «закрыт» золотом, «в работе» бронзой
   for (const n of state.map) { n.level ??= n.status === 'done' ? 3 : n.attempts >= 5 ? 1 : 0; n.topics ??= []; n.stale ??= false; }
@@ -194,6 +194,7 @@ export function gameBlock(state, { canClaim = false, studentId = '' } = {}) {
   return h`<div class="g-wrap">
     <div class="g-top">${streakCard(state.streak)}${levelCard(state.xp)}</div>
     ${nextGoal(state.map, linkFor, canClaim)}
+    ${afterGoal}
     ${subjects.map((s) => roadmap(state.map, s, linkFor))}
     ${rewards(state.rewards, state.streak.best, canClaim)}
   </div>`;

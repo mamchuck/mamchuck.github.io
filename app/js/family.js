@@ -2,12 +2,13 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610262010';
-import { TUTOR } from './config.js?v=202610262010';
-import { trainerFamily } from './trainer.js?v=202610262010';
-import { mockView } from './mock.js?v=202610262010';
-import { mountTelegramBanner } from './telegram.js?v=202610262010';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610262010';
+} from './ui.js?v=202610262146';
+import { TUTOR } from './config.js?v=202610262146';
+import { trainerFamily } from './trainer.js?v=202610262146';
+import { mockView } from './mock.js?v=202610262146';
+import { mountTelegramBanner } from './telegram.js?v=202610262146';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610262146';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610262146';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -109,7 +110,7 @@ async function home(view, _p, ctx) {
       <a class="stat" href="#/homework"><span>ДЗ не сдано</span><b class="${open.length ? 'text-warn' : ''}">${open.length}</b></a>
       <a class="stat" href="#/lessons"><span>Занятий проведено</span><b>${lessons.filter((l) => l.status === 'done').length}</b></a>
     </div>
-    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="../razminka/"><span class="g-goal-ico">⚡</span><div><span class="g-label">Тренировка навыков · 60 секунд</span>
+    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="#/razminka"><span class="g-goal-ico">⚡</span><div><span class="g-label">Тренировка навыков · 60 секунд</span>
       <b>Счёт, дроби, тригонометрия, формулы физики — на автомат</b></div><span class="btn btn-primary g-goal-btn">Начать →</span></a>` : ''}
     <div class="grid-2">
       <section class="card"><div class="card-head"><h2>Домашние задания</h2><a href="#/homework" class="link">Все</a></div>
@@ -256,12 +257,12 @@ async function materials(view, _p, ctx) {
 async function progress(view, _p, ctx) {
   const sid = ctx.studentId;
   if (!sid) return noChild(view, ctx);
-  const [rows, game] = await Promise.all([
-    ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' }), loadGame(ctx.api, sid)]);
+  const [rows, game, drill] = await Promise.all([
+    ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' }), loadGame(ctx.api, sid), loadDrill(ctx.api, sid)]);
   const subjects = [...new Set(rows.map((r) => r.subject))];
   mount(view, h`
     ${pageHero({ eyebrow: 'Прогресс', title: isStudent(ctx) ? 'Твой путь к ' : 'Путь к ', accent: 'ОГЭ' })}
-    ${gameBlock(game, { canClaim: isStudent(ctx), studentId: sid })}
+    ${game ? gameBlock(game, { canClaim: isStudent(ctx), studentId: sid, afterGoal: drillBlock(drill, { canPlay: isStudent(ctx) }) }) : drillBlock(drill, { canPlay: isStudent(ctx) })}
     ${rows.length ? h`<div class="section-head"><h2>Темы от преподавателя</h2></div>` : ''}
     ${rows.length ? h`<div class="stats">${subjects.map((s) => {
       const r = rows.filter((x) => x.subject === s);
@@ -272,11 +273,8 @@ async function progress(view, _p, ctx) {
         <span class="p-topic">${r.topic}</span>
         <span class="bar" role="progressbar" aria-valuenow="${r.level}" aria-valuemin="0" aria-valuemax="100"><i style="width:${r.level}%"></i></span>
         <span class="p-level">${levelLabel(r.level)}</span></div>`)}</div></section>`)}`
-    : game ? '' : empty('Преподаватель ещё не отметил темы', I.chart)}`);
+    : game || drill ? '' : empty('Преподаватель ещё не отметил темы', I.chart)}`);
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
-// «Тренировка навыков» — отдельная страница сайта; replace, чтобы «Назад» оттуда не возвращал сюда же
-const razminka = () => location.replace('../razminka/');
-
-export const familyRoutes = { razminka, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };
+export const familyRoutes = { razminka: drillPage, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };

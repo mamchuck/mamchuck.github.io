@@ -1162,3 +1162,47 @@ details summary { cursor: pointer; color: var(--accent-strong); font-weight: 600
 /* Ссылка на «Разминку» на главной ученика */
 .rz-link { color: inherit; margin-bottom: 4px; transition: transform .3s cubic-bezier(.22, .8, .24, 1); }
 .rz-link:hover { transform: translateY(-2px); }
+
+/* Единый ритм отступов: между блоками 16px, внутри карточек 20px (16px на телефоне), иконки и кнопки — на одних линиях */
+.grid-2 { align-items: stretch; }
+.grid-2 > .card + .card, .grid-2 > * + *, .g-wrap > .card + .card, .g-wrap > * + .card { margin-top: 0; }   /* правило «карточка после карточки» не должно сдвигать вторую колонку */
+.g-goal { padding: 20px; gap: 14px; }
+.g-goal-ico { width: 42px; height: 42px; font-size: 21px; border-radius: 12px; }
+.rz-link { margin: 0 0 16px; }
+.g-goal + .grid-2 { margin-top: 0; }
+@media (max-width: 760px) { .g-goal { padding: 16px; } }
+
+/* Тренировка навыков в «Прогрессе» */
+.dr-wrap { display: grid; gap: 16px; }
+.dr-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.dr-head h3 { margin: 2px 0 0; }
+.dr-head .g-label { color: var(--accent-strong); }
+.dr-week { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.dr-week > div { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.dr-week b { font-size: 26px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.dr-week small { font-size: 12.5px; color: var(--text-2); }
+.dr-dots { display: flex; gap: 5px; height: 26px; align-items: center; }
+.dr-dots i { width: 14px; height: 14px; border-radius: 50%; background: color-mix(in srgb, var(--text-3) 22%, transparent); }
+.dr-dots i.on { background: linear-gradient(135deg, #4aa8f5, #1f6fd1); box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 35%, transparent); }
+.dr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.dr-tile { display: grid; gap: 10px; padding: 16px; border-radius: 16px; color: inherit; border: 1px solid var(--line); background: var(--surface);
+  transition: transform .35s cubic-bezier(.22, .8, .24, 1), border-color .35s, box-shadow .35s; }
+a.dr-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: var(--shadow-hover); }
+.dr-tile-head { display: flex; align-items: center; gap: 10px; }
+.dr-tile-head b { font-size: 15px; }
+.dr-ico { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px; font-weight: 800; font-size: 15px;
+  color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.dr-tile-mid { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.dr-best { display: grid; }
+.dr-best small { font-size: 11px; color: var(--text-3); }
+.dr-best b { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--accent-strong); }
+.dr-spark { width: 132px; height: 40px; flex: none; overflow: visible; }
+.dr-tile-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); }
+.dr-d { font-style: normal; font-weight: 700; color: var(--text-3); }
+.dr-d.up { color: #16a34a; } .dr-d.down { color: #e5484d; }
+.dr-empty { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px; border-radius: 14px; border: 1px dashed var(--line-2); }
+.dr-empty span { font-size: 26px; }
+.dr-empty p { flex: 1 1 220px; margin: 0; color: var(--text-2); }
+.rz-cta-link { display: grid; gap: 4px; color: inherit; }
+.rz-root .page-hero { margin-bottom: 4px; }
+@media (max-width: 640px) { .dr-week { grid-template-columns: 1fr; } .dr-week > div { grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; } }

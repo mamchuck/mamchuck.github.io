@@ -2,15 +2,16 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610262010';
+} from './ui.js?v=202610262146';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610262010';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262010';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262010';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262010';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262010';
-import { leadsPage } from './leads.js?v=202610262010';
+} from './library.js?v=202610262146';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262146';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262146';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262146';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262146';
+import { loadDrill, drillBlock } from './drill.js?v=202610262146';
+import { leadsPage } from './leads.js?v=202610262146';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -602,12 +603,12 @@ async function studentPage(view, [id, tab = ''], ctx) {
   }
 
   if (tab === 'progress') {
-    const [rows, game] = await Promise.all([api.select('topic_progress', { eq: { student_id: id }, order: 'topic' }), loadGame(api, id)]);
+    const [rows, game, drill] = await Promise.all([api.select('topic_progress', { eq: { student_id: id }, order: 'topic' }), loadGame(api, id), loadDrill(api, id)]);
     const subjects = [...new Set([...s.subjects, ...rows.map((r) => r.subject)])];
     const claims = await tutorClaims(api, id, game);
     done(h`
       ${claims}
-      ${gameBlock(game)}
+      ${game ? gameBlock(game, { afterGoal: drillBlock(drill) }) : drillBlock(drill)}
       <div class="section-head"><h2>Прогресс по темам</h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Тема</button></div>
       ${rows.length ? subjects.filter((sub) => rows.some((r) => r.subject === sub)).map((sub) => h`
         <section class="card"><h3>${sub}</h3><div class="progress-list">

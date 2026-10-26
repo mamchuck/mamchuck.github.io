@@ -1,6 +1,6 @@
 /* Тренировка навыков (/razminka/): выбор навыка, раунд 60 с, итог. База — стили диагностики (diag.css: .x-title, .x-grad, сияние) */
 #x:has(#rz) { max-width: 880px; }
-#rz { --rz-blue: linear-gradient(135deg, #4aa8f5 0%, var(--accent) 50%, #1f6fd1 100%); --rz-glow: color-mix(in srgb, var(--accent) 35%, transparent);
+#rz, .rz-root { --rz-blue: linear-gradient(135deg, #4aa8f5 0%, var(--accent) 50%, #1f6fd1 100%); --rz-glow: color-mix(in srgb, var(--accent) 35%, transparent);
   --rz-ok: #16a34a; --rz-bad: #e5484d; --rz-gold: #e0a91a; }
 
 /* ---------- Меню ---------- */
@@ -64,7 +64,9 @@
 .rz-answer { margin-top: 14px; }
 .rz-form { display: flex; gap: 10px; align-items: center; }
 .rz-pre { font-size: 22px; font-weight: 700; }
-.rz-in { flex: 1; min-height: 58px; font-size: 26px !important; font-weight: 700; text-align: center; }
+.rz-in { flex: 1; min-width: 0; min-height: 58px; padding: 0 16px; border-radius: 14px; font-family: inherit; font-size: 26px; font-weight: 700; text-align: center; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--line-2); outline: none; transition: border-color .2s, box-shadow .2s; }
+.rz-in:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
 .rz-form .btn { min-height: 58px; padding: 0 24px; font-size: 18px; }
 .rz-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
 .rz-pad button { font-family: inherit; color: inherit; min-height: 54px; border-radius: 14px; font-size: 22px; font-weight: 700; background: color-mix(in srgb, var(--surface) 88%, transparent);
