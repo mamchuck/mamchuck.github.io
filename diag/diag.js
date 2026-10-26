@@ -1,7 +1,7 @@
 // «Диагностика ОГЭ и ЕГЭ»: 10 задач без регистрации → прогноз (оценка ОГЭ / тестовые баллы ЕГЭ) → разбор в Telegram.
 // Проверка ответов — только в базе (xray_submit), ответы на страницу не приходят.
-import { CONFIG } from '../app/js/config.js?v=202610262009';
-import { startFx } from './fx.js?v=202610262009';
+import { CONFIG } from '../app/js/config.js?v=202610262010';
+import { startFx } from './fx.js?v=202610262010';
 
 const fx = startFx();                         // шейдерный фон (без WebGL — просто пропускается)
 const EGE = 'Профильная математика';

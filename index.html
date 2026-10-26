@@ -24,13 +24,19 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css?v=202610262009">
-  <link rel="stylesheet" href="landing.css?v=202610262009">
+  <link rel="stylesheet" href="app/css/style.css?v=202610262010">
+  <link rel="stylesheet" href="landing.css?v=202610262010">
 </head>
 <body class="landing">
   <header class="l-head">
     <a href="./" class="brand" aria-label="mamchuck — на главную"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></a>
-    <nav><a href="diag/" class="l-nav-hi"><i aria-hidden="true"></i>Диагностика</a><a href="oge/">ОГЭ</a><a href="ege/">ЕГЭ</a><a href="razminka/">Тренировка</a><a href="#lessons">Занятия</a><a href="#formats">Форматы</a><a href="#faq">Вопросы</a></nav>
+    <nav><a href="diag/" class="l-nav-hi"><i aria-hidden="true"></i>Диагностика</a><div class="l-dd"><a href="#bank" class="l-nav-bank">Банк задач ОГЭ и ЕГЭ<svg class="l-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div class="l-dd-panel">
+        <a href="oge/matematika/"><span class="l-dd-ico">📐</span><span><b>ОГЭ · Математика</b><small>задания 6–25</small></span></a>
+        <a href="oge/fizika/"><span class="l-dd-ico">⚛️</span><span><b>ОГЭ · Физика</b><small>задания 1–22</small></span></a>
+        <a href="ege/profil/"><span class="l-dd-ico">📈</span><span><b>ЕГЭ · Профильная математика</b><small>задания 1–20</small></span></a>
+        <a href="razminka/" class="l-dd-skill"><span class="l-dd-ico">⚡</span><span><b>Тренировка навыков</b><small>счёт и формулы за 60 секунд</small></span></a>
+      </div></div><a href="#lessons">Занятия</a><a href="#formats">Форматы</a><a href="#faq">Вопросы</a></nav>
     <a href="app/" class="btn btn-ghost">Войти</a>
   </header>
 
@@ -62,6 +68,24 @@
         </div>
         <p class="l-preview-note">Подтянуть: <b>уравнения</b>, <b>неравенства</b>, <b>задачи на клетках</b></p>
       </div>
+    </section>
+
+    <!-- Банк задач: главный бесплатный инструмент -->
+    <section id="bank" class="l-bank">
+      <div class="l-bank-head">
+        <span class="l-chip">● Бесплатно · без регистрации</span>
+        <h2>Банк задач <span class="l-bank-grad">ОГЭ и ЕГЭ</span></h2>
+        <p class="l-lead">Почти 10 000 задач по номерам экзамена: ответ проверяется сразу, после — подробное решение. Вторая часть — с эталонным оформлением по критериям.</p>
+      </div>
+      <div class="l-bank-grid">
+        <a class="l-exam" href="oge/matematika/" data-n="25"><span class="l-exam-tag">ОГЭ · 9 класс</span><span class="l-exam-ico">📐</span>
+          <b>Математика</b><span class="l-exam-sub">Задания 6–25: дроби, уравнения, вероятность, геометрия и вторая часть</span><span class="l-exam-go">Решать задачи →</span></a>
+        <a class="l-exam" href="oge/fizika/" data-n="22"><span class="l-exam-tag">ОГЭ · 9 класс</span><span class="l-exam-ico">⚛️</span>
+          <b>Физика</b><span class="l-exam-sub">Задания 1–22: механика, тепло, электричество, оптика и расчётные задачи</span><span class="l-exam-go">Решать задачи →</span></a>
+        <a class="l-exam l-exam-ege" href="ege/profil/" data-n="20"><span class="l-exam-tag">ЕГЭ · 11 класс</span><span class="l-exam-ico">📈</span>
+          <b>Профильная математика</b><span class="l-exam-sub">Задания 1–20: от планиметрии и производной до параметров и теории чисел</span><span class="l-exam-go">Решать задачи →</span></a>
+      </div>
+      <a class="l-bank-skill" href="razminka/"><span class="l-dd-ico">⚡</span><span><b>Тренировка навыков</b> — счёт, дроби, тригонометрия и формулы физики на скорость, 60 секунд</span><span class="l-exam-go">Начать →</span></a>
     </section>
 
     <!-- Боль → понимание -->
@@ -140,6 +164,6 @@
   </footer>
 
   <a href="diag/" class="l-sticky btn l-cta-main"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-  <script src="landing.js?v=202610262009" defer></script>
+  <script src="landing.js?v=202610262010" defer></script>
 </body>
 </html>

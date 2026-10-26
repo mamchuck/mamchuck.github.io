@@ -2,15 +2,15 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610262009';
+} from './ui.js?v=202610262010';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610262009';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262009';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262009';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262009';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262009';
-import { leadsPage } from './leads.js?v=202610262009';
+} from './library.js?v=202610262010';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262010';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262010';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262010';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262010';
+import { leadsPage } from './leads.js?v=202610262010';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },

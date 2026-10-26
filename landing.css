@@ -216,3 +216,60 @@
 .legal-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; display: block; overflow-x: auto; }
 .legal-table th, .legal-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; color: var(--text-2); }
 .legal-table th { background: var(--accent-softer); color: var(--text); }
+
+/* Банк задач ОГЭ и ЕГЭ: пункт шапки с выпадающим меню */
+.l-dd { position: relative; display: flex; align-items: center; }
+.l-head nav .l-nav-bank { display: inline-flex; align-items: center; gap: 6px; margin: -6px 0; padding: 6px 10px 6px 14px; border-radius: 99px; font-weight: 650;
+  color: #fff; background: linear-gradient(135deg, #4aa8f5, var(--accent) 55%, #1f6fd1);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, .25);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.l-head nav .l-nav-bank:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.l-chev { width: 16px; height: 16px; transition: transform .3s var(--ease); }
+.l-dd:hover .l-chev, .l-dd:focus-within .l-chev { transform: rotate(180deg); }
+.l-dd-panel { position: absolute; top: calc(100% + 14px); left: 50%; z-index: 20; display: grid; gap: 4px; width: 320px; padding: 8px; border-radius: 18px;
+  background: var(--surface); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--line); box-shadow: 0 24px 60px rgba(15, 40, 70, .22);
+  opacity: 0; visibility: hidden; transform: translate(-50%, 8px); transition: opacity .25s var(--ease), transform .25s var(--ease), visibility .25s; }
+.l-dd-panel::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 16px; }   /* мостик: курсор не теряет меню */
+.l-dd:hover .l-dd-panel, .l-dd:focus-within .l-dd-panel { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.l-head nav .l-dd-panel a { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; color: var(--text); transition: background .2s; }
+.l-head nav .l-dd-panel a:hover { color: var(--text); background: var(--accent-soft); }
+.l-dd-panel b { display: block; font-size: 14px; font-weight: 650; }
+.l-dd-panel small { font-size: 12px; color: var(--text-3); }
+.l-dd-ico { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; font-size: 18px; background: var(--accent-soft); }
+.l-head nav .l-dd-panel .l-dd-skill { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; }
+
+/* Банк задач ОГЭ и ЕГЭ: блок на главной */
+.l-bank { scroll-margin-top: 90px; position: relative; isolation: isolate; margin: 8px 0 24px; padding: 40px; border-radius: 28px; display: flex; flex-direction: column; gap: 24px;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface) 60%);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); box-shadow: 0 30px 70px color-mix(in srgb, var(--accent) 14%, transparent); overflow: hidden; }
+.l-bank::after { content: ""; position: absolute; z-index: -1; right: -120px; top: -140px; width: 420px; height: 420px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, #4aa8f5 30%, transparent), transparent 65%); filter: blur(10px); }
+.l-bank-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 720px; }
+.l-bank-head h2 { font-size: clamp(30px, 4.6vw, 48px); line-height: 1.05; letter-spacing: -.035em; font-weight: 800; margin: 4px 0 0; }
+.l-bank-grad { background: linear-gradient(90deg, #5cb3f2, var(--accent) 50%, #1f6fd1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.l-bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.l-exam { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 22px; border-radius: 20px; color: var(--text);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line); box-shadow: var(--shadow);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.l-exam::before { content: "№" attr(data-n); position: absolute; right: -6px; bottom: -22px; font-size: 92px; font-weight: 800; letter-spacing: -.06em;
+  color: color-mix(in srgb, var(--accent) 9%, transparent); pointer-events: none; transition: color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.l-exam:hover { transform: translateY(-5px); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 18px 40px color-mix(in srgb, var(--accent) 20%, transparent); }
+.l-exam:hover::before { color: color-mix(in srgb, var(--accent) 16%, transparent); transform: translateX(-6px); }
+.l-exam-tag { align-self: flex-start; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; letter-spacing: .02em;
+  color: var(--accent-strong); background: var(--accent-soft); }
+.l-exam-ege .l-exam-tag { color: #fff; background: linear-gradient(135deg, #4aa8f5, #1f6fd1); }
+.l-exam-ico { display: grid; place-items: center; width: 52px; height: 52px; margin-top: 4px; border-radius: 16px; font-size: 26px; background: var(--accent-soft); }
+.l-exam b { font-size: 21px; font-weight: 750; letter-spacing: -.02em; }
+.l-exam-sub { position: relative; font-size: 14px; line-height: 1.45; color: var(--text-2); }
+.l-exam-go { position: relative; margin-top: auto; padding-top: 6px; font-weight: 650; color: var(--accent-strong); transition: transform var(--dur) var(--ease); }
+.l-exam:hover .l-exam-go, .l-bank-skill:hover .l-exam-go { transform: translateX(4px); }
+.l-bank-skill { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; color: var(--text-2); font-size: 15px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent); border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--line));
+  transition: background var(--dur) var(--ease); }
+.l-bank-skill:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.l-bank-skill b { color: var(--text); }
+.l-bank-skill .l-exam-go { margin: 0 0 0 auto; padding: 0; white-space: nowrap; }
+@media (max-width: 1080px) { .l-head nav { gap: 18px; } }
+@media (max-width: 900px) { .l-bank-grid { grid-template-columns: 1fr; } .l-bank { padding: 28px 22px; } .l-exam::before { font-size: 72px; } }
+@media (max-width: 640px) { .l-bank { padding: 24px 16px; border-radius: 22px; } .l-bank-skill { flex-wrap: wrap; } .l-bank-skill .l-exam-go { margin-left: 52px; } }

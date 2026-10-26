@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610262009';
-import { TUTOR } from './config.js?v=202610262009';
-import { trainerFamily } from './trainer.js?v=202610262009';
-import { mockView } from './mock.js?v=202610262009';
-import { mountTelegramBanner } from './telegram.js?v=202610262009';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610262009';
+} from './ui.js?v=202610262010';
+import { TUTOR } from './config.js?v=202610262010';
+import { trainerFamily } from './trainer.js?v=202610262010';
+import { mockView } from './mock.js?v=202610262010';
+import { mountTelegramBanner } from './telegram.js?v=202610262010';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610262010';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
