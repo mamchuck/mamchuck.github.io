@@ -2,12 +2,12 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610262005';
-import { TUTOR } from './config.js?v=202610262005';
-import { trainerFamily } from './trainer.js?v=202610262005';
-import { mockView } from './mock.js?v=202610262005';
-import { mountTelegramBanner } from './telegram.js?v=202610262005';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610262005';
+} from './ui.js?v=202610262009';
+import { TUTOR } from './config.js?v=202610262009';
+import { trainerFamily } from './trainer.js?v=202610262009';
+import { mockView } from './mock.js?v=202610262009';
+import { mountTelegramBanner } from './telegram.js?v=202610262009';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610262009';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -21,7 +21,7 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
-  { path: 'razminka', label: 'Разминка', icon: I.bolt },
+  { path: 'razminka', label: 'Тренировка', icon: I.bolt },
   { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
@@ -109,8 +109,8 @@ async function home(view, _p, ctx) {
       <a class="stat" href="#/homework"><span>ДЗ не сдано</span><b class="${open.length ? 'text-warn' : ''}">${open.length}</b></a>
       <a class="stat" href="#/lessons"><span>Занятий проведено</span><b>${lessons.filter((l) => l.status === 'done').length}</b></a>
     </div>
-    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="../razminka/"><span class="g-goal-ico">⚡</span><div><span class="g-label">Разминка · 60 секунд</span>
-      <b>Счёт, дроби, тригонометрия, формулы физики — на автомат</b></div><span class="btn btn-primary g-goal-btn">Размяться →</span></a>` : ''}
+    ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="../razminka/"><span class="g-goal-ico">⚡</span><div><span class="g-label">Тренировка навыков · 60 секунд</span>
+      <b>Счёт, дроби, тригонометрия, формулы физики — на автомат</b></div><span class="btn btn-primary g-goal-btn">Начать →</span></a>` : ''}
     <div class="grid-2">
       <section class="card"><div class="card-head"><h2>Домашние задания</h2><a href="#/homework" class="link">Все</a></div>
         ${open.length ? h`<div class="list">${open.slice(0, 5).map((x) => hwItem(x, null))}</div>` : empty('Всё сдано 🎉', I.check)}</section>
@@ -276,7 +276,7 @@ async function progress(view, _p, ctx) {
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
-// «Разминка» — отдельная страница сайта; replace, чтобы «Назад» оттуда не возвращал сюда же
+// «Тренировка навыков» — отдельная страница сайта; replace, чтобы «Назад» оттуда не возвращал сюда же
 const razminka = () => location.replace('../razminka/');
 
 export const familyRoutes = { razminka, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };

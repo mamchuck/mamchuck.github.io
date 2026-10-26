@@ -1,8 +1,8 @@
-// Разминка: раунды по 60 секунд на автоматизм (счёт, дроби, степени, тригонометрия, формулы физики).
+// Тренировка навыков (/razminka/): раунды по 60 секунд на автоматизм (счёт, дроби, степени, тригонометрия, формулы физики).
 // Задания генерирует drills.js. Рекорды — в браузере; вошедшему ученику раунд засчитывается в XP и 🔥 серию (drill_finish).
-import { CONFIG } from '../app/js/config.js?v=202610262005';
-import { startFx } from '../diag/fx.js?v=202610262005';
-import { SKILLS, parseAns, same, fmt } from './drills.js?v=202610262005';
+import { CONFIG } from '../app/js/config.js?v=202610262009';
+import { startFx } from '../diag/fx.js?v=202610262009';
+import { SKILLS, parseAns, same, fmt } from './drills.js?v=202610262009';
 
 const ROUND = 60;
 const root = document.getElementById('rz');
@@ -51,7 +51,7 @@ function menu() {
     </button>`;
   root.innerHTML = `
     <span class="l-chip">⚡ 60 секунд · бесплатно · без регистрации</span>
-    <h1 class="x-title">Разминка: <span class="x-grad">навыки на автомате</span></h1>
+    <h1 class="x-title">Тренировка: <span class="x-grad">навыки на автомате</span></h1>
     <p class="x-sub">Счёт, дроби, степени, тригонометрия, формулы и единицы физики. Минута в день — и на экзамене руки делают это сами, а голова занята задачей.</p>
     <div class="rz-filters">
       <div class="rz-seg">${seg('s', 'all', 'Всё')}${seg('s', 'math', 'Математика')}${seg('s', 'phys', 'Физика')}</div>
@@ -233,7 +233,7 @@ async function finish() {
   if (r) {
     serverBest[g.id] = r.best;
     const el = root.querySelector('.rz-xp');
-    if (el) { el.hidden = false; el.textContent = r.xp ? `+${r.xp} XP в кабинет${r.streak ? ' · 🔥 серия засчитана' : ''}` : r.capped ? 'XP за разминку на сегодня уже набран — рекорд всё равно сохранён' : 'Раунд сохранён в кабинете'; }
+    if (el) { el.hidden = false; el.textContent = r.xp ? `+${r.xp} XP в кабинет${r.streak ? ' · 🔥 серия засчитана' : ''}` : r.capped ? 'XP за тренировку на сегодня уже набран — рекорд всё равно сохранён' : 'Раунд сохранён в кабинете'; }
   }
 }
 

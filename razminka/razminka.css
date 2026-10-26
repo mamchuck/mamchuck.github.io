@@ -1,4 +1,4 @@
-/* Разминка: выбор навыка, раунд 60 с, итог. База — стили диагностики (diag.css: .x-title, .x-grad, сияние) */
+/* Тренировка навыков (/razminka/): выбор навыка, раунд 60 с, итог. База — стили диагностики (diag.css: .x-title, .x-grad, сияние) */
 #x:has(#rz) { max-width: 880px; }
 #rz { --rz-blue: linear-gradient(135deg, #4aa8f5 0%, var(--accent) 50%, #1f6fd1 100%); --rz-glow: color-mix(in srgb, var(--accent) 35%, transparent);
   --rz-ok: #16a34a; --rz-bad: #e5484d; --rz-gold: #e0a91a; }
