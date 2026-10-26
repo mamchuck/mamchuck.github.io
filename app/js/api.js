@@ -1,5 +1,7 @@
 // Работа с Supabase. Все права доступа проверяет база (Row Level Security).
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
+// Библиотека Supabase — своя копия (официальный npm-пакет 2.57.4, сверен по sha512): без внешнего CDN и 8 лишних запросов
+import '../vendor/supabase-2.57.4.js';
+const { createClient } = self.supabase;
 
 const MESSAGES = {
   'Invalid login credentials': 'Неверный email или пароль',

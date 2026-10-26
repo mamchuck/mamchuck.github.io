@@ -2,7 +2,8 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero, subjLabel,
-} from './ui.js?v=202610262220';
+} from './ui.js?v=202610262254';
+import { reviewCard } from './daily.js?v=202610262254';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22, 'Профильная математика': 20 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -681,10 +682,11 @@ async function familyHome(view, ctx) {
   const sid = ctx.studentId;
   const student = ctx.students.find((s) => s.id === sid);
   // Счётчики по номерам и статистика — с сервера (раньше сюда грузился весь банк, ~6 МБ)
-  const [counts, numStats, sets, attempts] = await Promise.all([
+  const [counts, numStats, sets, attempts, srs] = await Promise.all([
     loadCounts(api), loadNumStats(api, sid),
     api.select('oge_sets', { eq: { student_id: sid }, order: 'created_at', asc: false }).then((r) => r.filter((x) => x.kind !== 'mock')),
     api.select('oge_attempts', { cols: 'task_id,set_id', eq: { student_id: sid }, notNull: ['set_id'] }),
+    isStudent(ctx) ? api.rpc('srs_due', { p_limit: 0 }).catch(() => null) : null,
   ]);
   const subs = (student?.subjects?.length ? student.subjects : SUBJECTS).filter((s) => counts.some((c) => c.subject === s));
   mount(view, h`
@@ -692,6 +694,7 @@ async function familyHome(view, ctx) {
       sub: isStudent(ctx) ? 'Краткий ответ проверяется сразу, после попытки откроется решение.' : 'Здесь видно, какие номера получаются, а какие нужно подтянуть.' })}
     ${isStudent(ctx) ? h`<a class="g-goal rz-link" href="#/razminka"><span class="g-goal-ico">⚡</span><div><span class="g-label">Тренировка навыков · 60 секунд</span>
       <b>Перед задачами — минута на счёт, дроби и формулы</b></div><span class="btn btn-primary g-goal-btn">Начать →</span></a>` : ''}
+    ${reviewCard(srs)}
     <div class="section-head"><h2>Задано преподавателем</h2></div>
     ${sets.length ? h`<div class="list card">${sets.map((s) => {
       const done = new Set(attempts.filter((a) => a.set_id === s.id).map((a) => a.task_id)).size, n = s.task_ids.length;
@@ -706,9 +709,11 @@ async function familyHome(view, ctx) {
 }
 
 // Решение задач по одной: list — массив задач, setId — если это вариант
-async function solver(view, ctx, { list, setId, title, back, startIndex = 0 }) {
+// fresh — решать заново (работа над ошибками, задание дня): прошлые попытки не подставляются
+async function solver(view, ctx, { list, setId, title, back, backLabel = 'Банк задач', startIndex = 0, fresh = false }) {
   const { api } = ctx;
-  const attempts = await api.select('oge_attempts', { eq: { student_id: ctx.studentId } });
+  // только попытки по задачам этого списка, а не вся история ученика
+  const attempts = fresh || !list.length ? [] : await api.select('oge_attempts', { eq: { student_id: ctx.studentId, task_id: list.map((t) => t.id) } });
   const lastBy = {}; for (const a of attempts.filter((x) => !setId || x.set_id === setId).sort((x, y) => (x.created_at > y.created_at ? 1 : -1))) lastBy[a.task_id] = a;
   let i = startIndex;
   const chip = (t, k) => {
@@ -720,7 +725,7 @@ async function solver(view, ctx, { list, setId, title, back, startIndex = 0 }) {
     const t = list[i];
     const a = lastBy[t.id];
     mount(view, h`
-      <a href="${back}" class="back">${I.back} Банк задач</a>
+      <a href="${back}" class="back">${I.back} ${backLabel}</a>
       <div class="page-head"><div><h1>${title}</h1><p class="muted">Задача ${i + 1} из ${list.length}</p></div></div>
       ${list.length > 1 ? h`<div class="steps">${list.map(chip)}</div>` : ''}
       <section class="card task-card">
@@ -806,6 +811,18 @@ export async function trainerFamily(view, params, ctx) {
     const tried = new Set(attempts.map((x) => x.task_id));
     const list = [...tasks.filter((t) => !tried.has(t.id)), ...tasks.filter((t) => tried.has(t.id))];
     return solver(view, ctx, { list, title: `${subj}: задание №${num}${topic ? ` · ${topic}` : ''}`, back: topic ? '#/progress' : '#/trainer' });
+  }
+  // Работа над ошибками и задание дня — задачи отдаёт база (srs_due / daily_quest), решаем заново
+  if (mode === 'review') {
+    const r = await ctx.api.rpc('srs_due', { p_limit: 20 }).catch(() => null);
+    if (!r?.tasks?.length) return mount(view, h`<a href="#/" class="back">${I.back} Главная</a>${empty(r?.waiting ? 'Сегодня повторять нечего — следующие задачи вернутся позже' : 'Ошибок для повторения нет 🎉', I.check)}`);
+    return solver(view, ctx, { list: r.tasks, title: 'Работа над ошибками', back: '#/', backLabel: 'Главная', fresh: true });
+  }
+  if (mode === 'quest') {
+    const q = await ctx.api.rpc('daily_quest').catch(() => null);
+    if (!q?.tasks?.length) return mount(view, h`<a href="#/" class="back">${I.back} Главная</a>${empty('Задание дня пока недоступно', I.target)}`);
+    const start = Math.max(0, q.tasks.findIndex((t) => !t.done));
+    return solver(view, ctx, { list: q.tasks, title: 'Задание дня', back: '#/', backLabel: 'Главная', fresh: true, startIndex: start });
   }
   if (mode === 'set') {
     const [s] = await ctx.api.select('oge_sets', { eq: { id: a1 } });

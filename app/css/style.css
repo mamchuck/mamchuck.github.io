@@ -1247,3 +1247,38 @@ a.dr-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, 
   .lead-actions > * { width: 100%; }
   .lead-actions .btn { justify-content: center; white-space: normal; }
 }
+
+/* Задание дня и работа над ошибками (главная ученика) */
+.dq { display: grid; gap: 14px; margin-bottom: 16px; border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  background: linear-gradient(140deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface) 65%); }
+.dq.complete { border-color: color-mix(in srgb, #16a34a 45%, var(--line)); background: linear-gradient(140deg, color-mix(in srgb, #16a34a 10%, var(--surface)), var(--surface) 65%); }
+.dq-head { display: flex; align-items: center; gap: 14px; }
+.dq-ico { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 21px; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.dq-title { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.dq-title .g-label { color: var(--accent-strong); }
+.dq-title b { font-size: 16px; }
+.dq-pct { font-size: 22px; font-weight: 800; color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.dq.complete .dq-pct { color: #16a34a; }
+.dq-bar { height: 8px; border-radius: 99px; overflow: hidden; background: color-mix(in srgb, var(--text-3) 18%, transparent); }
+.dq-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4aa8f5, #1f6fd1); transition: width .6s cubic-bezier(.22, .8, .24, 1); }
+.dq.complete .dq-bar i { background: linear-gradient(90deg, #4ade80, #16a34a); }
+.dq-list { display: grid; gap: 8px; }
+.dq-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; color: inherit; border: 1px solid var(--line);
+  background: var(--surface); transition: border-color .25s, transform .25s; }
+.dq-row:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); transform: translateX(2px); }
+.dq-dot { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line-2); color: #fff; }
+.dq-dot svg { width: 14px; height: 14px; }
+.dq-row.done .dq-dot { border: 0; background: linear-gradient(135deg, #4ade80, #16a34a); }
+.dq-row.miss .dq-dot { background: linear-gradient(135deg, #fbbf24, #d97706); }
+.dq-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.dq-text b { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dq-text small { font-size: 12.5px; color: var(--text-2); }
+.dq-row.done .dq-text b { color: var(--text-2); }
+.dq-go { color: var(--text-3); }
+.dq-btn { justify-self: start; }
+.dq-note { margin: 0; color: #16a34a; font-weight: 600; }
+.dq-review { margin-bottom: 16px; color: inherit; }
+a.dq-review:hover { transform: translateY(-2px); }
+.dq-review.calm { opacity: .92; }
+.dq-mastered { margin: 2px 0 0; font-size: 13px; color: var(--text-2); }
+@media (max-width: 760px) { .dq-btn { justify-self: stretch; justify-content: center; } }

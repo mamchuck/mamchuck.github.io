@@ -324,6 +324,30 @@ export function createDemoApi() {
         return db.oge_tasks.filter((t) => s.task_ids.includes(t.id)).map((t) => ({ id: t.id, answer: t.answer.split('|')[0], solution: t.solution, solution_image_path: t.solution_image_path || null }));
       }
       if (fn === 'mock_finish') { const s = db.oge_sets.find((x) => x.id === args.p_set); if (s && !s.finished_at) s.finished_at = new Date().toISOString(); return { ok: true }; }
+      // Работа над ошибками и задание дня (как srs_due / daily_quest в базе, упрощённо)
+      if (fn === 'srs_due' || fn === 'daily_quest') {
+        const sid = myStudents()[0];
+        if (me.role !== 'student' || !sid) return null;
+        const pub = ({ answer, solution, solution_image_path, source, ...t }) => t;
+        const mine = db.oge_attempts.filter((a) => a.student_id === sid && a.reviewed_at);
+        const last = {}; for (const a of mine.sort((x, y) => (x.created_at > y.created_at ? 1 : -1))) last[a.task_id] = a;
+        if (fn === 'srs_due') {
+          const wrong = Object.values(last).filter((a) => !a.is_correct).map((a) => db.oge_tasks.find((t) => t.id === a.task_id)).filter(Boolean);
+          const extra = db.oge_tasks.filter((t) => t.answer_type === 'short' && !last[t.id]).slice(0, Math.max(0, 3 - wrong.length));   // в демо — пара задач для вида
+          const due = [...wrong, ...extra];
+          return { due: due.length, waiting: 2, mastered: 4, next_at: new Date(now + 2 * day).toISOString(), tasks: due.slice(0, args?.p_limit ?? 20).map((t) => ({ ...pub(t), step: 0 })) };
+        }
+        db.quest ||= { ids: db.oge_tasks.filter((t) => t.answer_type === 'short').slice(0, 3).map((t) => t.id), skill: 'frac', rewarded: false };
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const tasks = db.quest.ids.map((id) => db.oge_tasks.find((t) => t.id === id)).filter(Boolean).map((t) => {
+          const at = mine.filter((a) => a.task_id === t.id && a.answer != null && new Date(a.created_at) >= today);
+          return { ...pub(t), done: at.length > 0, ok: at.some((a) => a.is_correct) };
+        });
+        const skillDone = (db.drill_rounds || []).some((r) => r.student_id === sid && r.skill === db.quest.skill && new Date(r.created_at) >= today);
+        const done = tasks.filter((t) => t.done).length + (skillDone ? 1 : 0), total = tasks.length + 1, complete = done === total;
+        const rewardedNow = complete && !db.quest.rewarded; if (complete) db.quest.rewarded = true;
+        return { day: today.toISOString().slice(0, 10), tasks, skill: db.quest.skill, skill_done: skillDone, done, total, complete, rewarded_now: rewardedNow };
+      }
       if (fn === 'trainer_check' || fn === 'trainer_reveal') {
         const t = db.oge_tasks.find((x) => x.id === args.p_task);
         if (!t) throw new Error('Задача не найдена');

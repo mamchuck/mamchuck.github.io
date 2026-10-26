@@ -2,13 +2,14 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610262220';
-import { TUTOR } from './config.js?v=202610262220';
-import { trainerFamily } from './trainer.js?v=202610262220';
-import { mockView } from './mock.js?v=202610262220';
-import { mountTelegramBanner } from './telegram.js?v=202610262220';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610262220';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610262220';
+} from './ui.js?v=202610262254';
+import { TUTOR } from './config.js?v=202610262254';
+import { trainerFamily } from './trainer.js?v=202610262254';
+import { mockView } from './mock.js?v=202610262254';
+import { mountTelegramBanner } from './telegram.js?v=202610262254';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610262254';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610262254';
+import { loadDaily, questCard, reviewCard } from './daily.js?v=202610262254';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -84,10 +85,11 @@ async function home(view, _p, ctx) {
   if (!sid) return noChild(view, ctx);
   const { api } = ctx;
   const student = ctx.students.find((s) => s.id === sid);
-  const [lessons, hws, subs] = await Promise.all([
+  const [lessons, hws, subs, daily] = await Promise.all([
     api.select('lessons_public', { eq: { student_id: sid }, order: 'starts_at' }),
     api.select('homework', { eq: { student_id: sid }, order: 'due_at' }),
     api.select('submissions', { eq: { student_id: sid } }),
+    isStudent(ctx) ? loadDaily(api) : {},
   ]);
   const nowIso = new Date().toISOString();
   const next = lessons.find((l) => l.status === 'planned' && l.starts_at >= nowIso);
@@ -100,6 +102,8 @@ async function home(view, _p, ctx) {
     ${isStudent(ctx)
     ? pageHero({ eyebrow: `Личный кабинет · ${student.grade ? student.grade + ' класс' : 'ученик'}`, title: first ? 'Привет, ' : 'Привет!', accent: first, after: first ? '!' : '', sub: fmtDay(Date.now()) })
     : pageHero({ eyebrow: 'Кабинет родителя', title: 'Успехи: ', accent: student.name, sub: fmtDay(Date.now()) })}
+    ${questCard(daily.quest)}
+    ${reviewCard(daily.srs)}
     <section class="hero card">
       <span class="hero-label">Следующее занятие</span>
       ${next ? h`<div class="hero-title">${next.subject}${next.topic ? ` · ${next.topic}` : ''}</div>
