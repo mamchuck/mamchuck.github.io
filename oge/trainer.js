@@ -1,5 +1,5 @@
 // Открытый тренажёр ОГЭ и ЕГЭ: 5 задач номера → проверка → решение → итог и диагностика.
-import { CONFIG } from '../app/js/config.js?v=202610262156';
+import { CONFIG } from '../app/js/config.js?v=202610262205';
 
 const main = document.querySelector('[data-num]');
 const box = document.getElementById('tasks');

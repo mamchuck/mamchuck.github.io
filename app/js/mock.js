@@ -1,8 +1,8 @@
-// «Пробник ОГЭ»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
+// «Пробный экзамен»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
 // Вариант собирает сервер (mock_create): по задаче на номер, сначала нерешённые. Ответы проверяет trainer_check,
 // но до завершения пробника итог не показывается.
-import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610262156';
-import { img, lazyImages } from './trainer.js?v=202610262156';
+import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610262205';
+import { img, lazyImages } from './trainer.js?v=202610262205';
 
 const INFO = {
   'Математика': { n: 25, min: 235, max: 31, grade: [[22, 5], [15, 4], [8, 3], [0, 2]] },
@@ -55,8 +55,8 @@ async function home(view, ctx) {
   const open = Object.fromEntries(sets.filter((s) => !isOver(s)).map((s) => [s.subject, s]));
   const done = sets.filter(isOver);
   mount(view, h`
-    ${pageHero({ eyebrow: 'Пробник ОГЭ', title: isStudent(ctx) ? 'Проверь себя ' : 'Пробники: ', accent: isStudent(ctx) ? 'как на экзамене' : student?.name || '',
-      sub: 'Полный вариант: все номера, таймер и баллы по критериям ОГЭ. Ответы и решения откроются после завершения.' })}
+    ${pageHero({ eyebrow: 'Пробный экзамен', title: isStudent(ctx) ? 'Проверь себя ' : 'Пробники: ', accent: isStudent(ctx) ? 'как на экзамене' : student?.name || '',
+      sub: 'Полный вариант: все номера, таймер и баллы по критериям экзамена. Ответы и решения откроются после завершения.' })}
     ${isStudent(ctx) ? h`<div class="grid-2">${subs.map((s) => h`
       <section class="card stack mock-card">
         <div class="card-head"><h2>${s}</h2><span class="badge info">${plural(INFO[s].n, 'задание', 'задания', 'заданий')}</span></div>

@@ -295,7 +295,7 @@ export function createDemoApi() {
           const all = db.oge_tasks.filter((t) => t.subject === subj && t.num === n);
           if (all.length) ids.push(all[Math.floor(Math.random() * all.length)].id);
         }
-        const s = { id: uid(), student_id: sid, subject: subj, kind: 'mock', title: 'Пробник ОГЭ (демо)', task_ids: ids,
+        const s = { id: uid(), student_id: sid, subject: subj, kind: 'mock', title: 'Пробный экзамен (демо)', task_ids: ids,
           duration_min: subj === 'Математика' ? 235 : 180, finished_at: null, created_at: new Date().toISOString() };
         db.oge_sets.push(s); return s.id;
       }

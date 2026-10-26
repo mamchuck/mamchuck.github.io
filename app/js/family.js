@@ -2,13 +2,13 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610262156';
-import { TUTOR } from './config.js?v=202610262156';
-import { trainerFamily } from './trainer.js?v=202610262156';
-import { mockView } from './mock.js?v=202610262156';
-import { mountTelegramBanner } from './telegram.js?v=202610262156';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610262156';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610262156';
+} from './ui.js?v=202610262205';
+import { TUTOR } from './config.js?v=202610262205';
+import { trainerFamily } from './trainer.js?v=202610262205';
+import { mockView } from './mock.js?v=202610262205';
+import { mountTelegramBanner } from './telegram.js?v=202610262205';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610262205';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610262205';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -16,14 +16,14 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
-  { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
+  { path: 'mock', label: 'Пробный экзамен', short: 'Пробник', icon: I.clock },
   { path: 'materials', label: 'Материалы', icon: I.folder },
 ] : [
   { path: '', label: 'Главная', icon: I.home },
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'razminka', label: 'Тренировка', icon: I.bolt },
-  { path: 'mock', label: 'Пробник ОГЭ', short: 'Пробник', icon: I.clock },
+  { path: 'mock', label: 'Пробный экзамен', short: 'Пробник', icon: I.clock },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
   { path: 'materials', label: 'Материалы', icon: I.folder },
