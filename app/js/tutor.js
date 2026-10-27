@@ -2,16 +2,16 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610262254';
+} from './ui.js?v=202610271534';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610262254';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610262254';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610262254';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610262254';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610262254';
-import { loadDrill, drillBlock } from './drill.js?v=202610262254';
-import { leadsPage } from './leads.js?v=202610262254';
+} from './library.js?v=202610271534';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610271534';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610271534';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610271534';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610271534';
+import { loadDrill, drillBlock } from './drill.js?v=202610271534';
+import { leadsPage } from './leads.js?v=202610271534';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
