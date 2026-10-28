@@ -2,8 +2,8 @@
 // Ответы и решения ученику приходят только из trainer_check — после его попытки.
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtD, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero, subjLabel,
-} from './ui.js?v=202610290022';
-import { reviewCard } from './daily.js?v=202610290022';
+} from './ui.js?v=202610290028';
+import { reviewCard } from './daily.js?v=202610290028';
 
 const MAX_NUM = { 'Математика': 25, 'Физика': 22, 'Профильная математика': 20 };
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
