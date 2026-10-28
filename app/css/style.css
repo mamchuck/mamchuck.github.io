@@ -314,9 +314,7 @@ button.progress-row:hover { background: var(--accent-softer); }
    Фирменный стиль mamchuck
    ============================================================ */
 body {
-  background-color: var(--bg);
-  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 28px 28px; background-attachment: fixed;
+  background: var(--bg);                            /* однотонный, без сетки — легче для телефона */
 }
 h1 { font-weight: 900; letter-spacing: -.03em; }
 h2 { font-weight: 800; }

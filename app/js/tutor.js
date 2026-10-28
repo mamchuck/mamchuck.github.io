@@ -2,16 +2,17 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610290035';
+} from './ui.js?v=202610290044';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610290035';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610290035';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610290035';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610290035';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610290035';
-import { loadDrill, drillBlock } from './drill.js?v=202610290035';
-import { leadsPage } from './leads.js?v=202610290035';
+} from './library.js?v=202610290044';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610290044';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610290044';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610290044';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610290044';
+import { loadDrill, drillBlock } from './drill.js?v=202610290044';
+import { cardsPage } from './cards.js?v=202610290044';
+import { leadsPage } from './leads.js?v=202610290044';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -21,6 +22,7 @@ export const tutorNav = [
   { path: 'review', label: 'Проверка', icon: I.check },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'library', label: 'Библиотека', icon: I.folder },
+  { path: 'cards', label: 'Шпаргалки', icon: I.cards },
 ];
 
 const arr = (v) => (v == null ? [] : [].concat(v));
@@ -849,4 +851,4 @@ async function reviewPage(view, _p, ctx) {
   }));
 }
 
-export const tutorRoutes = { leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
+export const tutorRoutes = { cards: cardsPage, leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
