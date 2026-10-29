@@ -1,49 +1,48 @@
-/* Онлайн-доска (board.js): белый клетчатый лист, панель инструментов, вкладки листов */
+/* Онлайн-доска (board.js): бесконечное белое клетчатое поле, панель инструментов, режим на весь экран */
 .bd { display: grid; gap: 12px; }
-.bd-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 10px 14px; position: sticky; top: 8px; z-index: 5; }
-.bd-grp { display: inline-flex; align-items: center; gap: 6px; }
-.bd-grp + .bd-grp:not(.bd-right) { padding-left: 18px; border-left: 1px solid var(--line); }
+.bd-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px; }
+.bd-grp { display: inline-flex; align-items: center; gap: 4px; }
+.bd-grp + .bd-grp:not(.bd-right) { padding-left: 16px; border-left: 1px solid var(--line); }
 .bd-right { margin-left: auto; }
 .bd-btn { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 1px solid transparent; background: none; color: var(--text-2); cursor: pointer; font: inherit; font-size: 18px; }
 .bd-btn:hover { background: var(--accent-softer); color: var(--accent-strong); }
 .bd-btn.on { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
 .bd-touch { display: none; }
 @media (pointer: coarse) { .bd-touch { display: grid; } }
-.bd-dot { width: 26px; height: 26px; border-radius: 50%; border: 3px solid transparent; background: var(--c); box-shadow: inset 0 0 0 2px var(--surface); cursor: pointer; padding: 0; }
+.bd-dot { width: 26px; height: 26px; margin: 0 2px; border-radius: 50%; border: 3px solid transparent; background: var(--c); box-shadow: inset 0 0 0 2px var(--surface); cursor: pointer; padding: 0; }
 .bd-dot.on { border-color: var(--c); box-shadow: inset 0 0 0 3px var(--surface); }
 .bd-w { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid transparent; background: none; cursor: pointer; padding: 0; }
 .bd-w i { display: block; width: 18px; border-radius: 99px; background: var(--text-2); }
 .bd-w.on { background: var(--accent-soft); border-color: var(--accent); }
 .bd-w.on i { background: var(--accent-strong); }
+.bd-zoom { min-width: 54px; height: 40px; border-radius: 12px; border: 1px solid transparent; background: none; color: var(--text-2); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bd-zoom:hover { background: var(--accent-softer); color: var(--accent-strong); }
 .bd-status { font-size: 13px; color: var(--text-3); min-width: 96px; text-align: right; }
 .bd-status.busy { color: var(--accent-strong); }
 
-.bd-pages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.bd-tab { display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text-2); font: inherit; font-weight: 600; cursor: pointer; }
-.bd-tab small { font-weight: 500; font-size: 12px; color: var(--text-3); }
-.bd-tab:hover { border-color: var(--accent); }
-.bd-tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
-.bd-add { align-items: center; gap: 4px; }
-.bd-add svg { width: 16px; height: 16px; }
-.bd-sp { flex: 1; }
+/* Поле всегда светлое, как бумага (и в тёмной теме): так же оно выглядит у второго участника и в скачанной картинке */
+.bd-stage { position: relative; height: calc(100dvh - 190px); min-height: 420px; overflow: hidden; border-radius: 18px; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); touch-action: none; overscroll-behavior: contain; }
+.bd-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.bd-stage[data-tool="pen"] canvas { cursor: crosshair; }
+.bd-stage[data-tool="eraser"] canvas { cursor: cell; }
+.bd-stage[data-tool="move"] canvas { cursor: default; }
+.bd-stage[data-tool="hand"] canvas, .bd-stage.space canvas { cursor: grab; }
+.bd-stage.panning canvas { cursor: grabbing; }
 
-/* Лист всегда светлый (как бумага), в тёмной теме тоже: так же он выглядит у ученика и в скачанной картинке */
-.bd-scroll { height: calc(100dvh - 250px); min-height: 380px; overflow-y: auto; overflow-x: hidden; border-radius: 18px; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); overscroll-behavior: contain; }
-.bd-sheet { position: relative; width: 100%; background-color: #fff;
-  background-image: linear-gradient(#d6e4f4 1px, transparent 1px), linear-gradient(90deg, #d6e4f4 1px, transparent 1px);
-  background-size: var(--cell, 40px) var(--cell, 40px); }
-.bd-sheet canvas { display: block; width: 100%; touch-action: pan-y; }
-.bd-sheet.finger canvas { touch-action: none; }
-.bd-sheet[data-tool="pen"] canvas { cursor: crosshair; }
-.bd-sheet[data-tool="eraser"] canvas { cursor: cell; }
-.bd-sheet[data-tool="move"] canvas { cursor: grab; }
+/* На весь экран */
+.bd-lock { overflow: hidden; }
+.bd.bd-full { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; gap: 8px; padding: 8px; background: var(--bg); }
+.bd-full .bd-bar { padding: 4px 8px; gap: 4px 10px; border-radius: 14px; }
+.bd-full .bd-btn { width: 36px; height: 36px; }
+.bd-full .bd-status { display: none; }
+.bd-full .bd-grp + .bd-grp:not(.bd-right) { padding-left: 10px; }
+.bd-full .bd-stage { flex: 1; height: auto; min-height: 0; border-radius: 14px; }
 
 @media (max-width: 720px) {
-  .bd-bar { position: static; gap: 6px 10px; padding: 8px 10px; }
+  .bd-bar { gap: 6px 10px; padding: 8px 10px; }
   .bd-grp + .bd-grp:not(.bd-right) { border-left: 0; padding-left: 0; }
   .bd-right { margin-left: 0; }
-  .bd-scroll { height: calc(100dvh - 120px); }
-  .bd-grp + .bd-grp:not(.bd-right) { padding-left: 12px; }
   .bd-btn { width: 38px; height: 38px; }
+  .bd-stage { height: calc(100dvh - 250px); min-height: 360px; }
   .bd-status { display: none; }
 }

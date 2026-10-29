@@ -1,7 +1,7 @@
 // Тренировка навыков в кабинете: раздел #/razminka (тот же интерфейс, что на сайте — razminka/drill-ui.js)
 // и блок «Тренировка навыков» в прогрессе (drill_stats: рекорды, график последних раундов, неделя).
-import { h, raw, pageHero } from './ui.js?v=202610291759';
-import { mountDrill, skillMeta } from '../../razminka/drill-ui.js?v=202610291759';
+import { h, raw, pageHero } from './ui.js?v=202610291805';
+import { mountDrill, skillMeta } from '../../razminka/drill-ui.js?v=202610291805';
 
 const word = (n, one, few, many) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many; };
 

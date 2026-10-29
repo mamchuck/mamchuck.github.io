@@ -183,7 +183,7 @@ export function createDemoApi() {
     async dumpAll(table) { return clone(visible(table)); },
     async insert(table, row) {
       await tick();
-      if (me.role !== 'tutor' && table !== 'submissions' && !(table === 'board_items' && me.role === 'student')) throw new Error('Нет доступа');
+      if (me.role !== 'tutor' && table !== 'submissions' && !(['board_items', 'board_pages'].includes(table) && me.role === 'student')) throw new Error('Нет доступа');
       const x = { id: uid(), created_at: new Date().toISOString(), ...row };
       if (table === 'lessons') Object.assign(x, { status: 'planned', report: '', report_published: false, plan: '', ...row });
       if (table === 'submissions') {

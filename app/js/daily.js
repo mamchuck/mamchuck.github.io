@@ -1,6 +1,6 @@
 // Главная ученика: «Задание дня» (daily_quest) и «Работа над ошибками» (srs_due — интервальное повторение 1 → 3 → 7 дней).
-import { h, raw, toast } from './ui.js?v=202610291759';
-import { skillMeta } from '../../razminka/drill-ui.js?v=202610291759';
+import { h, raw, toast } from './ui.js?v=202610291805';
+import { skillMeta } from '../../razminka/drill-ui.js?v=202610291805';
 
 const word = (n, one, few, many) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many; };
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
