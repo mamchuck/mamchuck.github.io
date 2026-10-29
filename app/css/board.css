@@ -46,3 +46,7 @@
   .bd-stage { height: calc(100dvh - 250px); min-height: 360px; }
   .bd-status { display: none; }
 }
+
+/* Индикатор связи: зелёный — изменения видны сразу, серый — доска обновляется раз в несколько секунд */
+.bd-conn { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: var(--text-3); flex: none; }
+.bd-conn.ok { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }

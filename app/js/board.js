@@ -2,7 +2,7 @@
 // Перья разных цветов, ластик (стирает штрих целиком), картинки/скриншоты. Рисуют оба: преподаватель и ученик.
 // Всё хранится в базе (board_pages → board_items), чужие штрихи видны сразу (Realtime + «живой» штрих во время письма).
 // Координаты мировые, у всех одинаковые; у каждого участника свой масштаб и положение окна.
-import { toast, confirmDialog, I, $ } from './ui.js?v=202610291837';
+import { toast, confirmDialog, I, $ } from './ui.js?v=202610291936';
 
 const CELL = 40, ERASER_PX = 11, MIN_Z = 0.1, MAX_Z = 4;
 const COLORS = [['#1b2330', 'Чёрный'], ['#2563eb', 'Синий'], ['#e5392f', 'Красный'], ['#1f9d55', 'Зелёный'], ['#f08a00', 'Оранжевый'], ['#8b3fd9', 'Фиолетовый']];
@@ -127,6 +127,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   let fingerDraw = false, spaceDown = false, full = false, selected = null, cur = null, drag = null, pan = null, gesture = null;
   let pending = 0, raf = 0, loadToken = 0;
   const unsub = [];
+  const bad = new Set();                        // строки в базе, которые не прошли проверку (в сравнении с базой не учитываем)
 
   root.innerHTML = `
     <div class="bd" id="bd">
@@ -152,6 +153,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
           <button class="bd-btn" id="bd-fit" title="Показать всё, что нарисовано (0)" aria-label="Показать всё">${ico('fit')}</button>
         </div>
         <div class="bd-grp bd-right">
+          <span class="bd-conn off" id="bd-conn" role="img" aria-label="Связь"></span>
           <span class="bd-status" id="bd-status" aria-live="polite"></span>
           <button class="bd-btn" id="bd-save" title="Скачать доску картинкой" aria-label="Скачать доску">${ico('down')}</button>
           ${isTutor ? `<button class="bd-btn" id="bd-clear" title="Очистить доску" aria-label="Очистить доску">${ico('trash')}</button>` : ''}
@@ -246,11 +248,11 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
       const path = `${studentId}/board/${uuid()}.jpg`;
       const w = Math.round(Math.min(c.width, 900, (stage.clientWidth / view.z) * 0.7)), hgt = Math.round(w * c.height / c.width);
       const data = { path, x: Math.round(view.x + 40 / view.z), y: Math.round(view.y + 40 / view.z), w, h: hgt };
-      const id = uuid(), item = { id, kind: 'img', data };
+      const id = uuid(), item = { id, kind: 'img', data, sync: 'pending' };
       imgCache.set(path, { el: c, p: Promise.resolve(c), failed: false });
       items.set(id, item); selected = id; setTool('move'); redraw();
       setPending(1);
-      try { await api.upload(path, blob); await api.insert('board_items', { id, page_id: page.id, student_id: studentId, kind: 'img', data }); mine.push(id); }
+      try { await api.upload(path, blob); await api.insert('board_items', { id, page_id: page.id, student_id: studentId, kind: 'img', data }); item.sync = 'db'; mine.push(id); }
       catch (e) { items.delete(id); selected = null; toast(`Не удалось добавить картинку: ${e.message}`, 'error'); redraw(); }
       setPending(-1);
     } catch { toast('Не удалось прочитать картинку', 'error'); }
@@ -264,7 +266,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   async function persist(item) {
     setPending(1);
     for (let t = 0; t < 3; t++) {
-      try { await api.insert('board_items', { id: item.id, page_id: item.page_id, student_id: studentId, kind: item.kind, data: item.data }); setPending(-1); return; }
+      try { await api.insert('board_items', { id: item.id, page_id: item.page_id, student_id: studentId, kind: item.kind, data: item.data }); item.sync = 'db'; setPending(-1); return; }
       catch (e) { if (t === 2) { items.delete(item.id); redraw(); toast(`Штрих не сохранился: ${e.message}`, 'error'); setPending(-1); return; } await sleep(700 * (t + 1)); }
     }
   }
@@ -291,7 +293,10 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     if (!l) { if (live.size >= 50) return; live.set(m.id, l = { d: { c: m.c, w: m.w, p: [] } }); }
     if (l.d.p.length + m.p.length > 20000) return;
     l.d.p.push(...m.p);
-    if (m.end) setTimeout(() => { if (live.delete(m.id)) redraw(); }, 4000);   // если сохранённый штрих так и не пришёл
+    if (m.end) {                                                // штрих дописан: оставляем его на доске, база подтвердит чуть позже
+      live.delete(m.id);
+      if (sane('stroke', l.d, studentId)) items.set(m.id, { id: m.id, kind: 'stroke', data: l.d, sync: 'live', t: Date.now() });
+    }
     redraw();
   });
   function sendLive(force = false, end = false) {
@@ -368,7 +373,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     if (cur) {
       sendLive(true, true);
       cur.d.p = simplify(cur.d.p, 0.7);
-      const item = { id: cur.id, page_id: page.id, kind: 'stroke', data: cur.d };
+      const item = { id: cur.id, page_id: page.id, kind: 'stroke', data: cur.d, sync: 'pending' };
       items.set(item.id, item); mine.push(item.id); cur = null; redraw(); persist(item);
     } else if (drag && !drag.erase && drag.moved) {
       const it = items.get(drag.id);
@@ -469,7 +474,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     try { rows = await api.select('board_items', { eq: { page_id: page.id }, order: 'created_at' }); }
     catch (e) { toast(`Не удалось загрузить доску: ${e.message}`, 'error'); return; }
     if (token !== loadToken) return;
-    for (const r of rows) if (sane(r.kind, r.data, studentId)) items.set(r.id, { id: r.id, kind: r.kind, data: r.data });
+    for (const r of rows) { if (sane(r.kind, r.data, studentId)) items.set(r.id, { id: r.id, kind: r.kind, data: r.data, sync: 'db' }); else { bad.add(r.id); console.warn('board: пропущена строка с неверными данными', r.id); } }
     fitContent();
   }
 
@@ -477,27 +482,55 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   function onItem(ev) {
     if (!root.isConnected) return stop();
     const n = ev.new, o = ev.old;
-    if (ev.eventType === 'INSERT') { live.delete(n.id); if (n.page_id === page.id && !items.has(n.id) && sane(n.kind, n.data, studentId)) items.set(n.id, { id: n.id, kind: n.kind, data: n.data }); }
+    if (ev.eventType === 'INSERT') {
+      if (n.page_id === page.id) {
+        if (!sane(n.kind, n.data, studentId)) { bad.add(n.id); console.warn('board: пропущен штрих с неверными данными', n.id); }
+        else {
+          const ex = items.get(n.id);
+          if (!ex) { live.delete(n.id); items.set(n.id, { id: n.id, kind: n.kind, data: n.data, sync: 'db' }); }
+          else if (ex.sync === 'live') { ex.data = n.data; ex._bb = null; ex.sync = 'db'; }      // сохранённая версия заменяет «живую»
+          else if (ex.sync === 'pending') ex.sync = 'db';
+        }
+      }
+    }
     else if (ev.eventType === 'DELETE') { if (items.delete(o.id) && selected === o.id) selected = null; }
     else if (ev.eventType === 'UPDATE') { const it = items.get(n.id); if (it && drag?.id !== n.id && sane(it.kind, n.data, studentId)) { it.data = n.data; it._bb = null; } }
     redraw();
   }
-  // Запасной вариант, если Realtime не подключился: раз в 4 секунды подтягиваем новое
-  let poll = null;
-  const startPoll = () => {
-    if (poll) return;
-    poll = setInterval(async () => {
-      if (!root.isConnected) return stop();
-      try {
-        const rows = await api.select('board_items', { eq: { page_id: page.id }, order: 'created_at' });
-        const ids = new Set(rows.map((r) => r.id)); let ch = false;
-        for (const r of rows) if (!items.has(r.id) && sane(r.kind, r.data, studentId)) { items.set(r.id, { id: r.id, kind: r.kind, data: r.data }); ch = true; }
-        for (const id of [...items.keys()]) if (!ids.has(id) && !pending) { items.delete(id); ch = true; }
-        if (ch) redraw();
-      } catch { /* повторим */ }
-    }, 4000);
+  // Сверка с базой. Realtime быстрый, но не гарантирует доставку (обрыв сети, сон вкладки): раз в несколько секунд сравниваем
+  // число штрихов с базой и, если разошлись, подтягиваем недостающее. Дёшево: обычно это один лёгкий запрос.
+  let timer = null, online = false, reconciling = false;
+  const dot = $('#bd-conn', root);
+  const showConn = () => { dot.className = `bd-conn ${online ? 'ok' : 'off'}`; dot.title = online ? 'На связи: изменения видны сразу' : 'Связь восстанавливается, доска обновляется раз в несколько секунд'; };
+  async function reconcile() {
+    if (!root.isConnected) return stop();
+    if (reconciling || pending || cur || drag) return;
+    reconciling = true;
+    try {
+      const { count } = await api.page('board_items', { from: 0, to: 0, cols: 'id', eq: { page_id: page.id } });
+      const now = Date.now(); let inDb = 0, stale = false;
+      for (const it of items.values()) { if (it.sync === 'db') inDb++; else if (it.sync === 'live' && now - it.t > 20000) stale = true; }
+      if (count === inDb + bad.size && !stale) return;
+      const rows = await api.select('board_items', { eq: { page_id: page.id }, order: 'created_at' });
+      if (pending || cur) return;                               // пока шла загрузка, начали писать: сверимся в следующий раз
+      const ids = new Set(rows.map((r) => r.id)); let ch = false;
+      for (const r of rows) {
+        if (!sane(r.kind, r.data, studentId)) { bad.add(r.id); continue; }
+        const ex = items.get(r.id);
+        if (!ex) { items.set(r.id, { id: r.id, kind: r.kind, data: r.data, sync: 'db' }); ch = true; }
+        else if (ex.sync === 'live') { ex.data = r.data; ex._bb = null; ex.sync = 'db'; ch = true; }
+      }
+      for (const [id, it] of items) if (!ids.has(id) && (it.sync === 'db' || (it.sync === 'live' && now - it.t > 20000))) { items.delete(id); ch = true; }
+      if (ch) redraw();
+    } catch { /* повторим в следующий раз */ }
+    finally { reconciling = false; }
+  }
+  const onStatus = (st) => {
+    online = st === 'SUBSCRIBED'; showConn();
+    clearInterval(timer); timer = setInterval(reconcile, online ? 6000 : 2500);
+    if (online) reconcile();
   };
-  const onStatus = (s) => { if (s === 'SUBSCRIBED') { clearInterval(poll); poll = null; } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') startPoll(); };
+  showConn(); timer = setInterval(reconcile, 2500);
   unsub.push(api.subscribe('board_items', `student_id=eq.${studentId}`, onItem, onStatus));
   const watchdog = setInterval(() => { if (!root.isConnected) stop(); }, 3000);
 
@@ -526,7 +559,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   function stop() {
     flushDel();
     unsub.forEach((f) => { try { f(); } catch {} }); unsub.length = 0;
-    clearInterval(poll); clearInterval(watchdog); ro.disconnect(); chan.close();
+    clearInterval(timer); clearInterval(watchdog); ro.disconnect(); chan.close();
     removeEventListener('scroll', refreshRect, true); removeEventListener('resize', refreshRect);
     removeEventListener('keydown', onKey); removeEventListener('keyup', onKeyUp); removeEventListener('paste', onPaste);
     document.removeEventListener('fullscreenchange', onFs);
