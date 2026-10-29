@@ -127,6 +127,10 @@ export function createApi(cfg) {
       const ch = sb.channel(name, { config: { broadcast: { self: false } } }).on('broadcast', { event: 's' }, ({ payload }) => cb(payload)).subscribe();
       return { send: (payload) => { ch.send({ type: 'broadcast', event: 's', payload }); }, close: () => { sb.removeChannel(ch); } };
     },
+    async removeMany(table, ids) {                              // удалить пачку строк по id (порциями, чтобы адрес запроса не разрастался)
+      invalidate(table);
+      for (let i = 0; i < ids.length; i += IN_CHUNK) ok(await sb.from(table).delete().in('id', ids.slice(i, i + IN_CHUNK)));
+    },
     async removeWhere(table, eq) { invalidate(table); ok(await sb.from(table).delete().match(eq)); },
     async remove(table, id) { invalidate(table); ok(await sb.from(table).delete().eq('id', id)); },
     async rpc(fn, args) { return ok(await sb.rpc(fn, args)); },

@@ -207,6 +207,7 @@ export function createDemoApi() {
       return clone(x);
     },
     subscribe(_t, _f, _cb, onStatus) { setTimeout(() => onStatus?.('SUBSCRIBED')); return () => {}; },
+    async removeMany(table, ids) { await tick(); db[table] = db[table].filter((r) => !ids.includes(r.id)); },
     live() { return { send() {}, close() {} }; },
     async removeWhere(table, eq) { await tick(); db[table] = db[table].filter((r) => !Object.entries(eq).every(([k, v]) => r[k] === v)); },
     async remove(table, id) {

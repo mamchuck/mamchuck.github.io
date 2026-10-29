@@ -2,7 +2,7 @@
 // Перья разных цветов, ластик (стирает штрих целиком), картинки/скриншоты. Рисуют оба: преподаватель и ученик.
 // Всё хранится в базе (board_pages → board_items), чужие штрихи видны сразу (Realtime + «живой» штрих во время письма).
 // Координаты мировые, у всех одинаковые; у каждого участника свой масштаб и положение окна.
-import { toast, confirmDialog, I, $ } from './ui.js?v=202610291805';
+import { toast, confirmDialog, I, $ } from './ui.js?v=202610291837';
 
 const CELL = 40, ERASER_PX = 11, MIN_Z = 0.1, MAX_Z = 4;
 const COLORS = [['#1b2330', 'Чёрный'], ['#2563eb', 'Синий'], ['#e5392f', 'Красный'], ['#1f9d55', 'Зелёный'], ['#f08a00', 'Оранжевый'], ['#8b3fd9', 'Фиолетовый']];
@@ -30,14 +30,43 @@ const IC = {
 const ico = (k) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
 
 // ---------- Рисование штриха ----------
-function drawStroke(ctx, d) {
-  const p = d.p, n = p.length / 2;
-  ctx.strokeStyle = ctx.fillStyle = d.c; ctx.lineWidth = d.w; ctx.lineCap = ctx.lineJoin = 'round';
-  if (n === 1) { ctx.beginPath(); ctx.arc(p[0], p[1], d.w / 2, 0, Math.PI * 2); ctx.fill(); return; }
-  ctx.beginPath(); ctx.moveTo(p[0], p[1]);
-  for (let i = 1; i < n - 1; i++) ctx.quadraticCurveTo(p[2 * i], p[2 * i + 1], (p[2 * i] + p[2 * i + 2]) / 2, (p[2 * i + 1] + p[2 * i + 3]) / 2);
-  ctx.lineTo(p[2 * n - 2], p[2 * n - 1]); ctx.stroke();
+const PATHS = new WeakMap();                              // готовый контур штриха: строится один раз, а не на каждый кадр
+function buildPath(d) {
+  const p = d.p, n = p.length / 2, P = new Path2D();
+  if (n === 1) { P.arc(p[0], p[1], d.w / 2, 0, Math.PI * 2); return P; }
+  P.moveTo(p[0], p[1]);
+  for (let i = 1; i < n - 1; i++) P.quadraticCurveTo(p[2 * i], p[2 * i + 1], (p[2 * i] + p[2 * i + 2]) / 2, (p[2 * i + 1] + p[2 * i + 3]) / 2);
+  P.lineTo(p[2 * n - 2], p[2 * n - 1]);
+  return P;
 }
+function drawStroke(ctx, d, cache = true) {            // cache=false для штриха, который ещё растёт
+  let P = cache && PATHS.get(d);
+  if (!P) { P = buildPath(d); if (cache) PATHS.set(d, P); }
+  ctx.strokeStyle = ctx.fillStyle = d.c; ctx.lineWidth = d.w; ctx.lineCap = ctx.lineJoin = 'round';
+  if (d.p.length === 2) ctx.fill(P); else ctx.stroke(P);
+}
+// Упрощение линии (Рамер — Дуглас — Пекер): меньше точек — быстрее рисуется, меньше уходит по сети и лежит в базе
+function simplify(p, eps) {
+  const n = p.length / 2; if (n < 3) return p;
+  const keep = new Uint8Array(n); keep[0] = keep[n - 1] = 1;
+  const stack = [[0, n - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop(); let max = 0, idx = -1;
+    for (let i = a + 1; i < b; i++) { const d = segDist(p[2 * i], p[2 * i + 1], p[2 * a], p[2 * a + 1], p[2 * b], p[2 * b + 1]); if (d > max) { max = d; idx = i; } }
+    if (max > eps && idx > 0) { keep[idx] = 1; stack.push([a, idx], [idx, b]); }
+  }
+  const out = []; for (let i = 0; i < n; i++) if (keep[i]) out.push(p[2 * i], p[2 * i + 1]);
+  return out;
+}
+// Всё, что пришло из базы или по сети, проверяем: чужие данные не должны ломать доску
+const HEX = /^#[0-9a-f]{6}$/i, fin = (v) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e6;
+function sane(kind, d, studentId) {
+  if (!d || typeof d !== 'object') return false;
+  if (kind === 'stroke') return Array.isArray(d.p) && d.p.length >= 2 && d.p.length <= 20000 && d.p.length % 2 === 0 && d.p.every(fin) && fin(d.w) && d.w >= 1 && d.w <= 60 && typeof d.c === 'string' && HEX.test(d.c);
+  if (kind === 'img') return okPath(d.path, studentId) && [d.x, d.y, d.w, d.h].every(fin) && d.w > 0 && d.h > 0 && d.w < 20000 && d.h < 20000;
+  return false;
+}
+const okPath = (p, studentId) => typeof p === 'string' && p.startsWith(`${studentId}/board/`) && !p.includes('..') && p.length < 200;
 const bboxOf = (it) => {
   if (it._bb) return it._bb;
   const d = it.data;
@@ -71,6 +100,8 @@ function drawGrid(g, x0, y0, x1, y1, z) {
     g.stroke();
   }
 }
+
+export { sane, simplify };
 
 export async function mountBoard(root, { api, studentId, canWrite = true, isTutor = false }) {
   dispose?.();
@@ -130,9 +161,13 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
       <div class="bd-stage" id="bd-stage"><canvas id="bd-cv"></canvas></div>
       <input type="file" id="bd-file" accept="image/*" hidden>
     </div>`;
-  const bd = $('#bd', root), stage = $('#bd-stage', root), cv = $('#bd-cv', root), ctx = cv.getContext('2d');
+  const bd = $('#bd', root), stage = $('#bd-stage', root), cv = $('#bd-cv', root), ctx = cv.getContext('2d', { alpha: false, desynchronized: true });
   const status = $('#bd-status', root), zlabel = $('#bd-zlabel', root);
   if (!canWrite) tool = 'hand';
+
+  // Положение холста на странице кэшируем: не дёргаем раскладку на каждое движение мыши
+  let rect = cv.getBoundingClientRect();
+  const refreshRect = () => { rect = cv.getBoundingClientRect(); };
 
   // ---------- Вид: масштаб и положение ----------
   const setZoomLabel = () => { zlabel.textContent = `${Math.round(view.z * 100)}%`; };
@@ -166,14 +201,16 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     const k = dpr * view.z;
     ctx.setTransform(k, 0, 0, k, -view.x * k, -view.y * k);
     drawGrid(ctx, view.x, view.y, view.x + cw / view.z, view.y + ch / view.z, view.z);
-    for (const it of items.values()) if (it.kind === 'img') {
+    const vx0 = view.x, vy0 = view.y, vx1 = view.x + cw / view.z, vy1 = view.y + ch / view.z;
+    const seen = (it, m = 0) => { const b = bboxOf(it); return b[2] + m >= vx0 && b[0] - m <= vx1 && b[3] + m >= vy0 && b[1] - m <= vy1; };
+    for (const it of items.values()) if (it.kind === 'img' && seen(it)) {
       const el = getImg(it.data.path), d = it.data;
       if (el) ctx.drawImage(el, d.x, d.y, d.w, d.h);
       else { ctx.fillStyle = '#eef3f9'; ctx.fillRect(d.x, d.y, d.w, d.h); ctx.fillStyle = '#8aa0b8'; ctx.font = '28px sans-serif'; ctx.fillText(imgCache.get(d.path)?.failed ? 'Не удалось загрузить' : 'Загрузка…', d.x + 20, d.y + 44); }
     }
-    for (const it of items.values()) if (it.kind === 'stroke') drawStroke(ctx, it.data);
-    for (const l of live.values()) drawStroke(ctx, l.d);
-    if (cur) drawStroke(ctx, cur.d);
+    for (const it of items.values()) if (it.kind === 'stroke' && seen(it, it.data.w)) drawStroke(ctx, it.data);
+    for (const l of live.values()) drawStroke(ctx, l.d, false);
+    if (cur) drawStroke(ctx, cur.d, false);
     const sel = selected && items.get(selected);
     if (sel) {
       const d = sel.data, s = 1 / view.z; ctx.save(); ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 3 * s; ctx.setLineDash([12 * s, 8 * s]); ctx.strokeRect(d.x, d.y, d.w, d.h); ctx.setLineDash([]);
@@ -231,19 +268,28 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
       catch (e) { if (t === 2) { items.delete(item.id); redraw(); toast(`Штрих не сохранился: ${e.message}`, 'error'); setPending(-1); return; } await sleep(700 * (t + 1)); }
     }
   }
+  // Ластик за один взмах стирает много штрихов: удаляем их одним запросом, а не десятками
+  let delQ = [], delT = 0;
+  function flushDel() {
+    clearTimeout(delT); delT = 0;
+    const ids = delQ; delQ = []; if (!ids.length) return;
+    api.removeMany('board_items', ids).catch((e) => toast(`Не удалось удалить: ${e.message}`, 'error')).finally(() => setPending(-ids.length));
+  }
   function del(it, { file = true } = {}) {
     items.delete(it.id); if (selected === it.id) selected = null;
     const i = mine.indexOf(it.id); if (i >= 0) mine.splice(i, 1);
-    setPending(1);
-    api.remove('board_items', it.id).catch((e) => toast(`Не удалось удалить: ${e.message}`, 'error')).finally(() => setPending(-1));
-    if (file && it.kind === 'img') api.removeFile(it.data.path).catch(() => {});
+    setPending(1); delQ.push(it.id); if (!delT) delT = setTimeout(flushDel, 150);
+    if (file && it.kind === 'img' && okPath(it.data.path, studentId)) api.removeFile(it.data.path).catch(() => {});
     redraw();
   }
 
   // ---------- Живой штрих ----------
   const chan = api.live(`board-live:${studentId}`, (m) => {
-    if (!root.isConnected || !m || m.page !== page.id || items.has(m.id)) return;
-    let l = live.get(m.id); if (!l) live.set(m.id, l = { d: { c: m.c, w: m.w, p: [] } });
+    if (!root.isConnected || !m || m.page !== page.id || typeof m.id !== 'string' || m.id.length > 40 || items.has(m.id)) return;
+    if (!Array.isArray(m.p) || m.p.length > 400 || !m.p.every(fin) || !fin(m.w) || m.w < 1 || m.w > 60 || typeof m.c !== 'string' || !HEX.test(m.c)) return;
+    let l = live.get(m.id);
+    if (!l) { if (live.size >= 50) return; live.set(m.id, l = { d: { c: m.c, w: m.w, p: [] } }); }
+    if (l.d.p.length + m.p.length > 20000) return;
     l.d.p.push(...m.p);
     if (m.end) setTimeout(() => { if (live.delete(m.id)) redraw(); }, 4000);   // если сохранённый штрих так и не пришёл
     redraw();
@@ -257,21 +303,21 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   }
 
   // ---------- Указатель ----------
-  const pt = (e) => { const r = cv.getBoundingClientRect(); return [view.x + (e.clientX - r.left) / view.z, view.y + (e.clientY - r.top) / view.z]; };
+  const pt = (e) => [view.x + (e.clientX - rect.left) / view.z, view.y + (e.clientY - rect.top) / view.z];
   const imgAt = (x, y) => { const l = [...items.values()].filter((i) => i.kind === 'img'); for (let i = l.length - 1; i >= 0; i--) { const d = l[i].data; if (x >= d.x && x <= d.x + d.w && y >= d.y && y <= d.y + d.h) return l[i]; } return null; };
   const eraseAt = (x, y) => { const r = ERASER_PX / view.z; for (const it of [...items.values()]) if (it.kind === 'stroke' && strokeHit(it, x, y, r)) del(it); };
   const mid = () => { const a = [...touches.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1 }; };
-  const cancelStroke = () => { if (cur) { cur = null; redraw(); } drag = null; };
+  const cancelStroke = () => { if (cur) { sendLive(true, true); cur = null; redraw(); } drag = null; };
 
   function down(e) {
-    cv.setPointerCapture?.(e.pointerId);
+    cv.setPointerCapture?.(e.pointerId); refreshRect();
     if (e.pointerType === 'touch') {
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (touches.size === 2) { cancelStroke(); pan = null; const m = mid(); gesture = { d0: m.d, z0: view.z, wx: view.x + (m.x - cv.getBoundingClientRect().left) / view.z, wy: view.y + (m.y - cv.getBoundingClientRect().top) / view.z }; return; }
       if (touches.size > 2) return;
       if (!fingerDraw || !canWrite) { e.preventDefault(); pan = { id: e.pointerId, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y }; return; }
     }
-    if (e.button === 1 || tool === 'hand' || spaceDown || !canWrite) { e.preventDefault(); pan = { id: e.pointerId, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y }; stage.classList.add('panning'); return; }
+    if (e.button === 1 || e.button === 2 || tool === 'hand' || spaceDown || !canWrite) { e.preventDefault(); pan = { id: e.pointerId, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y }; stage.classList.add('panning'); return; }
     if (e.button > 0) return;
     e.preventDefault();
     const [x, y] = pt(e);
@@ -321,6 +367,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     if (pan && pan.id === e.pointerId) { pan = null; stage.classList.remove('panning'); return; }
     if (cur) {
       sendLive(true, true);
+      cur.d.p = simplify(cur.d.p, 0.7);
       const item = { id: cur.id, page_id: page.id, kind: 'stroke', data: cur.d };
       items.set(item.id, item); mine.push(item.id); cur = null; redraw(); persist(item);
     } else if (drag && !drag.erase && drag.moved) {
@@ -329,15 +376,17 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     }
     drag = null;
   }
+  cv.addEventListener('contextmenu', (e) => e.preventDefault());      // правая кнопка — двигать доску, а не меню
   cv.addEventListener('pointerdown', down);
   cv.addEventListener('pointermove', move);
   cv.addEventListener('pointerup', up);
   cv.addEventListener('pointercancel', up);
   cv.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const r = cv.getBoundingClientRect();
-    if (e.ctrlKey || e.metaKey) zoomAt(view.z * Math.exp(-e.deltaY * 0.01), e.clientX - r.left, e.clientY - r.top);   // щипок на тачпаде или Ctrl + колесо
-    else { view.x += (e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX) / view.z; view.y += (e.shiftKey ? 0 : e.deltaY) / view.z; redraw(); }
+    const r = cv.getBoundingClientRect(), u = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? r.height : 1;   // Firefox отдаёт строки, а не пиксели
+    const dx = e.deltaX * u, dy = e.deltaY * u;
+    if (e.ctrlKey || e.metaKey) zoomAt(view.z * Math.exp(-dy * 0.01), e.clientX - r.left, e.clientY - r.top);   // щипок на тачпаде или Ctrl + колесо
+    else { view.x += (e.shiftKey && !dx ? dy : dx) / view.z; view.y += (e.shiftKey ? 0 : dy) / view.z; redraw(); }
   }, { passive: false });
 
   // ---------- Панель ----------
@@ -385,6 +434,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   const onKey = (e) => {
     if (!root.isConnected) return stop();
     if (typing(e)) return;
+    if (e.code === 'Space' && e.target.closest?.('button, a')) return;
     if (e.code === 'Space') { if (!spaceDown) { spaceDown = true; stage.classList.add('space'); } e.preventDefault(); return; }
     if (e.code === 'Escape' && full) { setFull(false); return; }
     if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ' && canWrite) { e.preventDefault(); undo(); }
@@ -408,7 +458,8 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   document.addEventListener('fullscreenchange', onFs);
   stage.addEventListener('dragover', (e) => { if (canWrite) e.preventDefault(); });
   stage.addEventListener('drop', (e) => { if (!canWrite) return; e.preventDefault(); [...e.dataTransfer.files].forEach(addImage); });
-  const ro = new ResizeObserver(redraw); ro.observe(stage);
+  const ro = new ResizeObserver(() => { refreshRect(); redraw(); }); ro.observe(stage);
+  addEventListener('scroll', refreshRect, true); addEventListener('resize', refreshRect);
   status.textContent = '';
 
   // ---------- Загрузка ----------
@@ -418,7 +469,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
     try { rows = await api.select('board_items', { eq: { page_id: page.id }, order: 'created_at' }); }
     catch (e) { toast(`Не удалось загрузить доску: ${e.message}`, 'error'); return; }
     if (token !== loadToken) return;
-    for (const r of rows) items.set(r.id, { id: r.id, kind: r.kind, data: r.data });
+    for (const r of rows) if (sane(r.kind, r.data, studentId)) items.set(r.id, { id: r.id, kind: r.kind, data: r.data });
     fitContent();
   }
 
@@ -426,9 +477,9 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   function onItem(ev) {
     if (!root.isConnected) return stop();
     const n = ev.new, o = ev.old;
-    if (ev.eventType === 'INSERT') { live.delete(n.id); if (n.page_id === page.id && !items.has(n.id)) items.set(n.id, { id: n.id, kind: n.kind, data: n.data }); }
+    if (ev.eventType === 'INSERT') { live.delete(n.id); if (n.page_id === page.id && !items.has(n.id) && sane(n.kind, n.data, studentId)) items.set(n.id, { id: n.id, kind: n.kind, data: n.data }); }
     else if (ev.eventType === 'DELETE') { if (items.delete(o.id) && selected === o.id) selected = null; }
-    else if (ev.eventType === 'UPDATE') { const it = items.get(n.id); if (it && drag?.id !== n.id) { it.data = n.data; it._bb = null; } }
+    else if (ev.eventType === 'UPDATE') { const it = items.get(n.id); if (it && drag?.id !== n.id && sane(it.kind, n.data, studentId)) { it.data = n.data; it._bb = null; } }
     redraw();
   }
   // Запасной вариант, если Realtime не подключился: раз в 4 секунды подтягиваем новое
@@ -440,7 +491,7 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
       try {
         const rows = await api.select('board_items', { eq: { page_id: page.id }, order: 'created_at' });
         const ids = new Set(rows.map((r) => r.id)); let ch = false;
-        for (const r of rows) if (!items.has(r.id)) { items.set(r.id, { id: r.id, kind: r.kind, data: r.data }); ch = true; }
+        for (const r of rows) if (!items.has(r.id) && sane(r.kind, r.data, studentId)) { items.set(r.id, { id: r.id, kind: r.kind, data: r.data }); ch = true; }
         for (const id of [...items.keys()]) if (!ids.has(id) && !pending) { items.delete(id); ch = true; }
         if (ch) redraw();
       } catch { /* повторим */ }
@@ -473,8 +524,10 @@ export async function mountBoard(root, { api, studentId, canWrite = true, isTuto
   }
 
   function stop() {
+    flushDel();
     unsub.forEach((f) => { try { f(); } catch {} }); unsub.length = 0;
     clearInterval(poll); clearInterval(watchdog); ro.disconnect(); chan.close();
+    removeEventListener('scroll', refreshRect, true); removeEventListener('resize', refreshRect);
     removeEventListener('keydown', onKey); removeEventListener('keyup', onKeyUp); removeEventListener('paste', onPaste);
     document.removeEventListener('fullscreenchange', onFs);
     document.body.classList.remove('bd-lock');
