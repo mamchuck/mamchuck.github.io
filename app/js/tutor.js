@@ -2,17 +2,18 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610290044';
+} from './ui.js?v=202610291759';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610290044';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610290044';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610290044';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610290044';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610290044';
-import { loadDrill, drillBlock } from './drill.js?v=202610290044';
-import { cardsPage } from './cards.js?v=202610290044';
-import { leadsPage } from './leads.js?v=202610290044';
+} from './library.js?v=202610291759';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610291759';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610291759';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610291759';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610291759';
+import { loadDrill, drillBlock } from './drill.js?v=202610291759';
+import { cardsPage } from './cards.js?v=202610291759';
+import { mountBoard } from './board.js?v=202610291759';
+import { leadsPage } from './leads.js?v=202610291759';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -480,7 +481,7 @@ async function studentsPage(view, _p, ctx) {
 }
 
 const TABS = [
-  ['', 'Обзор'], ['lessons', 'Занятия'], ['homework', 'ДЗ'], ['materials', 'Материалы'],
+  ['', 'Обзор'], ['lessons', 'Занятия'], ['board', 'Доска'], ['homework', 'ДЗ'], ['materials', 'Материалы'],
   ['progress', 'Прогресс'], ['notes', 'Заметки'], ['access', 'Доступ'],
 ];
 
@@ -624,6 +625,12 @@ async function studentPage(view, [id, tab = ''], ctx) {
     $('#add', view).addEventListener('click', () => progressForm(ctx, s));
     bindTutorClaims(view, ctx);
     $$('[data-pedit]', view).forEach((b) => b.addEventListener('click', () => progressForm(ctx, s, R[b.dataset.pedit])));
+  }
+
+  if (tab === 'board') {
+    done(h`<div class="bd-wrap" id="bd-root"></div>`);
+    await mountBoard($('#bd-root', view), { api, studentId: id, canWrite: true, isTutor: true });
+    return;
   }
 
   if (tab === 'notes') {

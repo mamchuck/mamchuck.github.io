@@ -122,8 +122,20 @@ export function createApi(cfg) {
     async insertMany(table, rows) { invalidate(table); return ok(await sb.from(table).insert(rows).select()); },
     async insert(table, row) { invalidate(table); return ok(await sb.from(table).insert(row).select().single()); },
     async update(table, id, patch) { invalidate(table); return ok(await sb.from(table).update(patch).eq('id', id).select().single()); },
+    // Живой штрих «пока пишется»: короткие сообщения между участниками доски, в базу не попадают
+    live(name, cb) {
+      const ch = sb.channel(name, { config: { broadcast: { self: false } } }).on('broadcast', { event: 's' }, ({ payload }) => cb(payload)).subscribe();
+      return { send: (payload) => { ch.send({ type: 'broadcast', event: 's', payload }); }, close: () => { sb.removeChannel(ch); } };
+    },
+    async removeWhere(table, eq) { invalidate(table); ok(await sb.from(table).delete().match(eq)); },
     async remove(table, id) { invalidate(table); ok(await sb.from(table).delete().eq('id', id)); },
     async rpc(fn, args) { return ok(await sb.rpc(fn, args)); },
+    // Живые изменения таблицы (Realtime, с учётом прав RLS). filter: 'student_id=eq.<uuid>'. Возвращает функцию отписки.
+    subscribe(table, filter, cb, onStatus) {
+      const ch = sb.channel(`${table}:${filter}:${Math.random().toString(36).slice(2, 8)}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table, filter }, cb).subscribe(onStatus);
+      return () => { sb.removeChannel(ch); };
+    },
 
     async upload(path, file) { ok(await sb.storage.from('files').upload(path, file)); return path; },
     async fileUrl(path) { return ok(await sb.storage.from('files').createSignedUrl(path, 3600)).signedUrl; },

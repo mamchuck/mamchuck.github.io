@@ -26,7 +26,7 @@ function seed() {
     payments: [], invitations: [], private_notes: [], library_items: [],
     app_settings: [{ id: 1, reminder_minutes: 120, evening_reminder: false, evening_hour: 20, timezone: 'Europe/Moscow', bot_username: 'mamchuck_bot', bot_ready: true }],
     telegram_links: [{ user_id: P, chat_id: 1001, tg_username: 'mama_demo', tg_name: 'Мама', notify: true, linked_at: at(-3) }],
-    lesson_responses: [],
+    lesson_responses: [], board_pages: [], board_items: [],
     oge_tasks: [], oge_sets: [], oge_attempts: [], oge_templates: [],
   };
   const L = (student_id, d, subject, topic, status, report = '', pub = false, hh = 16) =>
@@ -183,7 +183,7 @@ export function createDemoApi() {
     async dumpAll(table) { return clone(visible(table)); },
     async insert(table, row) {
       await tick();
-      if (me.role !== 'tutor' && table !== 'submissions') throw new Error('Нет доступа');
+      if (me.role !== 'tutor' && table !== 'submissions' && !(table === 'board_items' && me.role === 'student')) throw new Error('Нет доступа');
       const x = { id: uid(), created_at: new Date().toISOString(), ...row };
       if (table === 'lessons') Object.assign(x, { status: 'planned', report: '', report_published: false, plan: '', ...row });
       if (table === 'submissions') {
@@ -198,6 +198,7 @@ export function createDemoApi() {
       if (!x) throw new Error('Запись не найдена');
       if (table === 'profiles' && id === me.id) { delete patch.role; }
       else if (me.role !== 'tutor') {
+        if (table === 'board_items' && me.role === 'student') { Object.assign(x, patch); return clone(x); }
         if (table !== 'submissions' || x.reviewed_at) throw new Error('Нет доступа');
         patch = { answer: patch.answer, file_path: patch.file_path ?? x.file_path, submitted_at: new Date().toISOString() };
       }
@@ -205,9 +206,12 @@ export function createDemoApi() {
       if (table === 'profiles' && id === me.id) Object.assign(me, x);
       return clone(x);
     },
+    subscribe(_t, _f, _cb, onStatus) { setTimeout(() => onStatus?.('SUBSCRIBED')); return () => {}; },
+    live() { return { send() {}, close() {} }; },
+    async removeWhere(table, eq) { await tick(); db[table] = db[table].filter((r) => !Object.entries(eq).every(([k, v]) => r[k] === v)); },
     async remove(table, id) {
       await tick();
-      if (me.role !== 'tutor') throw new Error('Нет доступа');
+      if (me.role !== 'tutor' && !(table === 'board_items' && me.role === 'student')) throw new Error('Нет доступа');
       db[table] = db[table].filter((r) => r.id !== id);
       if (table === 'homework') db.submissions = db.submissions.filter((s) => s.homework_id !== id);
       if (table === 'library_items') db.materials = db.materials.filter((m) => m.library_item_id !== id);

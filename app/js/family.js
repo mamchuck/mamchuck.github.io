@@ -2,15 +2,16 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610290044';
-import { TUTOR } from './config.js?v=202610290044';
-import { trainerFamily } from './trainer.js?v=202610290044';
-import { mockView } from './mock.js?v=202610290044';
-import { mountTelegramBanner } from './telegram.js?v=202610290044';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610290044';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610290044';
-import { loadDaily, questCard, reviewCard } from './daily.js?v=202610290044';
-import { cardsPage } from './cards.js?v=202610290044';
+} from './ui.js?v=202610291759';
+import { TUTOR } from './config.js?v=202610291759';
+import { trainerFamily } from './trainer.js?v=202610291759';
+import { mockView } from './mock.js?v=202610291759';
+import { mountTelegramBanner } from './telegram.js?v=202610291759';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610291759';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610291759';
+import { loadDaily, questCard, reviewCard } from './daily.js?v=202610291759';
+import { cardsPage } from './cards.js?v=202610291759';
+import { mountBoard } from './board.js?v=202610291759';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -29,6 +30,7 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: 'cards', label: 'Шпаргалки', icon: I.cards },
   { path: 'mock', label: 'Пробный экзамен', short: 'Пробник', icon: I.clock },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
+  { path: 'board', label: 'Доска', icon: I.board },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
   { path: 'materials', label: 'Материалы', icon: I.folder },
 ]);
@@ -204,6 +206,14 @@ async function hwDetail(view, [id], ctx) {
   });
 }
 
+// Доска ученика: рисует сам ученик вместе с преподавателем; родитель только смотрит
+async function boardPage(view, _p, ctx) {
+  const sid = ctx.studentId;
+  if (!sid) return noChild(view, ctx);
+  view.innerHTML = '<div class="bd-wrap"></div>';
+  await mountBoard(view.firstElementChild, { api: ctx.api, studentId: sid, canWrite: isStudent(ctx), isTutor: false });
+}
+
 async function lessons(view, _p, ctx) {
   const sid = ctx.studentId;
   if (!sid) return noChild(view, ctx);
@@ -284,4 +294,4 @@ async function progress(view, _p, ctx) {
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
-export const familyRoutes = { cards: cardsPage, razminka: drillPage, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };
+export const familyRoutes = { board: boardPage, cards: cardsPage, razminka: drillPage, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };

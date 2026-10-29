@@ -1,6 +1,6 @@
 // Шпаргалки в кабинете (#/cards): видны только после входа. Интерфейс — cards-ui.js.
-import { pageHero } from './ui.js?v=202610290044';
-import { mountCards } from './cards-ui.js?v=202610290044';
+import { pageHero } from './ui.js?v=202610291759';
+import { mountCards } from './cards-ui.js?v=202610291759';
 
 export function cardsPage(view, _params, ctx) {
   view.innerHTML = '<div class="cd-root"></div>';
