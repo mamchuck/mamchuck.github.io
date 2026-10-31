@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js?v=202611010230';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202611010230';
-import { tutorRoutes, tutorNav } from './tutor.js?v=202611010230';
-import { backupCard, bindBackup } from './backup.js?v=202611010230';
-import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202611010230';
-import { familyRoutes, familyNav } from './family.js?v=202611010230';
+import { CONFIG, TUTOR } from './config.js?v=202611010231';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202611010231';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202611010231';
+import { backupCard, bindBackup } from './backup.js?v=202611010231';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202611010231';
+import { familyRoutes, familyNav } from './family.js?v=202611010231';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js?v=202611010230')).createApi(CONFIG)
-  : (await import('./demo.js?v=202611010230')).createDemoApi();
+  ? (await import('./api.js?v=202611010231')).createApi(CONFIG)
+  : (await import('./demo.js?v=202611010231')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };
