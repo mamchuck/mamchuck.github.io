@@ -1,10 +1,10 @@
 // «Теория»: шпаргалки и физическая песочница в одном разделе кабинета (#/theory, #/theory/sim, #/theory/sim/<сцена>).
-import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202611010129';
-import { cardsInto } from './cards.js?v=202611010129';
+import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202611010150';
+import { cardsInto } from './cards.js?v=202611010150';
 // Песочница подгружается только при открытии: движок, сцена и LaTeX не тормозят запуск кабинета
-const SCENES = { spring: () => import('../../sim/spring.js?v=202611010129').then((m) => m.spring), projectile: () => import('../../sim/projectile.js?v=202611010129').then((m) => m.projectile), kinematics: () => import('../../sim/kinematics.js?v=202611010129').then((m) => m.kinematics), pendulum: () => import('../../sim/pendulum.js?v=202611010129').then((m) => m.pendulum), archimedes: () => import('../../sim/archimedes.js?v=202611010129').then((m) => m.archimedes), atom: () => import('../../sim/atom.js?v=202611010129').then((m) => m.atom), lens: () => import('../../sim/lens.js?v=202611010129').then((m) => m.lens) };
-const loadFree = () => import('../../sim/free-ui.js?v=202611010129').then((m) => m.mountFree);
-const loadSim = () => import('../../sim/sim-ui.js?v=202611010129').then((m) => m.mountSim);
+const SCENES = { spring: () => import('../../sim/spring.js?v=202611010150').then((m) => m.spring), projectile: () => import('../../sim/projectile.js?v=202611010150').then((m) => m.projectile), kinematics: () => import('../../sim/kinematics.js?v=202611010150').then((m) => m.kinematics), pendulum: () => import('../../sim/pendulum.js?v=202611010150').then((m) => m.pendulum), archimedes: () => import('../../sim/archimedes.js?v=202611010150').then((m) => m.archimedes), atom: () => import('../../sim/atom.js?v=202611010150').then((m) => m.atom), lens: () => import('../../sim/lens.js?v=202611010150').then((m) => m.lens) };
+const loadFree = () => import('../../sim/free-ui.js?v=202611010150').then((m) => m.mountFree);
+const loadSim = () => import('../../sim/sim-ui.js?v=202611010150').then((m) => m.mountSim);
 // Каталог песочниц: готовые открываются, остальные помечены «скоро» (порядок — по плану)
 const CATALOG = [
   { id: 'lens', topic: 'Оптика', title: 'Линза и изображение', lead: 'Передвинь предмет (его можно взять мышью) и смотри, как меняется изображение. Три главных луча строят его: параллельный оси проходит через фокус, луч через центр не преломляется, луч через передний фокус выходит параллельно оси.', text: 'Собирающая и рассеивающая линза, три главных луча, формула тонкой линзы.' },
@@ -14,7 +14,6 @@ const CATALOG = [
   { id: 'pendulum', topic: 'Колебания и волны', title: 'Математический маятник', lead: 'Оттяни груз и отпусти. Период зависит от длины нити и от g, но не от массы груза. Поменяй массу и убедись. Пунктир на графике — упрощённая гармоническая модель: при больших углах она расходится с расчётом.', text: 'Период, энергия и сила натяжения нити. Меняй длину, массу, угол и планету.' },
   { id: 'projectile', topic: 'Баллистика', title: 'Бросок под углом', lead: 'Меняй скорость, угол и высоту броска и смотри траекторию. По горизонтали тело летит равномерно, по вертикали — с ускорением g = 10 м/с². Включи составляющие скорости, чтобы увидеть это.', text: 'Траектория, дальность и время полёта при разных углах и скоростях.' },
   { id: 'kinematics', topic: 'Кинематика', title: 'Равноускоренное движение', lead: 'Тележка едет с начальной скоростью и постоянным ускорением. Метки на дороге показывают, где она была через каждую секунду. Измени ускорение и смотри, как меняются графики x(t), v(t) и a(t).', text: 'Графики x(t), v(t), a(t) и как они связаны между собой.' },
-  { id: 'incline', topic: 'Динамика', title: 'Силы и трение', text: 'Тело на наклонной плоскости: когда оно начинает скользить.', soon: true },
   { id: 'ohm', topic: 'Постоянный ток', title: 'Закон Ома', text: 'Реостат, последовательное и параллельное соединение, показания приборов.', soon: true },
 ];
 
