@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202610311615';
-import { Graphs } from './graph.js?v=202610311615';
+import { fmt, math, ready } from './tex.js?v=202611010120';
+import { Graphs } from './graph.js?v=202611010120';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -47,8 +47,11 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     </section>
     <div class="sm-trio">
       <section class="sm-card"><h3>Параметры</h3>
-        ${scene.params.map((q) => `<label class="sm-par"><span class="sm-par-h"><span>${esc(q.name)} ${math(q.tex)}</span><output data-o="${q.id}"></output></span>
-          <input type="range" data-p="${q.id}" min="${q.min}" max="${q.max}" step="${q.step}" value="${q.def}" aria-label="${esc(q.name)}"></label>`).join('')}
+        ${scene.params.map((q) => (q.options
+          ? `<div class="sm-par"><span class="sm-par-h"><span>${esc(q.name)} ${math(q.tex)}</span><output data-o="${q.id}"></output></span>
+              <span class="sm-seg sm-opts" role="group" aria-label="${esc(q.name)}">${q.options.map((o) => `<button type="button" data-po="${q.id}" data-v="${o.v}">${esc(o.label)}</button>`).join('')}</span></div>`
+          : `<label class="sm-par"><span class="sm-par-h"><span>${esc(q.name)} ${math(q.tex)}</span><output data-o="${q.id}"></output></span>
+              <input type="range" data-p="${q.id}" min="${q.min}" max="${q.max}" step="${q.step}" value="${q.def}" aria-label="${esc(q.name)}"></label>`)).join('')}
       </section>
       <section class="sm-card"><h3>Положения</h3>
         <div class="sm-tab">
@@ -71,7 +74,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   // ---------- Пересборка слоёв (размер окна, параметры, набор графиков) ----------
   const S_ = { at: (tt) => scene.at(P, d, tt), get d() { return d; } };
   function graphsSetup() {
-    const panels = scene.panels.filter((q) => on.has(q.id)).map((q) => ({ label: q.label, unit: q.unit, signed: q.signed, max: q.max(P, d), curves: q.curves(S_).map((c) => ({ ...c })) }));
+    const panels = scene.panels.filter((q) => on.has(q.id)).map((q) => ({ label: q.label, unit: q.unit, signed: q.signed, max: q.max(P, d), curves: q.curves(S_, flags).map((c) => ({ ...c })) }));
     graphs.setup({ panels, T: T4, axisMarks: scene.axisMarks(d, T4), marks: scene.marks(P, d, T4) });
   }
   function layout() {                                         // полная пересборка: размер окна или набор графиков
@@ -85,7 +88,9 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   }
   function ticks() { $('.sm-ticks').innerHTML = scene.axisMarks(d, T4).map((m) => `<span style="left:${(m.t / T4) * 100}%">${math(m.tex)}</span>`).join(''); }
   function readouts() {
-    $$('[data-o]').forEach((o) => { const q = scene.params.find((x) => x.id === o.dataset.o); o.innerHTML = `${fmt(P[q.id], q.dec)} <small>${esc(q.unit)}</small>`; const inp = $(`[data-p="${q.id}"]`); inp.style.setProperty('--p', `${((P[q.id] - q.min) / (q.max - q.min)) * 100}%`); });
+    $$('[data-o]').forEach((o) => { const q = scene.params.find((x) => x.id === o.dataset.o); o.innerHTML = `${fmt(P[q.id], q.dec)} <small>${esc(q.unit)}</small>`;
+      if (q.options) $$(`[data-po="${q.id}"]`).forEach((b) => b.classList.toggle('on', +b.dataset.v === P[q.id]));
+      else { const inp = $(`[data-p="${q.id}"]`); inp.style.setProperty('--p', `${((P[q.id] - q.min) / (q.max - q.min)) * 100}%`); } });
     out.innerHTML = scene.readouts(P, d).map(([n, s, v]) => `<div><dt>${esc(n)} ${math(s)}</dt><dd>${v}</dd></div>`).join('');
     scene.table.rows.forEach((r) => { const tds = $(`[data-r="${r.id}"]`).querySelectorAll('span:not(.sm-rn)'); r.vals(P, d).forEach((v, i) => { tds[i].textContent = (v == null ? '—' : fmt(v, v >= 10 ? 1 : 2)); }); });
   }
@@ -125,7 +130,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   play.addEventListener('click', () => { run = !run; setPlay(); kick(); });
   $('.sm-reset').addEventListener('click', () => { t = 0; dirty = true; kick(); });
   $$('[data-sp]').forEach((b) => b.addEventListener('click', () => { speed = +b.dataset.sp; $$('[data-sp]').forEach((x) => x.classList.toggle('on', x === b)); }));
-  $$('[data-tg]').forEach((b) => b.addEventListener('click', () => { flags[b.dataset.tg] = !flags[b.dataset.tg]; b.classList.toggle('on', flags[b.dataset.tg]); b.setAttribute('aria-pressed', flags[b.dataset.tg]); dirty = true; kick(); }));
+  $$('[data-tg]').forEach((b) => b.addEventListener('click', () => { flags[b.dataset.tg] = !flags[b.dataset.tg]; b.classList.toggle('on', flags[b.dataset.tg]); b.setAttribute('aria-pressed', flags[b.dataset.tg]); dirty = true; if (scene.toggles.find((q) => q.id === b.dataset.tg)?.graphs) graphsSetup(); kick(); }));
   $$('[data-pn]').forEach((b) => b.addEventListener('click', () => {
     if (on.has(b.dataset.pn)) { if (on.size === 1) return; on.delete(b.dataset.pn); } else on.add(b.dataset.pn);
     $$('[data-pn]').forEach((x) => { x.classList.toggle('on', on.has(x.dataset.pn)); x.setAttribute('aria-pressed', on.has(x.dataset.pn)); });
@@ -134,6 +139,9 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   const schedule = () => { if (!relayout) relayout = requestAnimationFrame(() => { relayout = 0; relayout_(); }); };      // не чаще раза за кадр, пока тянут ползунок
   $$('[data-p]').forEach((inp) => inp.addEventListener('input', () => {
     P[inp.dataset.p] = +inp.value; d = scene.derive(P); T4 = scene.window(d); t = 0; holdT = 0; readouts(); ticks(); schedule();
+  }));
+  $$('[data-po]').forEach((b) => b.addEventListener('click', () => {
+    P[b.dataset.po] = +b.dataset.v; d = scene.derive(P); T4 = scene.window(d); t = 0; holdT = 0; readouts(); ticks(); schedule();
   }));
   scrub.addEventListener('input', () => { t = (+scrub.value / 1000) * T4; if (run) { run = false; setPlay(); } dirty = true; kick(); });
   root.addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.target.closest('input, button, select, textarea')) { e.preventDefault(); play.click(); } });
@@ -148,9 +156,9 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     });
     box.addEventListener('pointermove', (e) => {
       if (drag !== e.pointerId) return;
-      const r = box.getBoundingClientRect(), lx = ((e.clientX - r.left) / r.width) * SW, set = scene.grab.to(P, lx);
+      const r = box.getBoundingClientRect(), lx = ((e.clientX - r.left) / r.width) * SW, set = scene.grab.to(P, lx, ((e.clientY - r.top) / r.height) * SH);
       Object.assign(P, set); d = scene.derive(P); T4 = scene.window(d); t = 0;
-      for (const k of Object.keys(set)) $(`[data-p="${k}"]`).value = P[k];
+      for (const k of Object.keys(set)) { const inp = $(`[data-p="${k}"]`); if (inp) inp.value = P[k]; }
       readouts(); schedule(); dirty = true; kick();
     });
     const release = (e) => { if (drag !== e.pointerId) return; drag = null; holding = false; box.classList.remove('grab'); if (!run) { run = true; setPlay(); } kick(); };

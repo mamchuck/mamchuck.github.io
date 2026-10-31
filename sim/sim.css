@@ -190,3 +190,14 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 /* Сцена «Равноускоренное движение» */
 .sm-cart { position: absolute; left: 0; display: block; z-index: 3; pointer-events: none; will-change: transform; }
 .sm-kvec { position: absolute; left: 0; display: block; z-index: 4; pointer-events: none; will-change: transform; }
+
+/* Выбор из вариантов (например, планета) */
+.sm-opts { display: flex; width: 100%; }
+.sm-opts button { flex: 1; padding: 8px 6px; font-size: 13px; }
+.sm-opts button.on { background: var(--sm-bg); color: var(--sm-text); box-shadow: 0 1px 4px rgba(15, 23, 42, .18); }
+
+/* Сцена «Математический маятник» */
+.sm-pend { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; z-index: 3; pointer-events: none; will-change: transform; }
+.sm-rod { position: absolute; top: 0; background: #27303f; border-radius: 2px; }
+.sm-bob { position: absolute; display: block; }
+.sm-pvec2 { position: absolute; left: 0; top: 0; display: block; z-index: 4; pointer-events: none; will-change: transform; }

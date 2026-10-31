@@ -1,9 +1,9 @@
 // Графики величин от времени с общей осью (как в учебнике): сетка, подписи, отметки периода T и характерных моментов.
 // Ничего тяжёлого не перерисовывается в кадре: сетка и кривые рисуются один раз в два холста, а двигаются только лёгкие элементы:
 //   «жирная» часть кривой открывается обрезкой верхнего холста, курсор и точки — это обычные элементы со сдвигом (их ведёт видеокарта).
-import { fmt, tex, fitCanvas } from './tex.js?v=202610311615';
+import { fmt, tex, fitCanvas } from './tex.js?v=202611010120';
 
-const ML = 52, MR = 10, GAP = 8, TOP = 8, AXIS = 34;
+const ML = 60, MR = 10, GAP = 8, TOP = 8, AXIS = 34;
 const nice = (x) => { const e = 10 ** Math.floor(Math.log10(x)), f = x / e; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * e; };
 const dec = (v) => (v >= 10 ? 0 : v >= 1 ? 1 : v >= 0.1 ? 2 : 3);
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
@@ -40,17 +40,18 @@ export class Graphs {
       c.strokeStyle = '#2a3140'; c.lineWidth = 1.1; c.strokeRect(ML + 0.5, y0 + 0.5, W - ML - MR, PH);
       if (p.signed) { c.beginPath(); c.moveTo(ML, Math.round(p.yy(0)) + 0.5); c.lineTo(W - MR, Math.round(p.yy(0)) + 0.5); c.stroke(); }
       for (const v of (p.signed ? [-p.max, 0, p.max] : ticks)) tex(c, fmt(v, v === 0 ? 0 : dec(p.max)), ML - 7, p.yy(v) + 4, { size: 12, align: 'right', color: '#3b475c' });
-      tex(c, p.label, 12, y0 + 18, { size: 17 }); tex(c, p.unit, 12, y0 + 34, { size: 12, color: '#6b7a90' });
+      tex(c, p.label, 6, y0 + 18, { size: 17 }); tex(c, p.unit, 6, y0 + 34, { size: 12, color: '#6b7a90' });
       for (const [g, alpha, lw] of [[c, 0.28, 2], [gt, 1, 2.5]]) {            // бледная кривая (нижний холст) и насыщенная (верхний, открывается по мере движения)
         g.save(); g.beginPath(); g.rect(ML, y0 - 1, W - ML - MR, PH + 2); g.clip();
         for (const cu of p.curves) {
           if (g === gt && cu.dash) continue;
-          g.strokeStyle = cu.color; g.globalAlpha = alpha; g.lineWidth = lw; g.lineJoin = 'round'; g.setLineDash(cu.dash || []); g.beginPath();
+          g.strokeStyle = cu.color; g.globalAlpha = cu.alpha ?? alpha; g.lineWidth = lw; g.lineJoin = 'round'; g.setLineDash(cu.dash || []); g.beginPath();
           const N = 360; for (let k = 0; k <= N; k++) { const t = (k / N) * this.T, x = this.px(t), y = p.yy(cu.f(t)); k ? g.lineTo(x, y) : g.moveTo(x, y); }
           g.stroke();
         }
         g.restore();
       }
+      if (p.curves.length > 1) { c.fillStyle = 'rgba(255,255,255,.9)'; c.fillRect(ML + 4, y0 + 4, p.curves.length * 60 + 6, 18); }
       if (p.curves.length > 1) p.curves.forEach((cu, k) => { c.fillStyle = cu.color; c.fillRect(ML + 10 + k * 60, y0 + 10, 14, 3); tex(c, cu.name, ML + 29 + k * 60, y0 + 15, { size: 12.5 }); });
     });
     const ay = TOP + panels.length * (PH + GAP) - GAP;
