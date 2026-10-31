@@ -1,8 +1,8 @@
 // «Теория»: шпаргалки и физическая песочница в одном разделе кабинета (#/theory, #/theory/sim, #/theory/sim/<сцена>).
-import { h, mount, $, I, pageHero, esc } from './ui.js?v=202610311450';
-import { cardsInto } from './cards.js?v=202610311450';
-import { mountSim } from '../../sim/sim-ui.js?v=202610311450';
-import { spring } from '../../sim/spring.js?v=202610311450';
+import { h, mount, $, I, pageHero, esc } from './ui.js?v=202610311455';
+import { cardsInto } from './cards.js?v=202610311455';
+import { mountSim } from '../../sim/sim-ui.js?v=202610311455';
+import { spring } from '../../sim/spring.js?v=202610311455';
 
 const SCENES = { spring };
 // Каталог песочниц: готовые открываются, остальные помечены «скоро» (порядок — по плану)

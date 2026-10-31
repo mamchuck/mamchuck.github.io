@@ -2,7 +2,7 @@
 // Решение точное (аналитическое), поэтому время можно перематывать и ничего не накапливается: x = A·cos(ωt + φ₀).
 // Рисунок собран из лёгких слоёв: фон (стена, пол, ось) рисуется один раз; груз, линия-указатель и точка на оси — обычные элементы,
 // которые только сдвигаются (их ведёт видеокарта); пружина и векторы рисуются в узких полосках, а не на всей сцене.
-import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311450';
+import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311455';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 
@@ -117,10 +117,10 @@ export const spring = {
         const sh = g.createRadialGradient(S / 2 + 16, S + 8, 2, S / 2 + 16, S + 8, S * 0.78);     // мягкая тень на полу
         sh.addColorStop(0, 'rgba(25,35,55,.30)'); sh.addColorStop(1, 'rgba(25,35,55,0)');
         g.save(); g.translate(0, S + 8); g.scale(1, 0.14); g.translate(0, -(S + 8)); g.fillStyle = sh; g.fillRect(0, S - 30, S + 32, 90); g.restore();
-        const gr = g.createLinearGradient(0, 6, 0, S + 6); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#d5dbe6');
-        rr(g, 16, 6, S, S, 9); g.fillStyle = gr; g.fill(); g.strokeStyle = '#a7b1c2'; g.lineWidth = 1.3; g.stroke();
-        rr(g, 17.5, 7.5, S - 3, S - 3, 8); g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 1; g.stroke();
-        tex(g, 'm', 16 + S / 2, 6 + S / 2 + 9, { size: 28, align: 'center' });
+        const gr = g.createLinearGradient(0, 6, 0, S + 6); gr.addColorStop(0, '#5b9dff'); gr.addColorStop(1, '#2a62d9');
+        rr(g, 16, 6, S, S, 9); g.fillStyle = gr; g.fill(); g.strokeStyle = '#1c47a8'; g.lineWidth = 1.3; g.stroke();
+        rr(g, 17.5, 7.5, S - 3, S - 3, 8); g.strokeStyle = 'rgba(255,255,255,.38)'; g.lineWidth = 1; g.stroke();
+        tex(g, 'm', 16 + S / 2, 6 + S / 2 + 9, { size: 28, align: 'center', color: '#ffffff' });
       },
       // кадр: сдвигаем груз, указатель и точку; перерисовываем только пружину и (если включены) векторы
       update(s, d, o) {
