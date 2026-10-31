@@ -242,3 +242,10 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm-fx-e { background: radial-gradient(circle at 35% 30%, #9cc2ff, #1f56c9); } .sm-fx-pos { background: radial-gradient(circle at 35% 30%, #ffb3b3, #d92d2d); }
 .sm-fx-nu { width: 22px; height: 0; margin: 0 0 0 -11px; border-top: 2px dashed #7d8799; }
 .sm-fx-ph { width: 56px; height: 14px; margin: -7px 0 0 -28px; background: repeating-linear-gradient(90deg, transparent 0 6px, #e8590c 6px 8px); -webkit-mask: radial-gradient(ellipse at center, #000 40%, transparent 72%); mask: radial-gradient(ellipse at center, #000 40%, transparent 72%); }
+
+/* Сцена «Закон Ома и цепи» */
+.sm-edots { position: absolute; inset: 0; pointer-events: none; z-index: 2; contain: layout paint style; }
+.sm-edot { position: absolute; left: 0; top: 0; width: var(--ds, 9px); height: var(--ds, 9px); margin: calc(var(--ds, 9px) / -2) 0 0 calc(var(--ds, 9px) / -2); border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffd37a, #f08c00); box-shadow: 0 0 0 1px rgba(140, 70, 0, .55); will-change: transform; }
+.sm-it4 th { font-size: 12px; font-weight: 700; color: var(--sm-text2); text-align: right; padding: 2px 0 4px; border-bottom: 1px solid var(--sm-line); }
+.sm-it4 td { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; } .sm-it4 td:first-child, .sm-it4 th:first-child { text-align: left; }
+.sm-it4 .sm-itt td { font-weight: 800; border-bottom: 0; border-top: 1.5px solid var(--sm-line); }

@@ -1,16 +1,16 @@
 // «Повторение» (только для преподавателя): план повторения теории с материалами по темам. Бот раз в 4 дня присылает очередную тему,
 // а здесь лежит полный материал: определения, законы, ловушки, задачи с решениями, вопросы для самопроверки и источники.
-import { h, mount, $, $$, I, esc, raw, toast, pageHero, spinner, empty } from './ui.js?v=202611010150';
+import { h, mount, $, $$, I, esc, raw, toast, pageHero, spinner, empty } from './ui.js?v=202611010155';
 
 const BASE = '../study/';
 const SEC_ICON = { 'Механика': '🚀', 'Тепловые явления': '🔥', 'Электричество': '⚡', 'Магнетизм': '🧲', 'Оптика': '🔦', 'Атом и ядро': '⚛️', 'Методология': '📐' };
 let tex = null;
-const loadTex = async () => { tex ||= await import('../../sim/tex.js?v=202611010150'); await tex.ready(); return tex; };
+const loadTex = async () => { tex ||= await import('../../sim/tex.js?v=202611010155'); await tex.ready(); return tex; };
 
 // Текст с формулами: $...$ — LaTeX; переносы строк — абзацы; **жирный**
 function rich(s) {
-  const parts = String(s).split(/(\$[^$]+\$)/g).map((p) => (/^\$[^$]+\$$/.test(p) ? (tex ? tex.math(p.slice(1, -1)) : esc(p)) : esc(p).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')));
-  return parts.join('').replace(/\n/g, '<br>');
+  const parts = String(s).split(/(\$[^$]+\$)/g).map((p) => (/^\$[^$]+\$$/.test(p) ? (tex ? tex.math(p.slice(1, -1)) : esc(p)) : esc(p).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')));   // переносы только в тексте: внутри формул они ломают SVG корней
+  return parts.join('');
 }
 const LEVEL = { 'база': 'st-l1', 'ОГЭ': 'st-l2', 'повышенная': 'st-l3', 'олимпиадная': 'st-l4' };
 
