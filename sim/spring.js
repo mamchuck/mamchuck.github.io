@@ -2,7 +2,7 @@
 // Решение точное (аналитическое), поэтому время можно перематывать и ничего не накапливается: x = A·cos(ωt + φ₀).
 // Рисунок собран из лёгких слоёв: фон (стена, пол, ось) рисуется один раз; груз, линия-указатель и точка на оси — обычные элементы,
 // которые только сдвигаются (их ведёт видеокарта); пружина и векторы рисуются в узких полосках, а не на всей сцене.
-import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311516';
+import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311518';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 
@@ -72,7 +72,7 @@ export const spring = {
     bg.setAttribute('aria-hidden', 'true'); spr.setAttribute('aria-hidden', 'true'); vec.setAttribute('aria-hidden', 'true'); blk.setAttribute('aria-hidden', 'true');
     box.setAttribute('role', 'img'); box.setAttribute('aria-label', 'Груз на пружине колеблется вдоль горизонтальной оси');
     const SPR = { top: SPY - 20, h: 40 }, VEC = { top: 120, h: 180 }, pct = (v, tot) => `${(v / tot) * 100}%`;
-    let f = 1, k = 1, sprC = null, vecC = null, labels = null, P = P0, vecOn = false;
+    let f = 1, k = 1, dprN = 1, sprC = null, vecC = null, labels = null, P = P0, vecOn = false;
 
     // холст-полоска: пиксели по её размеру, а координаты — как у всей сцены (со сдвигом)
     const band = (cv, top, h) => {
@@ -83,7 +83,7 @@ export const spring = {
     };
     const api = {
       resize() {
-        const cssW = box.clientWidth || SW; f = cssW / SW; FS = Math.max(1, Math.min(1.7, 700 / cssW));
+        const cssW = box.clientWidth || SW; f = cssW / SW; dprN = Math.max(1, Math.min(2, window.devicePixelRatio || 1)); FS = Math.max(1, Math.min(1.7, 700 / cssW));
         const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1, Math.sqrt(1.1e6 / (cssW * SH)))); k = (cssW * dpr) / SW;
         // фон
         bg.width = Math.round(cssW * dpr); bg.height = Math.round(cssW * SH / SW * dpr);
@@ -126,8 +126,9 @@ export const spring = {
       // кадр: сдвигаем груз, указатель и точку; перерисовываем только пружину и (если включены) векторы
       update(s, d, o) {
         const xc = X0 + s.x * PXM, left = xc - S / 2;
-        blk.style.transform = `translate3d(${(left - 16) * f}px,0,0)`;
-        guide.style.transform = `translate3d(${xc * f}px,0,0)`; dot.style.transform = `translate3d(${xc * f}px,0,0)`;
+        const sn = (v) => Math.round(v * dprN) / dprN;                  // сдвиг по целым пикселям экрана: картинка груза не «мылится» и не дрожит на дробных позициях
+        blk.style.transform = `translate3d(${sn((left - 16) * f)}px,0,0)`;
+        const gx = sn(xc * f); guide.style.transform = `translate3d(${gx}px,0,0)`; dot.style.transform = `translate3d(${gx}px,0,0)`;
         sprC.clearRect(0, SPR.top, SW, SPR.h); zigzag(sprC, WALL, left, SPY, { peaks: 10, amp: 13, lead: 0 });
         const any = o.v || o.a || o.F;
         if (any !== vecOn) { vecOn = any; vec.style.display = any ? '' : 'none'; if (!any) vecC.clearRect(0, VEC.top, SW, VEC.h); }

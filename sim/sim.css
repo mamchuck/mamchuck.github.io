@@ -173,3 +173,7 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm input.sm-scrub { height: 30px !important; }
 .sm-f { overflow: visible; }
 @media (max-width: 560px) { .sm-f { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; } .sm-f::-webkit-scrollbar { display: none; } }
+
+/* Изоляция: анимация внутри сцены и графика не заставляет браузер пересчитывать и перерисовывать остальную страницу */
+.sm-stagebox, .sm-gbox { contain: layout paint style; }
+.sm-btns, .sm-scrubrow { contain: layout style; }

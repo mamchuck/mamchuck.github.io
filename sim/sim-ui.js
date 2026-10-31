@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202610311516';
-import { Graphs } from './graph.js?v=202610311516';
+import { fmt, math, ready } from './tex.js?v=202610311518';
+import { Graphs } from './graph.js?v=202610311518';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -65,6 +65,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   const $ = (s) => root.querySelector(s), $$ = (s) => [...root.querySelectorAll(s)];
   const box = $('.sm-stagebox'), scrub = $('.sm-scrub'), fillEl = $('.sm-fill'), knobEl = $('.sm-knob'), trackEl = $('.sm-track'), gwrap = $('.sm-gwrap'), play = $('.sm-play'), out = $('.sm-out'), clockEl = $('.sm-clock b');
   const graphs = new Graphs(gwrap);
+  const rowEls = scene.table.rows.map((r) => $(`[data-r="${r.id}"]`)), nowCells = [...$('.sm-now').querySelectorAll('span:not(.sm-rn)')];          // узлы ищем один раз, а не 8 раз в секунду
   let trackW = 1, lastInput = 0, lastGH = 0;
 
   // ---------- Пересборка слоёв (размер окна, параметры, набор графиков) ----------
@@ -100,8 +101,8 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     if (now - lastUi > 120) {                                 // числа и подсветку обновляем редко и только если изменились: так нет рывков от пересчёта текста
       lastUi = now;
       const c = fmt(t, 2); if (c !== lastClock) { lastClock = c; clockEl.textContent = c; }
-      scene.table.rows.forEach((r) => { const el = $(`[data-r="${r.id}"]`), h = r.test(s, P); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
-      const tds = $('.sm-now').querySelectorAll('span:not(.sm-rn)'); scene.table.now(s).forEach((v, i) => { const x = fmt(v, v >= 10 ? 1 : 2); if (tds[i].textContent !== x) tds[i].textContent = x; });
+      scene.table.rows.forEach((r, i) => { const el = rowEls[i], h = r.test(s, P); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
+      scene.table.now(s).forEach((v, i) => { const x = fmt(v, v >= 10 ? 1 : 2); if (nowCells[i].textContent !== x) nowCells[i].textContent = x; });
     }
     if (now - lastInput > 500) { lastInput = now; scrub.value = Math.round(pr * 1000); }      // настоящий ползунок нужен для клавиатуры и экранных дикторов
   }

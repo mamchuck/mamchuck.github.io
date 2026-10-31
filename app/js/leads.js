@@ -1,5 +1,5 @@
 // Заявки: лиды из диагностики ОГЭ (таблица xray_sessions). Статус, контакт, готовое сообщение.
-import { h, mount, $, $$, I, toast, fmtDT, empty, pageHero } from './ui.js?v=202610311516';
+import { h, mount, $, $$, I, toast, fmtDT, empty, pageHero } from './ui.js?v=202610311518';
 
 const STATUS = [
   ['new', 'Новый'], ['contacted', 'Написал'], ['trial', 'Пробное'], ['student', 'Ученик'], ['lost', 'Отказ'],

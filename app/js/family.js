@@ -2,17 +2,17 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610311516';
-import { TUTOR } from './config.js?v=202610311516';
-import { trainerFamily } from './trainer.js?v=202610311516';
-import { mockView } from './mock.js?v=202610311516';
-import { mountTelegramBanner } from './telegram.js?v=202610311516';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610311516';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610311516';
-import { loadDaily, questCard, reviewCard } from './daily.js?v=202610311516';
-import { cardsPage } from './cards.js?v=202610311516';
-import { theoryPage } from './theory.js?v=202610311516';
-import { mountBoard } from './board.js?v=202610311516';
+} from './ui.js?v=202610311518';
+import { TUTOR } from './config.js?v=202610311518';
+import { trainerFamily } from './trainer.js?v=202610311518';
+import { mockView } from './mock.js?v=202610311518';
+import { mountTelegramBanner } from './telegram.js?v=202610311518';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610311518';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610311518';
+import { loadDaily, questCard, reviewCard } from './daily.js?v=202610311518';
+import { cardsPage } from './cards.js?v=202610311518';
+import { theoryPage } from './theory.js?v=202610311518';
+import { mountBoard } from './board.js?v=202610311518';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },

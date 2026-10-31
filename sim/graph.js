@@ -1,7 +1,7 @@
 // Графики величин от времени с общей осью (как в учебнике): сетка, подписи, отметки периода T и характерных моментов.
 // Ничего тяжёлого не перерисовывается в кадре: сетка и кривые рисуются один раз в два холста, а двигаются только лёгкие элементы:
 //   «жирная» часть кривой открывается обрезкой верхнего холста, курсор и точки — это обычные элементы со сдвигом (их ведёт видеокарта).
-import { fmt, tex, fitCanvas } from './tex.js?v=202610311516';
+import { fmt, tex, fitCanvas } from './tex.js?v=202610311518';
 
 const ML = 52, MR = 10, GAP = 8, TOP = 8, AXIS = 34;
 const nice = (x) => { const e = 10 ** Math.floor(Math.log10(x)), f = x / e; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * e; };
@@ -62,14 +62,17 @@ export class Graphs {
     this.line.style.top = `${((TOP - 2) / H) * 100}%`; this.line.style.height = `${((this.H - AXIS + GAP - TOP) / H) * 100}%`;
     this.holder.replaceChildren(); this.dots = [];
     for (const p of panels) for (const cu of p.curves) { if (cu.dash) continue; const d = el('sm-gdot'); d.style.background = cu.color; this.holder.append(d); this.dots.push([d, p, cu]); }
-    this.last = -1;
+    this.lastX = null; this.lastT = null;
   }
 
   draw(t) {
     if (!this.panels.length || !this.dots) return;
-    const f = this.f, x = this.px(t) * f;
+    const f = this.f, dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1)), sn = (v) => Math.round(v * dpr) / dpr;   // целые пиксели экрана: линии курсора чёткие
+    const x = sn(this.px(t) * f);
+    if (x === this.lastX && this.lastT === t) return;                                                                   // ничего не сдвинулось — ничего не пишем
+    this.lastX = x; this.lastT = t;
     this.line.style.transform = `translate3d(${x}px,0,0)`;
     this.trace.style.clipPath = `inset(0 ${Math.max(0, this.wrap.clientWidth - x)}px 0 0)`;
-    for (const [d, p, cu] of this.dots) d.style.transform = `translate3d(${x}px,${p.yy(cu.f(t)) * f}px,0)`;
+    for (const [d, p, cu] of this.dots) d.style.transform = `translate3d(${x}px,${sn(p.yy(cu.f(t)) * f)}px,0)`;
   }
 }

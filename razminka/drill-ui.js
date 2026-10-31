@@ -6,7 +6,7 @@
 //   history        — true: раунд в адресе (#mul) и «Назад» браузера (только открытая страница);
 //   cta            — HTML карточки под итогом раунда;
 //   start          — id навыка, чтобы сразу начать раунд.
-import { SKILLS, parseAns, same, fmt } from './drills.js?v=202610311516';
+import { SKILLS, parseAns, same, fmt } from './drills.js?v=202610311518';
 
 const ROUND = 60;
 const MIX = { id: 'mix', ico: '🎲', t: 'Микс', d: 'Всё вперемешку — как на экзамене' };

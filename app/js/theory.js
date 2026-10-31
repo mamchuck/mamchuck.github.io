@@ -1,13 +1,12 @@
 // «Теория»: шпаргалки и физическая песочница в одном разделе кабинета (#/theory, #/theory/sim, #/theory/sim/<сцена>).
-import { h, mount, $, I, pageHero, esc } from './ui.js?v=202610311516';
-import { cardsInto } from './cards.js?v=202610311516';
-import { mountSim } from '../../sim/sim-ui.js?v=202610311516';
-import { spring } from '../../sim/spring.js?v=202610311516';
-
-const SCENES = { spring };
+import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202610311518';
+import { cardsInto } from './cards.js?v=202610311518';
+// Песочница подгружается только при открытии: движок, сцена и LaTeX не тормозят запуск кабинета
+const SCENES = { spring: () => import('../../sim/spring.js?v=202610311518').then((m) => m.spring) };
+const loadSim = () => import('../../sim/sim-ui.js?v=202610311518').then((m) => m.mountSim);
 // Каталог песочниц: готовые открываются, остальные помечены «скоро» (порядок — по плану)
 const CATALOG = [
-  { id: 'spring', topic: 'Колебания и волны', title: 'Пружинный маятник', text: 'Груз на пружине: период, амплитуда, энергия и графики от времени.' },
+  { id: 'spring', topic: 'Колебания и волны', title: 'Пружинный маятник', lead: 'Оттяни груз и отпусти. Графики идут друг под другом с общей осью времени: в крайнем положении видно, что равно нулю, а что максимально.', text: 'Груз на пружине: период, амплитуда, энергия и графики от времени.' },
   { id: 'projectile', topic: 'Баллистика', title: 'Бросок под углом', text: 'Траектория, дальность и время полёта при разных углах и скоростях.', soon: true },
   { id: 'kinematics', topic: 'Кинематика', title: 'Равноускоренное движение', text: 'Графики x(t), v(t), a(t) и как они связаны между собой.', soon: true },
   { id: 'incline', topic: 'Динамика', title: 'Силы и трение', text: 'Тело на наклонной плоскости: когда оно начинает скользить.', soon: true },
@@ -21,10 +20,12 @@ const tabs = (cur) => h`<nav class="tabs" aria-label="Разделы теори�
 export async function theoryPage(view, params, ctx) {
   const [tab = 'cards', id] = params;
   if (tab === 'sim' && id && SCENES[id]) {
-    const sc = SCENES[id];
+    const meta = CATALOG.find((c) => c.id === id);
     mount(view, h`<a href="#/theory/sim" class="back">${I.back} Песочница</a>
-      <header class="sm-head"><h1>${sc.title}</h1><p class="muted">${sc.lead}</p></header><div id="sim-root"></div>`);
-    mountSim($('#sim-root', view), sc);
+      <header class="sm-head"><h1>${meta.title}</h1><p class="muted">${meta.lead}</p></header><div id="sim-root">${spinner()}</div>`);
+    const [mountSim, sc] = await Promise.all([loadSim(), SCENES[id]()]);
+    const root = $('#sim-root', view); if (!root || !root.isConnected) return;
+    mountSim(root, sc);
     return;
   }
   if (tab === 'sim') {
