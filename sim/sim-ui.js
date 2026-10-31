@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202610311602';
-import { Graphs } from './graph.js?v=202610311602';
+import { fmt, math, ready } from './tex.js?v=202610311615';
+import { Graphs } from './graph.js?v=202610311615';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -16,7 +16,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
 
   const P = Object.fromEntries(scene.params.map((q) => [q.id, q.def]));
   let d = scene.derive(P), T4 = scene.window(d), t = 0, speed = scene.speed || 0.5, run = true, dirty = true, raf = 0, last = 0, vis = true, lastUi = 0, lastClock = '', holdT = 0, rt = null, lastW = 0, relayout = 0, holding = false;
-  const flags = Object.fromEntries(scene.toggles.map((q) => [q.id, false]));
+  const flags = Object.fromEntries(scene.toggles.map((q) => [q.id, !!q.on]));
   const on = new Set(scene.panels.filter((q) => q.on).map((q) => q.id));
   const { w: SW, h: SH } = scene.stage;
 
@@ -42,7 +42,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
         <button class="sm-btn sm-play" type="button"></button>
         <button class="sm-btn sm-ghost sm-reset" type="button"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v5h5"/></svg>Сброс</button>
         <span class="sm-seg" role="group" aria-label="Скорость">${[0.25, 0.5, 1].map((v) => `<button type="button" data-sp="${v}" class="${v === speed ? 'on' : ''}">${String(v).replace('.', ',')}×</button>`).join('')}</span>
-        <span class="sm-tog" role="group" aria-label="Показать векторы">${scene.toggles.map((q) => `<button type="button" data-tg="${q.id}" style="--c:${q.color}" aria-pressed="false"><i></i>${esc(q.name)}</button>`).join('')}</span>
+        <span class="sm-tog" role="group" aria-label="Показать векторы">${scene.toggles.map((q) => `<button type="button" data-tg="${q.id}" style="--c:${q.color}" class="${q.on ? 'on' : ''}" aria-pressed="${!!q.on}"><i></i>${esc(q.name)}</button>`).join('')}</span>
       </div>
     </section>
     <div class="sm-trio">
@@ -87,7 +87,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   function readouts() {
     $$('[data-o]').forEach((o) => { const q = scene.params.find((x) => x.id === o.dataset.o); o.innerHTML = `${fmt(P[q.id], q.dec)} <small>${esc(q.unit)}</small>`; const inp = $(`[data-p="${q.id}"]`); inp.style.setProperty('--p', `${((P[q.id] - q.min) / (q.max - q.min)) * 100}%`); });
     out.innerHTML = scene.readouts(P, d).map(([n, s, v]) => `<div><dt>${esc(n)} ${math(s)}</dt><dd>${v}</dd></div>`).join('');
-    scene.table.rows.forEach((r) => { const tds = $(`[data-r="${r.id}"]`).querySelectorAll('span:not(.sm-rn)'); r.vals(P, d).forEach((v, i) => { tds[i].textContent = fmt(v, v >= 10 ? 1 : 2); }); });
+    scene.table.rows.forEach((r) => { const tds = $(`[data-r="${r.id}"]`).querySelectorAll('span:not(.sm-rn)'); r.vals(P, d).forEach((v, i) => { tds[i].textContent = (v == null ? '—' : fmt(v, v >= 10 ? 1 : 2)); }); });
   }
 
   // ---------- Кадр ----------
@@ -102,7 +102,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
       lastUi = now;
       const c = fmt(t, 2); if (c !== lastClock) { lastClock = c; clockEl.textContent = c; }
       scene.table.rows.forEach((r, i) => { const el = rowEls[i], h = r.test(s, P, d, t); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
-      scene.table.now(s).forEach((v, i) => { const x = fmt(v, v >= 10 ? 1 : 2); if (nowCells[i].textContent !== x) nowCells[i].textContent = x; });
+      scene.table.now(s).forEach((v, i) => { const x = (v == null ? '—' : fmt(v, v >= 10 ? 1 : 2)); if (nowCells[i].textContent !== x) nowCells[i].textContent = x; });
     }
     if (now - lastInput > 500) { lastInput = now; scrub.value = Math.round(pr * 1000); }      // настоящий ползунок нужен для клавиатуры и экранных дикторов
   }

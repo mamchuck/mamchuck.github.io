@@ -1,5 +1,5 @@
 // Шпаргалки в кабинете: показываются во вкладке «Теория» (theory.js), видны только после входа. Интерфейс — cards-ui.js.
-import { mountCards } from './cards-ui.js?v=202610311602';
+import { mountCards } from './cards-ui.js?v=202610311615';
 
 export function cardsInto(el, ctx) {
   return mountCards(el, {

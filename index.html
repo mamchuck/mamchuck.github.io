@@ -24,8 +24,8 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css?v=202610311602">
-  <link rel="stylesheet" href="landing.css?v=202610311602">
+  <link rel="stylesheet" href="app/css/style.css?v=202610311615">
+  <link rel="stylesheet" href="landing.css?v=202610311615">
 </head>
 <body class="landing">
   <header class="l-head">
@@ -164,6 +164,6 @@
   </footer>
 
   <a href="diag/" class="l-sticky btn l-cta-main"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-  <script src="landing.js?v=202610311602" defer></script>
+  <script src="landing.js?v=202610311615" defer></script>
 </body>
 </html>

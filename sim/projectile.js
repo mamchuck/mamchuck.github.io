@@ -1,7 +1,7 @@
 // Сцена «Бросок под углом»: тело брошено с высоты h₀ со скоростью v₀ под углом α к горизонту, сопротивления воздуха нет, g = 10 м/с².
 // Решение точное: x = v₀cosα·t, y = h₀ + v₀sinα·t − gt²/2. Масштаб подгоняется под траекторию, чтобы она всегда занимала сцену.
 // Слои: фон (сетка, оси, пунктир траектории), сплошная траектория (открывается обрезкой), шарик и векторы (сдвигаются).
-import { fmt, tex, arrow, hatch, sprite } from './tex.js?v=202610311602';
+import { fmt, tex, arrow, hatch, sprite } from './tex.js?v=202610311615';
 
 const PI = Math.PI, G = 10;
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
