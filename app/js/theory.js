@@ -1,11 +1,13 @@
 // «Теория»: шпаргалки и физическая песочница в одном разделе кабинета (#/theory, #/theory/sim, #/theory/sim/<сцена>).
-import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202611010123';
-import { cardsInto } from './cards.js?v=202611010123';
+import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202611010126';
+import { cardsInto } from './cards.js?v=202611010126';
 // Песочница подгружается только при открытии: движок, сцена и LaTeX не тормозят запуск кабинета
-const SCENES = { spring: () => import('../../sim/spring.js?v=202611010123').then((m) => m.spring), projectile: () => import('../../sim/projectile.js?v=202611010123').then((m) => m.projectile), kinematics: () => import('../../sim/kinematics.js?v=202611010123').then((m) => m.kinematics), pendulum: () => import('../../sim/pendulum.js?v=202611010123').then((m) => m.pendulum), archimedes: () => import('../../sim/archimedes.js?v=202611010123').then((m) => m.archimedes) };
-const loadSim = () => import('../../sim/sim-ui.js?v=202611010123').then((m) => m.mountSim);
+const SCENES = { spring: () => import('../../sim/spring.js?v=202611010126').then((m) => m.spring), projectile: () => import('../../sim/projectile.js?v=202611010126').then((m) => m.projectile), kinematics: () => import('../../sim/kinematics.js?v=202611010126').then((m) => m.kinematics), pendulum: () => import('../../sim/pendulum.js?v=202611010126').then((m) => m.pendulum), archimedes: () => import('../../sim/archimedes.js?v=202611010126').then((m) => m.archimedes), atom: () => import('../../sim/atom.js?v=202611010126').then((m) => m.atom) };
+const loadFree = () => import('../../sim/free-ui.js?v=202611010126').then((m) => m.mountFree);
+const loadSim = () => import('../../sim/sim-ui.js?v=202611010126').then((m) => m.mountSim);
 // Каталог песочниц: готовые открываются, остальные помечены «скоро» (порядок — по плану)
 const CATALOG = [
+  { id: 'atom', topic: 'Атом и ядро', title: 'Атом и ядро', lead: 'Собери атом из протонов, нейтронов и электронов и посмотри, как это записывается. Потом запусти радиоактивный распад: заряд и массовое число всегда сохраняются.', text: 'Состав атома и ядра, изотопы, ионы, α-, β- и γ-излучение.' },
   { id: 'archimedes', topic: 'Гидростатика', title: 'Плавание и сила Архимеда', lead: 'Отпусти тело над жидкостью. Пока оно погружается, сила Архимеда растёт. Если её хватает, чтобы уравновесить силу тяжести, тело плавает, а если нет, тонет. Меняй плотность тела, объём и жидкость (в ртути плавает даже сталь).', text: 'Сила тяжести, сила Архимеда и условие плавания тел.' },
   { id: 'spring', topic: 'Колебания и волны', title: 'Пружинный маятник', lead: 'Оттяни груз и отпусти. Графики идут друг под другом с общей осью времени: в крайнем положении видно, что равно нулю, а что максимально.', text: 'Груз на пружине: период, амплитуда, энергия и графики от времени.' },
   { id: 'pendulum', topic: 'Колебания и волны', title: 'Математический маятник', lead: 'Оттяни груз и отпусти. Период зависит от длины нити и от g, но не от массы груза. Поменяй массу и убедись. Пунктир на графике — упрощённая гармоническая модель: при больших углах она расходится с расчётом.', text: 'Период, энергия и сила натяжения нити. Меняй длину, массу, угол и планету.' },
@@ -25,7 +27,7 @@ export async function theoryPage(view, params, ctx) {
     const meta = CATALOG.find((c) => c.id === id);
     mount(view, h`<a href="#/theory/sim" class="back">${I.back} Песочница</a>
       <header class="sm-head"><h1>${meta.title}</h1><p class="muted">${meta.lead}</p></header><div id="sim-root">${spinner()}</div>`);
-    const [mountSim, sc] = await Promise.all([loadSim(), SCENES[id]()]);
+    const sc = await SCENES[id](), mountSim = await (sc.mode === 'free' ? loadFree() : loadSim());
     const root = $('#sim-root', view); if (!root || !root.isConnected) return;
     mountSim(root, sc);
     return;

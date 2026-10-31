@@ -206,3 +206,39 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm-abody { position: absolute; left: 0; top: 0; display: block; z-index: 2; pointer-events: none; will-change: transform; }
 .sm-water { position: absolute; z-index: 3; pointer-events: none; will-change: transform; box-sizing: border-box; }
 .sm-avec { position: absolute; left: 0; top: 0; display: block; z-index: 5; pointer-events: none; will-change: transform; }
+
+/* «Свободные» сцены: карточка состояния справа, ряд кнопок действий под ней */
+.sm-info { background: var(--sm-bg); padding: 16px 18px; overflow: hidden; }
+.sm-info-in { font-size: 14.5px; line-height: 1.5; color: var(--sm-text); }
+.sm-info-in h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--sm-text2); }
+.sm-acts { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: center; padding-top: 4px; }
+.sm-actgrp { display: grid; gap: 6px; justify-items: center; }
+.sm-actgrp small { font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--sm-text2); }
+.sm-actbtns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.sm-abtn { border: 0; font: inherit; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 99px; cursor: pointer; color: color-mix(in srgb, var(--c) 82%, var(--sm-text)); background: color-mix(in srgb, var(--c) 14%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 40%, transparent); transition: background .15s, transform .12s; }
+.sm-abtn:hover:not(:disabled) { background: color-mix(in srgb, var(--c) 26%, transparent); }
+.sm-abtn:active:not(:disabled) { transform: scale(.96); }
+.sm-abtn:disabled { opacity: .45; cursor: default; }
+.sm-free .sm-fig { gap: 16px; }
+.sm-free .sm-trio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.sm-extra { grid-column: 1 / -1; }
+.sm-it { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.sm-it td { padding: 4px 0; border-bottom: 1px dashed var(--sm-line); } .sm-it td:last-child { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sm-big { font-size: 40px; line-height: 1.1; margin: 2px 0 6px; } .sm-big .katex { font-size: 1em; }
+.sm-chip { display: inline-block; padding: 3px 12px; border-radius: 99px; font-size: 13px; font-weight: 800; background: var(--sm-soft); color: var(--sm-acc-s); }
+.sm-eq { padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--sm-text2) 8%, transparent); margin: 6px 0; font-size: 15px; overflow-x: auto; }
+.sm-eq small { display: block; margin-top: 3px; font-size: 12px; color: var(--sm-text2); }
+@container (max-width: 780px) { .sm-free .sm-trio { grid-template-columns: minmax(0, 1fr); } .sm-free .sm-gbox.sm-info { min-height: 0; } }
+
+/* Сцена «Атом и ядро» */
+.sm-orbits, .sm-fx { position: absolute; inset: 0; pointer-events: none; }
+.sm-orbits { z-index: 2; } .sm-fx { z-index: 4; }
+.sm-orbit { position: absolute; width: 0; height: 0; transform-origin: 0 0; will-change: transform; }
+.sm-electron { position: absolute; left: 0; top: 0; width: var(--ds, 10px); height: var(--ds, 10px); margin: calc(var(--ds, 10px) / -2) 0 0 calc(var(--ds, 10px) / -2); border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #9cc2ff, #1f56c9); box-shadow: 0 0 0 1px rgba(20, 50, 130, .55); transform: translate(calc(var(--x) * var(--f, 1) * 1px), calc(var(--y) * var(--f, 1) * 1px)); }
+.sm-fx > * { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.sm-fx-alpha { width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #ffb3b3, #d92d2d 55%, #7d8799 56%, #7d8799); box-shadow: 0 0 0 1px rgba(60, 20, 20, .5); }
+.sm-fx-e, .sm-fx-pos { width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; }
+.sm-fx-e { background: radial-gradient(circle at 35% 30%, #9cc2ff, #1f56c9); } .sm-fx-pos { background: radial-gradient(circle at 35% 30%, #ffb3b3, #d92d2d); }
+.sm-fx-nu { width: 22px; height: 0; margin: 0 0 0 -11px; border-top: 2px dashed #7d8799; }
+.sm-fx-ph { width: 56px; height: 14px; margin: -7px 0 0 -28px; background: repeating-linear-gradient(90deg, transparent 0 6px, #e8590c 6px 8px); -webkit-mask: radial-gradient(ellipse at center, #000 40%, transparent 72%); mask: radial-gradient(ellipse at center, #000 40%, transparent 72%); }
