@@ -1,7 +1,7 @@
 // Сцена «Электромагнитная индукция»: магнит пролетает через катушку. Поток магнита через катушку Φ(x) = Φ₀·exp(−(x/σ)²)·s (s = ±1 — полюс),
 // ЭДС индукции ε = −N·dΦ/dt = N·(2x/σ²)·Φ·v, ток I = ε/R. Когда поток растёт, ЭДС одного знака, когда убывает — другого; когда магнит в центре, поток максимален, а ЭДС равна нулю.
 // Стрелка гальванометра показывает ток. Правило Ленца: поле индукционного тока препятствует изменению потока.
-import { fmt, tex, rr } from './tex.js?v=202611010226';
+import { fmt, tex, rr } from './tex.js?v=202611010230';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 export const COLI = { phi: '#7048e8', e: '#e8590c', i: '#1f9d55' };
@@ -17,7 +17,7 @@ export const induction = {
   params: [
     { id: 'v', name: 'Скорость магнита', tex: 'v', unit: 'м/с', min: 0.2, max: 2, step: 0.1, def: 0.8, dec: 1 },
     { id: 'N', name: 'Число витков', tex: 'N', unit: '', min: 50, max: 400, step: 50, def: 200, dec: 0 },
-    { id: 'pole', name: 'Какой полюс впереди', tex: '\\text{полюс}', unit: '', dec: 0, def: 1, options: [{ label: 'Северный', v: 1 }, { label: 'Южный', v: -1 }] },
+    { id: 'pole', name: 'Какой полюс впереди', tex: '', unit: '', dec: 0, def: 1, options: [{ label: 'Северный', v: 1 }, { label: 'Южный', v: -1 }] },
   ],
   derive(p) {
     const T = (2 * XMAX) / p.v, em = p.N * PHI0 * ((Math.SQRT2 / SIG) * Math.exp(-0.5)) * p.v, tIn = (XMAX - SIG / Math.SQRT2) / p.v, tOut = (XMAX + SIG / Math.SQRT2) / p.v;

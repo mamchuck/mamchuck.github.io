@@ -1,7 +1,7 @@
 // Сцена «Закон Ома и электрические цепи»: источник, один или два резистора (последовательно / параллельно), амперметр.
 // Точки на проводах — заряды: они текут от «+» к «−» (так принято направление тока), скорость пропорциональна силе тока на этом участке.
 // Всё считается точно: R общее → I = ε/(R + r) → напряжение на зажимах U = ε − I·r → токи и напряжения на резисторах; нагрев резистора показан цветом.
-import { fmt, tex, math as mathHtml, rr } from './tex.js?v=202611010226';
+import { fmt, tex, math as mathHtml, rr } from './tex.js?v=202611010230';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 const SW = 520, SH = 400, BX = 56, YP = 185, YM = 215, RW = 88, RH = 30, XR = 460, YT = 70, YB = 330;
@@ -34,7 +34,7 @@ export const circuit = {
   stage: { w: SW, h: SH, label: 'Электрическая цепь: источник, резисторы, амперметр' },
   get animated() { return !reduce; },
   params: [
-    { id: 'top', name: 'Схема', tex: '\\text{схема}', unit: '', dec: 0, def: 2, options: [{ label: 'Один резистор', v: 1 }, { label: 'Последовательно', v: 2 }, { label: 'Параллельно', v: 3 }], fmt: (v) => ['', '1 резистор', 'последовательно', 'параллельно'][v] },
+    { id: 'top', name: 'Схема', tex: '', unit: '', dec: 0, def: 2, options: [{ label: 'Один резистор', v: 1 }, { label: 'Последовательно', v: 2 }, { label: 'Параллельно', v: 3 }], fmt: (v) => ['', '1 резистор', 'последовательно', 'параллельно'][v] },
     { id: 'E', name: 'ЭДС источника', tex: '\\varepsilon', unit: 'В', min: 1, max: 24, step: 1, def: 12, dec: 0 },
     { id: 'r', name: 'Внутреннее сопротивление', tex: 'r', unit: 'Ом', min: 0, max: 5, step: 0.5, def: 0, dec: 1 },
     { id: 'R1', name: 'Первый резистор', tex: 'R_1', unit: 'Ом', min: 1, max: 50, step: 1, def: 10, dec: 0 },

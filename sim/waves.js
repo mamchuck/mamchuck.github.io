@@ -1,7 +1,7 @@
 // Сцена «Механические волны»: бегущая волна в верёвке (поперечная) или в пружине (продольная). Смещение точки на расстоянии x от начала:
 // ξ(x, t) = A·sin(2π(νt − x/λ)). Волна переносит энергию, а сами точки только колеблются около своих мест. Скорость волны v = λν.
 // Две отмеченные точки A и B на расстоянии d: график их колебаний показывает запаздывание Δt = d/v и разность фаз Δφ = 2πd/λ.
-import { fmt, tex } from './tex.js?v=202611010226';
+import { fmt, tex } from './tex.js?v=202611010230';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 export const COLW = { A: '#e03131', B: '#2563eb', rope: '#1b2330' };
@@ -16,7 +16,7 @@ export const waves = {
   speed: 0.5,
   hold: 0.5,
   params: [
-    { id: 'type', name: 'Волна', tex: '\\text{тип}', unit: '', dec: 0, def: 1, options: [{ label: 'Поперечная', v: 1 }, { label: 'Продольная', v: 2 }] },
+    { id: 'type', name: 'Волна', tex: '', unit: '', dec: 0, def: 1, options: [{ label: 'Поперечная', v: 1 }, { label: 'Продольная', v: 2 }] },
     { id: 'lam', name: 'Длина волны', tex: '\\lambda', unit: 'м', min: 0.5, max: 4, step: 0.1, def: 2, dec: 1 },
     { id: 'nu', name: 'Частота', tex: '\\nu', unit: 'Гц', min: 0.25, max: 2, step: 0.05, def: 0.5, dec: 2 },
     { id: 'A', name: 'Амплитуда', tex: 'A', unit: 'м', min: 0.1, max: 0.9, step: 0.05, def: 0.4, dec: 2 },

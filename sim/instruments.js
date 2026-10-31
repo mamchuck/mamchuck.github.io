@@ -1,6 +1,6 @@
 // Сцена «Приборы и измерения» (задание №15 ОГЭ): линейка, мензурка, термометр, динамометр, вольтметр, амперметр.
 // Случайная шкала: определи цену деления и считай показание. Шаги подсказки открываются по одному: цена деления c = (b − a)/n, показание, запись x = (x̄ ± c/2).
-import { fmt, tex, rr, arrow, math as mathHtml } from './tex.js?v=202611010226';
+import { fmt, tex, rr, arrow, math as mathHtml } from './tex.js?v=202611010230';
 
 const SW = 520, SH = 400, INK = '#2a3140';
 const DEV = {
@@ -22,7 +22,7 @@ export const instruments = {
   title: 'Приборы и измерения',
   lead: 'Задание №15 ОГЭ: определи цену деления шкалы и считай показание прибора. Нажимай «Следующий шаг» — подсказки открываются по одной. Когда справишься, бери «Новое задание».',
   stage: { w: SW, h: SH, label: 'Шкала измерительного прибора' },
-  params: [{ id: 'dev', name: 'Прибор', tex: '\\text{прибор}', unit: '', dec: 0, def: 1, options: Object.entries(DEV).map(([v, o]) => ({ label: o.name, v: +v })), fmt: (v) => DEV[v].name }],
+  params: [{ id: 'dev', name: 'Прибор', tex: '', unit: '', dec: 0, def: 1, options: Object.entries(DEV).map(([v, o]) => ({ label: o.name, v: +v })), fmt: (v) => DEV[v].name }],
   actions: [
     { id: 'step', group: 'Задание', label: 'Следующий шаг', color: '#2563eb' },
     { id: 'all', group: 'Задание', label: 'Показать ответ', color: '#e8590c' },
