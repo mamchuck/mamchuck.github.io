@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202611010155';
-import { Graphs } from './graph.js?v=202611010155';
+import { fmt, math, ready } from './tex.js?v=202611010200';
+import { Graphs } from './graph.js?v=202611010200';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -74,8 +74,8 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   // ---------- Пересборка слоёв (размер окна, параметры, набор графиков) ----------
   const S_ = { at: (tt) => scene.at(P, d, tt), get d() { return d; } };
   function graphsSetup() {
-    const panels = scene.panels.filter((q) => on.has(q.id)).map((q) => ({ label: q.label, unit: q.unit, signed: q.signed, max: q.max(P, d), curves: q.curves(S_, flags).map((c) => ({ ...c })) }));
-    graphs.setup({ panels, T: T4, axisMarks: scene.axisMarks(d, T4), marks: scene.marks(P, d, T4) });
+    const panels = scene.panels.filter((q) => on.has(q.id)).map((q) => ({ label: q.label, unit: q.unit, signed: q.signed, max: q.max(P, d), lo: q.lo ? q.lo(P, d) : null, curves: q.curves(S_, flags).map((c) => ({ ...c })) }));
+    graphs.setup({ panels, T: T4, axisMarks: scene.axisMarks(d, T4), marks: scene.marks(P, d, T4), axisLabel: scene.axisLabel });
   }
   function layout() {                                         // полная пересборка: размер окна или набор графиков
     if (!alive) return;
@@ -105,7 +105,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     const now = performance.now();
     if (now - lastUi > 120) {                                 // числа и подсветку обновляем редко и только если изменились: так нет рывков от пересчёта текста
       lastUi = now;
-      const c = fmt(t, 2); if (c !== lastClock) { lastClock = c; clockEl.textContent = c; }
+      const c = fmt(t, scene.clockDec ?? 2); if (c !== lastClock) { lastClock = c; clockEl.textContent = c; }
       scene.table.rows.forEach((r, i) => { const el = rowEls[i], h = r.test(s, P, d, t); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
       scene.table.now(s).forEach((v, i) => { const x = (v == null ? '—' : fmt(v, v >= 10 ? 1 : 2)); if (nowCells[i].textContent !== x) nowCells[i].textContent = x; });
     }
@@ -116,7 +116,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     if (!alive || !root.isConnected) return stop();
     const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
     if (run && !holding) {
-      t += dt * speed;
+      t += dt * speed * (scene.pace ? scene.pace(d) : 1);
       if (t >= T4) { if (scene.hold) { t = T4; holdT += dt; if (holdT >= scene.hold) { t = 0; holdT = 0; } } else t %= T4; }
     }
     if ((run && !holding) || dirty) { render(); dirty = false; }

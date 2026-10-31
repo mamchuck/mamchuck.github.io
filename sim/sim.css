@@ -249,3 +249,18 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm-it4 th { font-size: 12px; font-weight: 700; color: var(--sm-text2); text-align: right; padding: 2px 0 4px; border-bottom: 1px solid var(--sm-line); }
 .sm-it4 td { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; } .sm-it4 td:first-child, .sm-it4 th:first-child { text-align: left; }
 .sm-it4 .sm-itt td { font-weight: 800; border-bottom: 0; border-top: 1.5px solid var(--sm-line); }
+
+/* Сцена «Нагревание и плавление» */
+.sm-hv-w, .sm-hv-i, .sm-hv-hg { position: absolute; transform-origin: 50% 100%; will-change: transform; pointer-events: none; }
+.sm-hv-w { z-index: 1; border-radius: 0 0 10px 10px; background: linear-gradient(180deg, rgba(110, 185, 255, .62), rgba(40, 125, 235, .72)); }
+.sm-hv-i { z-index: 2; border-radius: 8px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .0) 0 38px, rgba(255, 255, 255, .85) 38px 40px), linear-gradient(180deg, rgba(232, 246, 255, .95), rgba(160, 208, 250, .92)); box-shadow: inset 0 0 0 1.5px rgba(70, 130, 200, .55); }
+.sm-hv-hg { z-index: 2; border-radius: 4px; background: linear-gradient(180deg, #ff6b6b, #e03131); }
+.sm-hv-glow { position: absolute; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 100%, rgba(255, 120, 40, .85), rgba(255, 120, 40, 0) 70%); }
+.sm-hv-fx { position: absolute; inset: 0; pointer-events: none; z-index: 4; contain: layout paint style; }
+.sm-hv-puff, .sm-hv-bub { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; will-change: transform, opacity; }
+.sm-hv-puff { width: calc(var(--f, 1) * 30px); height: calc(var(--f, 1) * 30px); margin: calc(var(--f, 1) * -15px) 0 0 calc(var(--f, 1) * -15px); background: radial-gradient(circle, rgba(255, 255, 255, .95), rgba(205, 214, 228, .55) 55%, rgba(205, 214, 228, 0) 72%); }
+.sm-hv-bub { width: calc(var(--f, 1) * 9px); height: calc(var(--f, 1) * 9px); margin: calc(var(--f, 1) * -4.5px) 0 0 calc(var(--f, 1) * -4.5px); background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .95), rgba(255, 255, 255, .25)); box-shadow: 0 0 0 1px rgba(255, 255, 255, .7); }
+.sm-hv-state { position: absolute; z-index: 5; left: 3%; top: 3%; padding: 5px 14px; border-radius: 99px; font-size: 15px; font-weight: 800; background: rgba(255, 255, 255, .88); color: #1d3f9c; box-shadow: inset 0 0 0 1.5px #2563eb; pointer-events: none; }
+.sm-hv-state[data-k="melt"] { color: #1864ab; box-shadow: inset 0 0 0 1.5px #339af0; } .sm-hv-state[data-k="boil"] { color: #c2410c; box-shadow: inset 0 0 0 1.5px #e8590c; } .sm-hv-state[data-k="steam"] { color: #495057; box-shadow: inset 0 0 0 1.5px #868e96; }
+.sm-hv-t { position: absolute; z-index: 5; left: 81.5%; top: 11%; transform: translateX(-50%); font: 700 22px/1 "KaTeX_Main", serif; color: #1b2330; pointer-events: none; white-space: nowrap; }
+@container (max-width: 520px) { .sm-hv-state { font-size: 13px; padding: 4px 11px; } .sm-hv-t { font-size: 18px; } }
