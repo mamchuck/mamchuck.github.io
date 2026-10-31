@@ -1,5 +1,5 @@
 // Библиотека материалов: загрузка пачкой, выбор, выдача ученикам, прикрепление к урокам и ДЗ
-import { h, mount, $, $$, I, toast, modal, confirmDialog, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610311455';
+import { h, mount, $, $$, I, toast, modal, confirmDialog, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610311516';
 
 const MAX = 20 * 1024 * 1024;
 const baseName = (n) => n.replace(/\.[^.]+$/, '');
