@@ -1,13 +1,12 @@
-// Шпаргалки в кабинете (#/cards): видны только после входа. Интерфейс — cards-ui.js.
-import { pageHero } from './ui.js?v=202610291936';
-import { mountCards } from './cards-ui.js?v=202610291936';
+// Шпаргалки в кабинете: показываются во вкладке «Теория» (theory.js), видны только после входа. Интерфейс — cards-ui.js.
+import { mountCards } from './cards-ui.js?v=202610311416';
 
-export function cardsPage(view, _params, ctx) {
-  view.innerHTML = '<div class="cd-root"></div>';
-  mountCards(view.firstElementChild, {
+export function cardsInto(el, ctx) {
+  return mountCards(el, {
     base: '../',
-    hero: pageHero({ eyebrow: 'Шпаргалки', title: 'Карточки ', accent: 'по темам',
-      sub: 'Формулы, определения и главное по каждой теме. Открой тему — и листай карточки.' }).s,
+    hero: '',
     trainer: (t) => (ctx.me.role !== 'tutor' && t.oge ? `#/trainer/num/${encodeURIComponent(t.subject.name)}/${t.oge}` : null),
   });
 }
+// Старая ссылка #/cards ведёт в «Теорию»
+export function cardsPage() { location.replace('#/theory'); }

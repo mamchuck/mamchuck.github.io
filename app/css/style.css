@@ -1280,3 +1280,7 @@ a.dq-review:hover { transform: translateY(-2px); }
 .dq-review.calm { opacity: .92; }
 .dq-mastered { margin: 2px 0 0; font-size: 13px; color: var(--text-2); }
 @media (max-width: 760px) { .dq-btn { justify-self: stretch; justify-content: center; } }
+
+/* «Теория» в меню: мягкая подсветка, чтобы раздел выделялся, но не кричал */
+.nav a.nav-hl:not(.active) { background: color-mix(in srgb, var(--accent) 7%, transparent); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 40%, transparent); color: var(--text); }
+.nav a.nav-hl:not(.active):hover { background: color-mix(in srgb, var(--accent) 13%, transparent); }

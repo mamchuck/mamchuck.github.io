@@ -1,13 +1,13 @@
-import { CONFIG, TUTOR } from './config.js?v=202610291936';
-import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610291936';
-import { tutorRoutes, tutorNav } from './tutor.js?v=202610291936';
-import { backupCard, bindBackup } from './backup.js?v=202610291936';
-import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610291936';
-import { familyRoutes, familyNav } from './family.js?v=202610291936';
+import { CONFIG, TUTOR } from './config.js?v=202610311416';
+import { h, mount, $, $$, I, toast, modal, spinner, authorBar, pageHero, getTheme, setTheme, isDark } from './ui.js?v=202610311416';
+import { tutorRoutes, tutorNav } from './tutor.js?v=202610311416';
+import { backupCard, bindBackup } from './backup.js?v=202610311416';
+import { renderTelegramCard, renderReminderCard } from './telegram.js?v=202610311416';
+import { familyRoutes, familyNav } from './family.js?v=202610311416';
 
 const api = CONFIG.supabaseUrl
-  ? (await import('./api.js?v=202610291936')).createApi(CONFIG)
-  : (await import('./demo.js?v=202610291936')).createDemoApi();
+  ? (await import('./api.js?v=202610311416')).createApi(CONFIG)
+  : (await import('./demo.js?v=202610311416')).createDemoApi();
 
 const root = $('#app');
 const ctx = { api, me: null, students: [], studentId: null };
@@ -195,7 +195,7 @@ function renderShell() {
     <aside class="sidebar">
       <div class="brand"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></div>
       ${childPicker}
-      <nav class="nav">${nav.map((n) => h`<a href="#/${n.path}" data-nav="${n.path}">${n.icon}<span>${n.label}</span></a>`)}</nav>
+      <nav class="nav">${nav.map((n) => h`<a href="#/${n.path}" data-nav="${n.path}" class="${n.hl ? 'nav-hl' : ''}">${n.icon}<span>${n.label}</span></a>`)}</nav>
       <div class="side-foot">
         <a href="#/settings" class="me" data-nav="settings">
           <span class="avatar">${(ctx.me.full_name || ctx.me.email || '?')[0].toUpperCase()}</span>

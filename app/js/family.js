@@ -2,16 +2,17 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202610291936';
-import { TUTOR } from './config.js?v=202610291936';
-import { trainerFamily } from './trainer.js?v=202610291936';
-import { mockView } from './mock.js?v=202610291936';
-import { mountTelegramBanner } from './telegram.js?v=202610291936';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202610291936';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610291936';
-import { loadDaily, questCard, reviewCard } from './daily.js?v=202610291936';
-import { cardsPage } from './cards.js?v=202610291936';
-import { mountBoard } from './board.js?v=202610291936';
+} from './ui.js?v=202610311416';
+import { TUTOR } from './config.js?v=202610311416';
+import { trainerFamily } from './trainer.js?v=202610311416';
+import { mockView } from './mock.js?v=202610311416';
+import { mountTelegramBanner } from './telegram.js?v=202610311416';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202610311416';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202610311416';
+import { loadDaily, questCard, reviewCard } from './daily.js?v=202610311416';
+import { cardsPage } from './cards.js?v=202610311416';
+import { theoryPage } from './theory.js?v=202610311416';
+import { mountBoard } from './board.js?v=202610311416';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -19,7 +20,7 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'progress', label: 'Прогресс', icon: I.chart },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
-  { path: 'cards', label: 'Шпаргалки', icon: I.cards },
+  { path: 'theory', label: 'Теория', icon: I.theory, hl: true },
   { path: 'mock', label: 'Пробный экзамен', short: 'Пробник', icon: I.clock },
   { path: 'materials', label: 'Материалы', icon: I.folder },
 ] : [
@@ -27,7 +28,7 @@ export const familyNav = (role) => (role === 'parent' ? [
   { path: 'homework', label: 'Домашние задания', short: 'ДЗ', icon: I.book },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'razminka', label: 'Тренировка', icon: I.bolt },
-  { path: 'cards', label: 'Шпаргалки', icon: I.cards },
+  { path: 'theory', label: 'Теория', icon: I.theory, hl: true },
   { path: 'mock', label: 'Пробный экзамен', short: 'Пробник', icon: I.clock },
   { path: 'lessons', label: 'Занятия', icon: I.calendar },
   { path: 'board', label: 'Доска', icon: I.board },
@@ -294,4 +295,4 @@ async function progress(view, _p, ctx) {
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 
-export const familyRoutes = { board: boardPage, cards: cardsPage, razminka: drillPage, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };
+export const familyRoutes = { theory: theoryPage, board: boardPage, cards: cardsPage, razminka: drillPage, trainer: trainerFamily, mock: mockView, '': home, homework, hw: hwDetail, lessons, materials, progress };

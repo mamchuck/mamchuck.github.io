@@ -2,18 +2,19 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202610291936';
+} from './ui.js?v=202610311416';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202610291936';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610291936';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610291936';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202610291936';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610291936';
-import { loadDrill, drillBlock } from './drill.js?v=202610291936';
-import { cardsPage } from './cards.js?v=202610291936';
-import { mountBoard } from './board.js?v=202610291936';
-import { leadsPage } from './leads.js?v=202610291936';
+} from './library.js?v=202610311416';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202610311416';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202610311416';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202610311416';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202610311416';
+import { loadDrill, drillBlock } from './drill.js?v=202610311416';
+import { cardsPage } from './cards.js?v=202610311416';
+import { theoryPage } from './theory.js?v=202610311416';
+import { mountBoard } from './board.js?v=202610311416';
+import { leadsPage } from './leads.js?v=202610311416';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -23,7 +24,7 @@ export const tutorNav = [
   { path: 'review', label: 'Проверка', icon: I.check },
   { path: 'trainer', label: 'Банк задач', short: 'Задачи', icon: I.target },
   { path: 'library', label: 'Библиотека', icon: I.folder },
-  { path: 'cards', label: 'Шпаргалки', icon: I.cards },
+  { path: 'theory', label: 'Теория', icon: I.theory, hl: true },
 ];
 
 const arr = (v) => (v == null ? [] : [].concat(v));
@@ -858,4 +859,4 @@ async function reviewPage(view, _p, ctx) {
   }));
 }
 
-export const tutorRoutes = { cards: cardsPage, leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
+export const tutorRoutes = { theory: theoryPage, cards: cardsPage, leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
