@@ -108,3 +108,47 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm-tile b { font-size: 19px; } .sm-tile p { margin: 0; color: var(--text-2, #5b6b82); line-height: 1.45; font-size: 14.5px; }
 .sm-open, .sm-soon { margin-top: auto; padding-top: 6px; font-weight: 700; font-size: 14px; color: var(--accent-strong, #1d4ed8); }
 .sm-soon { color: var(--text-3, #8a99b0); } .sm-tile.soon { opacity: .72; }
+
+/* ===== Раскладка v3: сцена и графики одной парой, ниже две симметричные колонки ===== */
+.sm-fig { padding: 18px; display: grid; gap: 14px; }
+.sm-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.sm-gbox { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #fff; border: 1px solid #e3e9f2; border-radius: 20px; padding: 12px 12px 8px; }
+.sm-gbox .sm-chips { margin: 0 2px 8px; }
+.sm-gbox .sm-gwrap { flex: 1 1 0; min-height: 0; }
+.sm-gcard { display: none; }
+.sm-trio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: stretch; }
+.sm-formulas { margin-top: 0; }
+.sm-fr { display: grid; gap: 18px; }
+.sm-stagebox { border-radius: 20px; }
+
+/* Секунды: обычный шрифт сайта, по центру сверху, ширина не прыгает */
+.sm-clock { top: 12px; right: auto; left: 50%; transform: translateX(-50%); min-width: 98px; text-align: center; padding: 5px 16px; border-radius: 99px; background: rgba(255, 255, 255, .92);
+  box-shadow: 0 1px 5px rgba(15, 23, 42, .14); font-family: inherit; font-size: 18px; font-weight: 700; line-height: 1.25; color: #1b2330; contain: layout paint style; }
+.sm-clock b { font-weight: 700; }
+
+/* Шкала времени: рисуется элементами, которые только сдвигаются; настоящий ползунок лежит сверху невидимым (клавиатура, перетаскивание) */
+.sm-scrubrow { position: relative; padding: 0 14px; height: 54px; }
+.sm-track { position: relative; height: 6px; margin-top: 12px; border-radius: 99px; background: var(--sm-track); }
+.sm-fill { position: absolute; inset: 0; border-radius: 99px; background: var(--sm-acc); transform-origin: left center; transform: scaleX(0); will-change: transform; }
+.sm-knob { position: absolute; left: 0; top: 50%; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; background: #fff; border: 1px solid #c9d1de; box-shadow: 0 2px 6px rgba(15, 23, 42, .25); will-change: transform; }
+.sm-scrub { position: absolute; left: 14px; right: 14px; top: 0; width: calc(100% - 28px); height: 30px; opacity: 0; margin: 0; cursor: pointer; }
+.sm-scrubrow:focus-within .sm-knob { outline: 2px solid var(--sm-acc); outline-offset: 3px; }
+.sm-ticks { position: absolute; left: 14px; right: 14px; top: 30px; height: 20px; margin: 0; }
+.sm-btns { justify-content: center; }
+.sm-tog { margin-left: 0; }
+
+/* «Положения»: сетка вместо таблицы, чтобы обновление цифр не пересчитывало вёрстку */
+.sm-tab { display: grid; gap: 4px; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; border-collapse: initial; }
+.sm-tr { display: grid; grid-template-columns: minmax(100px, 1.9fr) repeat(5, minmax(0, 1fr)); align-items: center; padding: 8px 6px; border-radius: 12px; contain: layout paint style; transition: background .15s; }
+.sm-tr > span { text-align: right; padding: 0 2px; }
+.sm-tr > .sm-rn { text-align: left; font-weight: 700; white-space: nowrap; padding-left: 4px; }
+.sm-th { color: var(--sm-text2); padding-bottom: 2px; } .sm-th small { display: block; font-size: 11px; opacity: .85; }
+.sm-tr.hot[data-r="ext"] { background: #ffe9cc; color: #1b2330; } .sm-tr.hot[data-r="eq"] { background: #dbe7ff; color: #1b2330; }
+.sm-tr.sm-now { color: var(--sm-text2); border-top: 1px dashed var(--sm-line); border-radius: 0; margin-top: 4px; }
+
+@container (max-width: 780px) {
+  .sm-split { grid-template-columns: minmax(0, 1fr); }
+  .sm-gbox .sm-gwrap { flex: none; aspect-ratio: 5 / 4; }
+  .sm-trio { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) { .sm-fig { padding: 10px 10px 14px; } .sm-clock { font-size: 15px; min-width: 84px; top: 8px; } .sm-gbox { padding: 8px; } }

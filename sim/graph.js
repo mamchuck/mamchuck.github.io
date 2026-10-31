@@ -1,9 +1,9 @@
 // Графики величин от времени с общей осью (как в учебнике): сетка, подписи, отметки периода T и характерных моментов.
 // Ничего тяжёлого не перерисовывается в кадре: сетка и кривые рисуются один раз в два холста, а двигаются только лёгкие элементы:
 //   «жирная» часть кривой открывается обрезкой верхнего холста, курсор и точки — это обычные элементы со сдвигом (их ведёт видеокарта).
-import { fmt, tex, fitCanvas } from './tex.js?v=202610311433';
+import { fmt, tex, fitCanvas } from './tex.js?v=202610311442';
 
-const WMAX = 680, ML = 54, MR = 12, PH = 78, GAP = 10, TOP = 8, AXIS = 36;
+const ML = 52, MR = 10, GAP = 8, TOP = 8, AXIS = 34;
 const nice = (x) => { const e = 10 ** Math.floor(Math.log10(x)), f = x / e; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * e; };
 const dec = (v) => (v >= 10 ? 0 : v >= 1 ? 1 : v >= 0.1 ? 2 : 3);
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
@@ -14,7 +14,6 @@ export class Graphs {
     this.base = el('sm-gl sm-gl-base', 'canvas'); this.trace = el('sm-gl sm-gl-trace', 'canvas'); this.line = el('sm-gcur'); this.holder = el('sm-gdots');
     wrap.append(this.base, this.trace, this.line, this.holder);
   }
-  get H() { return TOP + this.panels.length * (PH + GAP) - GAP + AXIS; }
   px(t) { return ML + (t / this.T) * (this.W - ML - MR); }
 
   setup({ panels, T, period, marks = [] }) { this.panels = panels; this.T = T; this.period = period; this.marks = marks; this.build(); }
@@ -22,8 +21,8 @@ export class Graphs {
   build() {
     const { panels, wrap } = this; if (!panels.length) { wrap.style.display = 'none'; return; }
     wrap.style.display = '';
-    const W = (this.W = Math.round(Math.min(WMAX, Math.max(300, wrap.clientWidth || WMAX)))), H = this.H;
-    wrap.style.aspectRatio = `${W} / ${H}`;
+    const W = (this.W = Math.round(Math.max(260, wrap.clientWidth || 480))), H = (this.H = Math.round(Math.max(200, wrap.clientHeight || 360)));   // рисуем 1:1 по размеру окна: подписи всегда читаемы
+    const PH = (this.PH = Math.max(46, (H - TOP - AXIS + GAP) / panels.length - GAP)), tstep = nice(this.T / (W < 420 ? 4 : 6));
     this.f = (wrap.clientWidth || W) / W;
     const c = fitCanvas(this.base, W, H, 1.3e6), gt = fitCanvas(this.trace, W, H, 1.3e6);
     c.clearRect(0, 0, W, H); gt.clearRect(0, 0, W, H);
@@ -31,7 +30,6 @@ export class Graphs {
       const y0 = TOP + i * (PH + GAP), ymax = p.max * 1.18, ymin = p.signed ? -ymax : 0;
       p.y0 = y0; p.yy = (v) => y0 + PH - ((v - ymin) / (ymax - ymin)) * PH;
       c.lineWidth = 1; c.strokeStyle = '#e4ecf6'; c.beginPath();
-      const tstep = nice(this.T / 8);
       for (let t = 0; t <= this.T + 1e-9; t += tstep) { const x = Math.round(this.px(t)) + 0.5; c.moveTo(x, y0); c.lineTo(x, y0 + PH); }
       const ticks = p.signed ? [-p.max, -p.max / 2, 0, p.max / 2, p.max] : [0, p.max / 2, p.max];
       for (const v of ticks) { const y = Math.round(p.yy(v)) + 0.5; c.moveTo(ML, y); c.lineTo(W - MR, y); }
@@ -55,7 +53,7 @@ export class Graphs {
       }
       if (p.curves.length > 1) p.curves.forEach((cu, k) => { c.fillStyle = cu.color; c.fillRect(ML + 10 + k * 60, y0 + 10, 14, 3); tex(c, cu.name, ML + 29 + k * 60, y0 + 15, { size: 12.5 }); });
     });
-    const ay = TOP + panels.length * (PH + GAP) - GAP, tstep = nice(this.T / 8);
+    const ay = TOP + panels.length * (PH + GAP) - GAP;
     c.strokeStyle = '#2a3140'; c.lineWidth = 1;
     for (let t = 0; t <= this.T + 1e-9; t += tstep) { const x = this.px(t); c.beginPath(); c.moveTo(x, ay); c.lineTo(x, ay + 4); c.stroke(); tex(c, fmt(t, tstep < 1 ? 1 : 0), x, ay + 17, { size: 12, align: 'center', color: '#3b475c' }); }
     for (let k = 1; k * this.period <= this.T + 1e-9; k++) { const x = this.px(k * this.period); c.strokeStyle = '#e8590c'; c.lineWidth = 1.8; c.beginPath(); c.moveTo(x, ay - 5); c.lineTo(x, ay + 5); c.stroke(); tex(c, k === 1 ? 'T' : `${k}T`, x, ay + 31, { size: 14, color: '#c2410c', align: 'center' }); }

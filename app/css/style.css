@@ -1284,3 +1284,7 @@ a.dq-review:hover { transform: translateY(-2px); }
 /* «Теория» в меню: мягкая подсветка, чтобы раздел выделялся, но не кричал */
 .nav a.nav-hl:not(.active) { background: color-mix(in srgb, var(--accent) 7%, transparent); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 40%, transparent); color: var(--text); }
 .nav a.nav-hl:not(.active):hover { background: color-mix(in srgb, var(--accent) 13%, transparent); }
+
+/* Вкладки с прокруткой обрезали свечение активной кнопки по прямоугольнику контейнера: даём свечению место и делаем его мягче */
+.tabs { padding: 10px 14px 18px; margin: -14px -14px 2px; }
+.tabs a.on { box-shadow: 0 3px 12px rgba(43, 138, 216, .22); }

@@ -2,15 +2,15 @@
 // Решение точное (аналитическое), поэтому время можно перематывать и ничего не накапливается: x = A·cos(ωt + φ₀).
 // Рисунок собран из лёгких слоёв: фон (стена, пол, ось) рисуется один раз; груз, линия-указатель и точка на оси — обычные элементы,
 // которые только сдвигаются (их ведёт видеокарта); пружина и векторы рисуются в узких полосках, а не на всей сцене.
-import { fmt, tex, arrow, hatch, coil, sprite, rr } from './tex.js?v=202610311433';
+import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311442';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 
 const PI = Math.PI;
 export const COL = { x: '#1b2330', v: '#1f9d55', a: '#2563eb', F: '#d6336c', Ek: '#e8590c', Ep: '#7048e8', E: '#64748b' };
 
-// Геометрия сцены (логические единицы 720×262)
-const SW = 720, SH = 262, WALL = 38, X0 = 376, PXM = 1100, S = 62, FLOOR = 192, SPY = FLOOR - S / 2, AXY = 238;
+// Геометрия сцены (логические единицы 520×400: почти квадрат, чтобы рядом поместились графики)
+const SW = 520, SH = 400, WALL = 30, X0 = 290, PXM = 900, S = 58, FLOOR = 286, SPY = FLOOR - S / 2, AXY = 338;
 let FS = 1;                                              // на узких экранах рисунок уменьшается целиком, поэтому подписи увеличиваем
 
 export const spring = {
@@ -18,7 +18,7 @@ export const spring = {
   title: 'Пружинный маятник',
   lead: 'Оттяни груз и отпусти. Графики идут друг под другом с общей осью времени: в крайнем положении видно, что равно нулю, а что максимально.',
   stage: { w: SW, h: SH, label: 'Груз на пружине колеблется вдоль горизонтальной оси' },
-  fit(cssW) { FS = Math.max(1, Math.min(1.7, 700 / cssW)); return FS; },
+  fit(cssW) { FS = Math.max(1, Math.min(1.5, 480 / cssW)); return FS; },
   params: [
     { id: 'm', name: 'Масса груза', tex: 'm', unit: 'кг', min: 0.1, max: 2, step: 0.1, def: 0.5, dec: 1 },
     { id: 'k', name: 'Жёсткость пружины', tex: 'k', unit: 'Н/м', min: 5, max: 80, step: 1, def: 20, dec: 0 },
@@ -71,7 +71,7 @@ export const spring = {
     box.prepend(bg, guide, spr, blk, dot, vec);
     bg.setAttribute('aria-hidden', 'true'); spr.setAttribute('aria-hidden', 'true'); vec.setAttribute('aria-hidden', 'true'); blk.setAttribute('aria-hidden', 'true');
     box.setAttribute('role', 'img'); box.setAttribute('aria-label', 'Груз на пружине колеблется вдоль горизонтальной оси');
-    const SPR = { top: SPY - 22, h: 44 }, VEC = { top: 14, h: 138 }, pct = (v, tot) => `${(v / tot) * 100}%`;
+    const SPR = { top: SPY - 20, h: 40 }, VEC = { top: 120, h: 180 }, pct = (v, tot) => `${(v / tot) * 100}%`;
     let f = 1, k = 1, sprC = null, vecC = null, labels = null, P = P0, vecOn = false;
 
     // холст-полоска: пиксели по её размеру, а координаты — как у всей сцены (со сдвигом)
@@ -100,17 +100,17 @@ export const spring = {
       params(p) { P = p; const bc = bg.getContext('2d'); bc.setTransform(bg.width / SW, 0, 0, bg.height / SH, 0, 0); api.paintBg(bc); },
       paintBg(c) {
         c.clearRect(0, 0, SW, SH);
-        c.fillStyle = 'rgba(160,172,192,.35)'; c.fillRect(0, 22, WALL, FLOOR + 16 - 22);
-        hatch(c, 0, 22, WALL, FLOOR + 16 - 22, 7, { color: '#8793a8', lw: 1 });
-        c.strokeStyle = '#3b4658'; c.lineWidth = 2; c.beginPath(); c.moveTo(WALL, 22); c.lineTo(WALL, FLOOR + 16); c.stroke();
+        c.fillStyle = 'rgba(160,172,192,.35)'; c.fillRect(0, 96, WALL, FLOOR + 16 - 96);
+        hatch(c, 0, 96, WALL, FLOOR + 16 - 96, 7, { color: '#8793a8', lw: 1 });
+        c.strokeStyle = '#3b4658'; c.lineWidth = 2; c.beginPath(); c.moveTo(WALL, 96); c.lineTo(WALL, FLOOR + 16); c.stroke();
         c.fillStyle = 'rgba(160,172,192,.28)'; c.fillRect(WALL, FLOOR, SW - WALL - 10, 16);
         hatch(c, WALL, FLOOR, SW - WALL - 10, 16, 7, { color: '#9aa5b8', lw: 0.9 });
         c.strokeStyle = '#3b4658'; c.lineWidth = 2; c.beginPath(); c.moveTo(WALL, FLOOR); c.lineTo(SW - 10, FLOOR); c.stroke();
         const xa = X0 - P.A * PXM, xb = X0 + P.A * PXM;                    // ось x: стрелка и деления −A, 0, A
-        arrow(c, 120, AXY, SW - 26, AXY, { lw: 1.4, head: 8, color: '#2a3140' });
+        arrow(c, 64, AXY, SW - 24, AXY, { lw: 1.4, head: 8, color: '#2a3140' });
         c.strokeStyle = '#2a3140'; c.lineWidth = 1.4;
         for (const [x, lab] of [[xa, '−A'], [X0, '0'], [xb, 'A']]) { c.beginPath(); c.moveTo(x, AXY - 4); c.lineTo(x, AXY + 4); c.stroke(); tex(c, lab, x, AXY + 19 * FS, { size: 15 * FS, align: 'center' }); }
-        tex(c, 'x', SW - 24, AXY + 19 * FS, { size: 15 * FS });
+        tex(c, 'x', SW - 22, AXY + 19 * FS, { size: 15 * FS });
         c.setLineDash([3, 4]); c.lineWidth = 1; c.strokeStyle = '#8a97ad'; c.beginPath(); c.moveTo(X0, FLOOR + 18); c.lineTo(X0, AXY - 6); c.stroke(); c.setLineDash([]);
       },
       paintBlock(g) {
@@ -127,16 +127,16 @@ export const spring = {
         const xc = X0 + s.x * PXM, left = xc - S / 2;
         blk.style.transform = `translate3d(${(left - 16) * f}px,0,0)`;
         guide.style.transform = `translate3d(${xc * f}px,0,0)`; dot.style.transform = `translate3d(${xc * f}px,0,0)`;
-        sprC.clearRect(0, SPR.top, SW, SPR.h); coil(sprC, WALL, left, SPY, { turns: 13, r: 16, lead: 10 });
+        sprC.clearRect(0, SPR.top, SW, SPR.h); zigzag(sprC, WALL, left, SPY, { peaks: 10, amp: 13, lead: 14 });
         const any = o.v || o.a || o.F;
         if (any !== vecOn) { vecOn = any; vec.style.display = any ? '' : 'none'; if (!any) vecC.clearRect(0, VEC.top, SW, VEC.h); }
         if (!any) return;
         vecC.clearRect(0, VEC.top, SW, VEC.h);
-        const top = FLOOR - S - 12, L = 86, lw = 2.3;
-        const draw = (val, max, y, color, img) => { const l = (val / max) * L; arrow(vecC, xc, y, xc + l, y, { color, lw, head: 10 }); vecC.drawImage(img, xc + (l >= 0 ? l + 3 : l - 40), y - 18, 80, 30); };
-        if (o.v) draw(s.v, d.vmax, top - 22, COL.v, labels.v);
-        if (o.a) draw(s.a, d.amax, top - 48, COL.a, labels.a);
-        if (o.F) draw(s.a, d.amax, SPY + 26 - 0, COL.F, labels.F);
+        const top = FLOOR - S - 12, L = 80, lw = 2.3;
+        const draw = (val, max, y, color, img, w) => { const l = (val / max) * L; arrow(vecC, xc, y, xc + l, y, { color, lw, head: 10 }); vecC.drawImage(img, l >= 0 ? xc + l + 3 : xc + l - w - 9, y - 18, 80, 30); };   // w — ширина надписи, чтобы она не налезала на стрелку
+        if (o.v) draw(s.v, d.vmax, top - 22, COL.v, labels.v, 10);
+        if (o.a) draw(s.a, d.amax, top - 48, COL.a, labels.a, 10);
+        if (o.F) draw(s.a, d.amax, top - 74, COL.F, labels.F, 36 * FS);
       },
     };
     vec.style.display = 'none';

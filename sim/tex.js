@@ -128,3 +128,12 @@ export function coil(ctx, x0, x1, y, { turns = 13, r = 16, lead = 12, lean = 0.5
   ctx.strokeStyle = halo; ctx.lineWidth = lw + 3.2; stroke(front);
   ctx.strokeStyle = color; ctx.lineWidth = lw; stroke(front);
 }
+
+// ---------- Пружина как рисуют в школьных учебниках (плоская, 2D): прямые концы и ровный зигзаг, симметричный и без наложений ----------
+export function zigzag(ctx, x0, x1, y, { peaks = 10, amp = 13, lead = 14, lw = 2.1, color = '#27303f' } = {}) {
+  const xs = Math.min(x0 + lead, x1), xe = Math.max(x1 - lead, x0), Lc = Math.max(0, xe - xs), n = peaks * 2;
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(xs, y);
+  for (let j = 1; j < n; j++) ctx.lineTo(xs + (Lc * j) / n, y + (j % 2 ? -amp : amp));      // вершины чередуются вверх и вниз
+  ctx.lineTo(xe, y); ctx.lineTo(x1, y); ctx.stroke();
+}

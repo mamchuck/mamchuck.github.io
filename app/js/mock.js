@@ -1,8 +1,8 @@
 // «Пробный экзамен»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
 // Вариант собирает сервер (mock_create): по задаче на номер, сначала нерешённые. Ответы проверяет trainer_check,
 // но до завершения пробника итог не показывается.
-import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610311433';
-import { img, lazyImages } from './trainer.js?v=202610311433';
+import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202610311442';
+import { img, lazyImages } from './trainer.js?v=202610311442';
 
 const INFO = {
   'Математика': { n: 25, min: 235, max: 31, grade: [[22, 5], [15, 4], [8, 3], [0, 2]] },

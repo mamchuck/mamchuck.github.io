@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202610311433';
-import { Graphs } from './graph.js?v=202610311433';
+import { fmt, math, ready } from './tex.js?v=202610311442';
+import { Graphs } from './graph.js?v=202610311442';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -20,46 +20,52 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   const on = new Set(scene.panels.filter((q) => q.on).map((q) => q.id));
   const { w: SW, h: SH } = scene.stage;
 
+  const trCells = (n) => Array.from({ length: n }, () => '<span></span>').join('');
   root.innerHTML = `
   <div class="sm sm-${mode}">
-    <div class="sm-grid">
-      <div class="sm-main">
-        <section class="sm-card sm-fig">
-          <div class="sm-stagebox" style="aspect-ratio:${SW} / ${SH}">
-            <div class="sm-clock"><b>0,00</b> с</div>
-          </div>
-          <div class="sm-scrubrow"><input type="range" class="sm-scrub" min="0" max="1000" value="0" aria-label="Момент времени"><div class="sm-ticks"></div></div>
-          <div class="sm-btns">
-            <button class="sm-btn sm-play" type="button"></button>
-            <button class="sm-btn sm-ghost sm-reset" type="button"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v5h5"/></svg>Сброс</button>
-            <span class="sm-seg" role="group" aria-label="Скорость">${[0.25, 0.5, 1].map((v) => `<button type="button" data-sp="${v}" class="${v === speed ? 'on' : ''}">${String(v).replace('.', ',')}×</button>`).join('')}</span>
-            <span class="sm-tog" role="group" aria-label="Показать векторы">${scene.toggles.map((q) => `<button type="button" data-tg="${q.id}" style="--c:${q.color}" aria-pressed="false"><i></i>${esc(q.name)}</button>`).join('')}</span>
-          </div>
-        </section>
-        <section class="sm-card sm-gcard">
+    <section class="sm-card sm-fig">
+      <div class="sm-split">
+        <div class="sm-stagebox" style="aspect-ratio:${SW} / ${SH}">
+          <div class="sm-clock"><b>0,00</b> с</div>
+        </div>
+        <div class="sm-gbox">
           <div class="sm-chips" role="group" aria-label="Какие графики показать"><span class="sm-chips-l">Графики</span>${scene.panels.map((q) => `<button type="button" data-pn="${q.id}" class="${on.has(q.id) ? 'on' : ''}" aria-pressed="${on.has(q.id)}">${math(q.tex)}</button>`).join('')}</div>
           <div class="sm-gwrap"></div>
-        </section>
+        </div>
       </div>
-      <aside class="sm-side">
-        <section class="sm-card"><h3>Параметры</h3>
-          ${scene.params.map((q) => `<label class="sm-par"><span class="sm-par-h"><span>${esc(q.name)} ${math(q.tex)}</span><output data-o="${q.id}"></output></span>
-            <input type="range" data-p="${q.id}" min="${q.min}" max="${q.max}" step="${q.step}" value="${q.def}" aria-label="${esc(q.name)}"></label>`).join('')}
-        </section>
-        <section class="sm-card"><h3>Положения</h3>
-          <table class="sm-tab"><thead><tr><th></th>${scene.table.cols.map((c, i) => `<th>${math(c)}<small>${esc(scene.table.units[i])}</small></th>`).join('')}</tr></thead>
-            <tbody>${scene.table.rows.map((r) => `<tr data-r="${r.id}"><th><i class="sm-dot sm-dot-${r.id}"></i>${esc(r.name)}</th>${scene.table.cols.map(() => '<td></td>').join('')}</tr>`).join('')}
-              <tr class="sm-now"><th>Сейчас</th>${scene.table.cols.map(() => '<td></td>').join('')}</tr></tbody></table>
-          <p class="sm-note">Строка подсвечивается, когда груз проходит это положение. На графиках такие моменты отмечены вертикалями того же цвета: оранжевые — крайнее положение, синие — равновесие.</p>
-        </section>
-        <section class="sm-card"><h3>Что получается</h3><dl class="sm-out"></dl></section>
-      </aside>
+      <div class="sm-scrubrow">
+        <div class="sm-track"><i class="sm-fill"></i><i class="sm-knob"></i></div>
+        <input type="range" class="sm-scrub" min="0" max="1000" value="0" aria-label="Момент времени">
+        <div class="sm-ticks"></div>
+      </div>
+      <div class="sm-btns">
+        <button class="sm-btn sm-play" type="button"></button>
+        <button class="sm-btn sm-ghost sm-reset" type="button"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v5h5"/></svg>Сброс</button>
+        <span class="sm-seg" role="group" aria-label="Скорость">${[0.25, 0.5, 1].map((v) => `<button type="button" data-sp="${v}" class="${v === speed ? 'on' : ''}">${String(v).replace('.', ',')}×</button>`).join('')}</span>
+        <span class="sm-tog" role="group" aria-label="Показать векторы">${scene.toggles.map((q) => `<button type="button" data-tg="${q.id}" style="--c:${q.color}" aria-pressed="false"><i></i>${esc(q.name)}</button>`).join('')}</span>
+      </div>
+    </section>
+    <div class="sm-trio">
+      <section class="sm-card"><h3>Параметры</h3>
+        ${scene.params.map((q) => `<label class="sm-par"><span class="sm-par-h"><span>${esc(q.name)} ${math(q.tex)}</span><output data-o="${q.id}"></output></span>
+          <input type="range" data-p="${q.id}" min="${q.min}" max="${q.max}" step="${q.step}" value="${q.def}" aria-label="${esc(q.name)}"></label>`).join('')}
+      </section>
+      <section class="sm-card"><h3>Положения</h3>
+        <div class="sm-tab">
+          <div class="sm-tr sm-th"><span></span>${scene.table.cols.map((c, i) => `<span>${math(c)}<small>${esc(scene.table.units[i])}</small></span>`).join('')}</div>
+          ${scene.table.rows.map((r) => `<div class="sm-tr" data-r="${r.id}"><span class="sm-rn"><i class="sm-dot sm-dot-${r.id}"></i>${esc(r.name)}</span>${trCells(scene.table.cols.length)}</div>`).join('')}
+          <div class="sm-tr sm-now"><span class="sm-rn">Сейчас</span>${trCells(scene.table.cols.length)}</div>
+        </div>
+        <p class="sm-note">Строка подсвечивается, когда груз проходит это положение. На графиках такие моменты отмечены вертикалями того же цвета: оранжевые — крайнее положение, синие — равновесие.</p>
+      </section>
+      <section class="sm-card"><h3>Что получается</h3><dl class="sm-out"></dl></section>
+      <section class="sm-card sm-formulas"><h3>Формулы</h3><div class="sm-fr">${scene.formulas.map((f) => `<div class="sm-fm"><small><i style="background:${f.color}"></i>${esc(f.tag)}</small><div class="sm-f">${math(f.tex, true)}</div></div>`).join('')}</div></section>
     </div>
-    <section class="sm-card sm-formulas"><h3>Формулы</h3><div class="sm-fr">${scene.formulas.map((f) => `<div class="sm-fm"><small><i style="background:${f.color}"></i>${esc(f.tag)}</small><div class="sm-f">${math(f.tex, true)}</div></div>`).join('')}</div></section>
   </div>`;
   const $ = (s) => root.querySelector(s), $$ = (s) => [...root.querySelectorAll(s)];
-  const box = $('.sm-stagebox'), scrub = $('.sm-scrub'), play = $('.sm-play'), out = $('.sm-out'), clockEl = $('.sm-clock b');
-  const graphs = new Graphs($('.sm-gwrap'));
+  const box = $('.sm-stagebox'), scrub = $('.sm-scrub'), fillEl = $('.sm-fill'), knobEl = $('.sm-knob'), trackEl = $('.sm-track'), gwrap = $('.sm-gwrap'), play = $('.sm-play'), out = $('.sm-out'), clockEl = $('.sm-clock b');
+  const graphs = new Graphs(gwrap);
+  let trackW = 1, lastInput = 0, lastGH = 0;
 
   // ---------- Пересборка слоёв (размер окна, параметры, набор графиков) ----------
   const S_ = { at: (tt) => scene.at(P, d, tt), get d() { return d; } };
@@ -70,7 +76,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   function layout() {                                         // полная пересборка: размер окна или набор графиков
     if (!alive) return;
     rt.resize(); rt.params(P); graphsSetup();
-    lastW = box.clientWidth; dirty = true; kick();
+    lastW = box.clientWidth; lastGH = gwrap.clientHeight; trackW = trackEl.clientWidth; dirty = true; kick();
   }
   function relayout_() {                                      // только параметры: фон сцены (деления оси) и графики
     if (!alive) return;
@@ -80,22 +86,24 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   function readouts() {
     $$('[data-o]').forEach((o) => { const q = scene.params.find((x) => x.id === o.dataset.o); o.innerHTML = `${fmt(P[q.id], q.dec)} <small>${esc(q.unit)}</small>`; const inp = $(`[data-p="${q.id}"]`); inp.style.setProperty('--p', `${((P[q.id] - q.min) / (q.max - q.min)) * 100}%`); });
     out.innerHTML = scene.readouts(P, d).map(([n, s, v]) => `<div><dt>${esc(n)} ${math(s)}</dt><dd>${v}</dd></div>`).join('');
-    scene.table.rows.forEach((r) => { const tds = $(`[data-r="${r.id}"]`).querySelectorAll('td'); r.vals(P, d).forEach((v, i) => { tds[i].textContent = fmt(v, v >= 10 ? 1 : 2); }); });
+    scene.table.rows.forEach((r) => { const tds = $(`[data-r="${r.id}"]`).querySelectorAll('span:not(.sm-rn)'); r.vals(P, d).forEach((v, i) => { tds[i].textContent = fmt(v, v >= 10 ? 1 : 2); }); });
   }
 
   // ---------- Кадр ----------
   function render() {
     const s = scene.at(P, d, t);
-    rt.update(s, d, flags);
+    rt.update(s, d, flags);                                   // сдвиги элементов и узкие полоски — дёшево и без пересчёта вёрстки
     graphs.draw(t);
+    const pr = t / T4;
+    fillEl.style.transform = `scaleX(${pr})`; knobEl.style.transform = `translate3d(${pr * trackW}px,0,0)`;
     const now = performance.now();
-    if (now - lastUi > 80) {                                // текст и подсветку обновляем реже, чем рисуем, и только если что-то изменилось
+    if (now - lastUi > 120) {                                 // числа и подсветку обновляем редко и только если изменились: так нет рывков от пересчёта текста
       lastUi = now;
       const c = fmt(t, 2); if (c !== lastClock) { lastClock = c; clockEl.textContent = c; }
-      scrub.value = Math.round((t / T4) * 1000); scrub.style.setProperty('--p', `${(t / T4) * 100}%`);
       scene.table.rows.forEach((r) => { const el = $(`[data-r="${r.id}"]`), h = r.test(s, P); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
-      const tds = $('.sm-now').querySelectorAll('td'); scene.table.now(s).forEach((v, i) => { const x = fmt(v, v >= 10 ? 1 : 2); if (tds[i].textContent !== x) tds[i].textContent = x; });
+      const tds = $('.sm-now').querySelectorAll('span:not(.sm-rn)'); scene.table.now(s).forEach((v, i) => { const x = fmt(v, v >= 10 ? 1 : 2); if (tds[i].textContent !== x) tds[i].textContent = x; });
     }
+    if (now - lastInput > 500) { lastInput = now; scrub.value = Math.round(pr * 1000); }      // настоящий ползунок нужен для клавиатуры и экранных дикторов
   }
   function frame(ts) {
     raf = 0;
@@ -146,7 +154,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   }
 
   let rz = 0;
-  const ro = new ResizeObserver(() => { if (Math.abs(box.clientWidth - lastW) < 1) return; clearTimeout(rz); rz = setTimeout(layout, 90); }); ro.observe(box);
+  const ro = new ResizeObserver(() => { if (Math.abs(box.clientWidth - lastW) < 1 && Math.abs(gwrap.clientHeight - lastGH) < 1) return; lastGH = gwrap.clientHeight; clearTimeout(rz); rz = setTimeout(layout, 90); }); ro.observe(box); ro.observe(gwrap);
   const io = new IntersectionObserver(([en]) => { vis = en.isIntersecting; if (vis) kick(); }); io.observe(box);
   const onVis = () => { if (!document.hidden) kick(); };
   document.addEventListener('visibilitychange', onVis);
