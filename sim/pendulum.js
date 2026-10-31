@@ -2,7 +2,7 @@
 // Уравнение φ'' = −(g/l)·sin φ решается числено (метод Рунге — Кутты 4-го порядка, шаг 1/480 с), поэтому большие углы считаются честно.
 // Для сравнения на графике можно показать гармоническую модель φ = φ₀·cos(ωt) (она верна только для малых углов).
 // Маятник — это обычный элемент с поворотом, его ведёт видеокарта; фон и векторы рисуются отдельно.
-import { fmt, tex, arrow, hatch, sprite } from './tex.js?v=202611010120';
+import { fmt, tex, arrow, hatch, sprite } from './tex.js?v=202611010123';
 
 const PI = Math.PI;
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };

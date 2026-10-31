@@ -201,3 +201,8 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm-rod { position: absolute; top: 0; background: #27303f; border-radius: 2px; }
 .sm-bob { position: absolute; display: block; }
 .sm-pvec2 { position: absolute; left: 0; top: 0; display: block; z-index: 4; pointer-events: none; will-change: transform; }
+
+/* Сцена «Плавание и сила Архимеда» */
+.sm-abody { position: absolute; left: 0; top: 0; display: block; z-index: 2; pointer-events: none; will-change: transform; }
+.sm-water { position: absolute; z-index: 3; pointer-events: none; will-change: transform; box-sizing: border-box; }
+.sm-avec { position: absolute; left: 0; top: 0; display: block; z-index: 5; pointer-events: none; will-change: transform; }
