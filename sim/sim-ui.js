@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202610311518';
-import { Graphs } from './graph.js?v=202610311518';
+import { fmt, math, ready } from './tex.js?v=202610311602';
+import { Graphs } from './graph.js?v=202610311602';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -15,7 +15,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   if (!alive || !root.isConnected) return;
 
   const P = Object.fromEntries(scene.params.map((q) => [q.id, q.def]));
-  let d = scene.derive(P), T4 = scene.window(d), t = 0, speed = 0.5, run = true, dirty = true, raf = 0, last = 0, vis = true, lastUi = 0, lastClock = '', rt = null, lastW = 0, relayout = 0, holding = false;
+  let d = scene.derive(P), T4 = scene.window(d), t = 0, speed = scene.speed || 0.5, run = true, dirty = true, raf = 0, last = 0, vis = true, lastUi = 0, lastClock = '', holdT = 0, rt = null, lastW = 0, relayout = 0, holding = false;
   const flags = Object.fromEntries(scene.toggles.map((q) => [q.id, false]));
   const on = new Set(scene.panels.filter((q) => q.on).map((q) => q.id));
   const { w: SW, h: SH } = scene.stage;
@@ -53,10 +53,10 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
       <section class="sm-card"><h3>Положения</h3>
         <div class="sm-tab">
           <div class="sm-tr sm-th"><span></span>${scene.table.cols.map((c, i) => `<span>${math(c)}<small>${esc(scene.table.units[i])}</small></span>`).join('')}</div>
-          ${scene.table.rows.map((r) => `<div class="sm-tr" data-r="${r.id}"><span class="sm-rn"><i class="sm-dot sm-dot-${r.id}"></i>${esc(r.name)}</span>${trCells(scene.table.cols.length)}</div>`).join('')}
+          ${scene.table.rows.map((r) => `<div class="sm-tr" data-r="${r.id}" style="--rc:${r.color}"><span class="sm-rn"><i class="sm-dot"></i>${esc(r.name)}</span>${trCells(scene.table.cols.length)}</div>`).join('')}
           <div class="sm-tr sm-now"><span class="sm-rn">Сейчас</span>${trCells(scene.table.cols.length)}</div>
         </div>
-        <p class="sm-note">Строка подсвечивается, когда груз проходит это положение. На графиках такие моменты отмечены вертикалями того же цвета: оранжевые — крайнее положение, синие — равновесие.</p>
+        <p class="sm-note">${scene.table.note}</p>
       </section>
       <section class="sm-card"><h3>Что получается</h3><dl class="sm-out"></dl></section>
       <section class="sm-card sm-formulas"><h3>Формулы</h3><div class="sm-fr">${scene.formulas.map((f) => `<div class="sm-fm"><small><i style="background:${f.color}"></i>${esc(f.tag)}</small><div class="sm-f">${math(f.tex, true)}</div></div>`).join('')}</div></section>
@@ -72,7 +72,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   const S_ = { at: (tt) => scene.at(P, d, tt), get d() { return d; } };
   function graphsSetup() {
     const panels = scene.panels.filter((q) => on.has(q.id)).map((q) => ({ label: q.label, unit: q.unit, signed: q.signed, max: q.max(P, d), curves: q.curves(S_).map((c) => ({ ...c })) }));
-    graphs.setup({ panels, T: T4, period: d.T, marks: scene.marks(P, d, T4) });
+    graphs.setup({ panels, T: T4, axisMarks: scene.axisMarks(d, T4), marks: scene.marks(P, d, T4) });
   }
   function layout() {                                         // полная пересборка: размер окна или набор графиков
     if (!alive) return;
@@ -83,7 +83,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     if (!alive) return;
     rt.params(P); graphsSetup(); dirty = true; kick();
   }
-  function ticks() { $('.sm-ticks').innerHTML = [1, 2, 3, 4].map((k) => `<span style="left:${(k / 4) * 100}%">${math(k === 1 ? 'T' : `${k}T`)}</span>`).join(''); }
+  function ticks() { $('.sm-ticks').innerHTML = scene.axisMarks(d, T4).map((m) => `<span style="left:${(m.t / T4) * 100}%">${math(m.tex)}</span>`).join(''); }
   function readouts() {
     $$('[data-o]').forEach((o) => { const q = scene.params.find((x) => x.id === o.dataset.o); o.innerHTML = `${fmt(P[q.id], q.dec)} <small>${esc(q.unit)}</small>`; const inp = $(`[data-p="${q.id}"]`); inp.style.setProperty('--p', `${((P[q.id] - q.min) / (q.max - q.min)) * 100}%`); });
     out.innerHTML = scene.readouts(P, d).map(([n, s, v]) => `<div><dt>${esc(n)} ${math(s)}</dt><dd>${v}</dd></div>`).join('');
@@ -93,7 +93,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   // ---------- Кадр ----------
   function render() {
     const s = scene.at(P, d, t);
-    rt.update(s, d, flags);                                   // сдвиги элементов и узкие полоски — дёшево и без пересчёта вёрстки
+    rt.update(s, d, flags, t);                                   // сдвиги элементов и узкие полоски — дёшево и без пересчёта вёрстки
     graphs.draw(t);
     const pr = t / T4;
     fillEl.style.transform = `scaleX(${pr})`; knobEl.style.transform = `translate3d(${pr * trackW}px,0,0)`;
@@ -101,7 +101,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     if (now - lastUi > 120) {                                 // числа и подсветку обновляем редко и только если изменились: так нет рывков от пересчёта текста
       lastUi = now;
       const c = fmt(t, 2); if (c !== lastClock) { lastClock = c; clockEl.textContent = c; }
-      scene.table.rows.forEach((r, i) => { const el = rowEls[i], h = r.test(s, P); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
+      scene.table.rows.forEach((r, i) => { const el = rowEls[i], h = r.test(s, P, d, t); if (el.classList.contains('hot') !== h) el.classList.toggle('hot', h); });
       scene.table.now(s).forEach((v, i) => { const x = fmt(v, v >= 10 ? 1 : 2); if (nowCells[i].textContent !== x) nowCells[i].textContent = x; });
     }
     if (now - lastInput > 500) { lastInput = now; scrub.value = Math.round(pr * 1000); }      // настоящий ползунок нужен для клавиатуры и экранных дикторов
@@ -110,7 +110,10 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
     raf = 0;
     if (!alive || !root.isConnected) return stop();
     const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
-    if (run && !holding) t = (t + dt * speed) % T4;
+    if (run && !holding) {
+      t += dt * speed;
+      if (t >= T4) { if (scene.hold) { t = T4; holdT += dt; if (holdT >= scene.hold) { t = 0; holdT = 0; } } else t %= T4; }
+    }
     if ((run && !holding) || dirty) { render(); dirty = false; }
     if (run && !holding && vis && !document.hidden) raf = requestAnimationFrame(frame); else last = 0;
   }
@@ -130,7 +133,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   }));
   const schedule = () => { if (!relayout) relayout = requestAnimationFrame(() => { relayout = 0; relayout_(); }); };      // не чаще раза за кадр, пока тянут ползунок
   $$('[data-p]').forEach((inp) => inp.addEventListener('input', () => {
-    P[inp.dataset.p] = +inp.value; d = scene.derive(P); T4 = scene.window(d); t = 0; readouts(); schedule();
+    P[inp.dataset.p] = +inp.value; d = scene.derive(P); T4 = scene.window(d); t = 0; holdT = 0; readouts(); ticks(); schedule();
   }));
   scrub.addEventListener('input', () => { t = (+scrub.value / 1000) * T4; if (run) { run = false; setPlay(); } dirty = true; kick(); });
   root.addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.target.closest('input, button, select, textarea')) { e.preventDefault(); play.click(); } });

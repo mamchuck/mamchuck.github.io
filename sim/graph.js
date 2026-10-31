@@ -1,7 +1,7 @@
 // Графики величин от времени с общей осью (как в учебнике): сетка, подписи, отметки периода T и характерных моментов.
 // Ничего тяжёлого не перерисовывается в кадре: сетка и кривые рисуются один раз в два холста, а двигаются только лёгкие элементы:
 //   «жирная» часть кривой открывается обрезкой верхнего холста, курсор и точки — это обычные элементы со сдвигом (их ведёт видеокарта).
-import { fmt, tex, fitCanvas } from './tex.js?v=202610311518';
+import { fmt, tex, fitCanvas } from './tex.js?v=202610311602';
 
 const ML = 52, MR = 10, GAP = 8, TOP = 8, AXIS = 34;
 const nice = (x) => { const e = 10 ** Math.floor(Math.log10(x)), f = x / e; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * e; };
@@ -16,7 +16,7 @@ export class Graphs {
   }
   px(t) { return ML + (t / this.T) * (this.W - ML - MR); }
 
-  setup({ panels, T, period, marks = [] }) { this.panels = panels; this.T = T; this.period = period; this.marks = marks; this.build(); }
+  setup({ panels, T, axisMarks = [], marks = [] }) { this.panels = panels; this.T = T; this.axisMarks = axisMarks; this.marks = marks; this.build(); }
 
   build() {
     const { panels, wrap } = this; if (!panels.length) { wrap.style.display = 'none'; return; }
@@ -56,7 +56,7 @@ export class Graphs {
     const ay = TOP + panels.length * (PH + GAP) - GAP;
     c.strokeStyle = '#2a3140'; c.lineWidth = 1;
     for (let t = 0; t <= this.T + 1e-9; t += tstep) { const x = this.px(t); c.beginPath(); c.moveTo(x, ay); c.lineTo(x, ay + 4); c.stroke(); tex(c, fmt(t, tstep < 1 ? 1 : 0), x, ay + 17, { size: 12, align: 'center', color: '#3b475c' }); }
-    for (let k = 1; k * this.period <= this.T + 1e-9; k++) { const x = this.px(k * this.period); c.strokeStyle = '#e8590c'; c.lineWidth = 1.8; c.beginPath(); c.moveTo(x, ay - 5); c.lineTo(x, ay + 5); c.stroke(); tex(c, k === 1 ? 'T' : `${k}T`, x, ay + 31, { size: 14, color: '#c2410c', align: 'center' }); }
+    for (const m of this.axisMarks) { const x = this.px(m.t); c.strokeStyle = '#e8590c'; c.lineWidth = 1.8; c.beginPath(); c.moveTo(x, ay - 5); c.lineTo(x, ay + 5); c.stroke(); tex(c, m.canvas, x, ay + 31, { size: 14, color: '#c2410c', align: 'center' }); }
     tex(c, 't, с', ML - 14, ay + 17, { size: 12.5, align: 'right', color: '#6b7a90' });
     // курсор и точки: обычные элементы, их двигает видеокарта
     this.line.style.top = `${((TOP - 2) / H) * 100}%`; this.line.style.height = `${((this.H - AXIS + GAP - TOP) / H) * 100}%`;

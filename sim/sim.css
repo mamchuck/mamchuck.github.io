@@ -177,3 +177,12 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 /* Изоляция: анимация внутри сцены и графика не заставляет браузер пересчитывать и перерисовывать остальную страницу */
 .sm-stagebox, .sm-gbox { contain: layout paint style; }
 .sm-btns, .sm-scrubrow { contain: layout style; }
+
+/* Цвет строки «Положений» задаёт сцена (--rc) */
+.sm-dot { background: var(--rc, #2563eb) !important; }
+.sm-tr.hot { background: color-mix(in srgb, var(--rc, #2563eb) 22%, #fff) !important; color: #1b2330; }
+
+/* Сцена «Бросок под углом» */
+.sm-traj { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; pointer-events: none; will-change: clip-path; }
+.sm-ball { position: absolute; left: 0; top: 0; display: block; z-index: 3; pointer-events: none; will-change: transform; }
+.sm-pvec { position: absolute; left: 0; top: 0; display: block; z-index: 4; pointer-events: none; will-change: transform; }

@@ -2,7 +2,7 @@
 // Решение точное (аналитическое), поэтому время можно перематывать и ничего не накапливается: x = A·cos(ωt + φ₀).
 // Рисунок собран из лёгких слоёв: фон (стена, пол, ось) рисуется один раз; груз, линия-указатель и точка на оси — обычные элементы,
 // которые только сдвигаются (их ведёт видеокарта); пружина и векторы рисуются в узких полосках, а не на всей сцене.
-import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311518';
+import { fmt, tex, arrow, hatch, zigzag, sprite, rr } from './tex.js?v=202610311602';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 
@@ -27,6 +27,7 @@ export const spring = {
   ],
   derive(p) { const w = Math.sqrt(p.k / p.m), T = 2 * PI / w; return { w, T, nu: 1 / T, vmax: p.A * w, amax: p.A * w * w, E: 0.5 * p.k * p.A * p.A }; },
   window: (d) => 4 * d.T,
+  axisMarks: (d) => [1, 2, 3, 4].map((k) => ({ t: k * d.T, tex: k === 1 ? 'T' : `${k}T`, canvas: k === 1 ? 'T' : `${k}T` })),
   at(p, d, t) {
     const ph = d.w * t + p.phi * PI, x = p.A * Math.cos(ph), v = -p.A * d.w * Math.sin(ph), a = -d.w * d.w * x;
     return { x, v, a, Ek: 0.5 * p.m * v * v, Ep: 0.5 * p.k * x * x };
@@ -52,10 +53,11 @@ export const spring = {
     cols: ['|x|', '|v|', '|a|', 'E_\\text{к}', 'E_\\text{п}'],
     units: ['м', 'м/с', 'м/с²', 'Дж', 'Дж'],
     rows: [
-      { id: 'eq', name: 'Равновесие', vals: (p, d) => [0, d.vmax, 0, d.E, 0], test: (s, p) => Math.abs(s.x) < 0.04 * p.A },
-      { id: 'ext', name: 'Крайнее', vals: (p, d) => [p.A, 0, d.amax, 0, d.E], test: (s, p) => Math.abs(s.x) > 0.96 * p.A },
+      { id: 'eq', color: '#2563eb', name: 'Равновесие', vals: (p, d) => [0, d.vmax, 0, d.E, 0], test: (s, p) => Math.abs(s.x) < 0.04 * p.A },
+      { id: 'ext', color: '#f08a00', name: 'Крайнее', vals: (p, d) => [p.A, 0, d.amax, 0, d.E], test: (s, p) => Math.abs(s.x) > 0.96 * p.A },
     ],
     now: (s) => [Math.abs(s.x), Math.abs(s.v), Math.abs(s.a), s.Ek, s.Ep],
+    note: 'Строка подсвечивается, когда груз проходит это положение. На графиках такие моменты отмечены вертикалями того же цвета: оранжевые — крайнее положение, синие — равновесие.',
   },
   readouts: (p, d) => [['Период', 'T', `${fmt(d.T, 2)} с`], ['Частота', '\\nu', `${fmt(d.nu, 2)} Гц`], ['Циклическая частота', '\\omega', `${fmt(d.w, 2)} рад/с`],
     ['Макс. скорость', 'v_{\\max}', `${fmt(d.vmax, 2)} м/с`], ['Макс. ускорение', 'a_{\\max}', `${fmt(d.amax, 1)} м/с²`], ['Полная энергия', 'E', `${fmt(d.E * 1000, 0)} мДж`]],
