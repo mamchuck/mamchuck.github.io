@@ -152,3 +152,24 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
   .sm-trio { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 560px) { .sm-fig { padding: 10px 10px 14px; } .sm-clock { font-size: 15px; min-width: 84px; top: 8px; } .sm-gbox { padding: 8px; } }
+
+/* ===== Надёжная раскладка: без aspect-ratio внутри сетки (Safari считает такие блоки иначе и схлопывает сцену) ===== */
+.sm-fig { display: flex; flex-direction: column; gap: 14px; }
+.sm-split { display: flex; flex-direction: row; gap: 16px; align-items: stretch; }
+.sm-split > * { flex: 1 1 0; min-width: 0; }
+.sm-stagebox { aspect-ratio: auto; width: 100%; }
+.sm-stagebox::before { content: ""; display: block; padding-top: var(--ar, 77%); }
+.sm-gbox .sm-gwrap { flex: 1 1 0; min-height: 0; aspect-ratio: auto; }
+@container (max-width: 780px) {
+  .sm-split { flex-direction: column; }
+  .sm-split > * { flex: none; width: 100%; }
+  .sm-gbox .sm-gwrap { flex: none; height: 0; padding-top: 82%; }
+}
+
+/* Общие стили полей кабинета рисуют вокруг ползунка рамку и поля: у песочницы свой вид */
+.sm input[type=range] { border: 0; background: transparent; padding: 0; box-shadow: none; min-height: 0; height: 26px; border-radius: 0; }
+.sm input[type=range]:focus { box-shadow: none; }
+.sm .sm-par input[type=range], .sm input.sm-scrub { border: 0 !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; min-height: 0 !important; height: 26px !important; border-radius: 0 !important; }
+.sm input.sm-scrub { height: 30px !important; }
+.sm-f { overflow: visible; }
+@media (max-width: 560px) { .sm-f { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; } .sm-f::-webkit-scrollbar { display: none; } }

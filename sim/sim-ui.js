@@ -2,8 +2,8 @@
 // Один и тот же модуль работает на открытой странице и в кабинете. Сцену описывает отдельный файл (spring.js).
 // Плавность: движение считается по реальному времени; на паузе и вне экрана ничего не рисуется; фон сцены и графиков —
 // отдельные слои, которые не перерисовываются; в кадре — пружина, груз и пара линий курсора, без копирования больших картинок.
-import { fmt, math, ready } from './tex.js?v=202610311442';
-import { Graphs } from './graph.js?v=202610311442';
+import { fmt, math, ready } from './tex.js?v=202610311450';
+import { Graphs } from './graph.js?v=202610311450';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;                                           // прошлая сцена на странице закрывается при открытии новой
@@ -25,7 +25,7 @@ export async function mountSim(root, scene, { mode = 'cabinet' } = {}) {
   <div class="sm sm-${mode}">
     <section class="sm-card sm-fig">
       <div class="sm-split">
-        <div class="sm-stagebox" style="aspect-ratio:${SW} / ${SH}">
+        <div class="sm-stagebox" style="--ar:${((SH / SW) * 100).toFixed(2)}%">
           <div class="sm-clock"><b>0,00</b> с</div>
         </div>
         <div class="sm-gbox">
