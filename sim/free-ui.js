@@ -1,7 +1,7 @@
 // Интерфейс «свободных» сцен, где важен не ход времени, а состояние: атом и ядро, линза, электрическая цепь, приборы.
 // Слева сцена, справа карточка «состояние» (её текст формирует сцена), ниже кнопки действий (распад, примеры), параметры, итоги и формулы.
 // Анимация (например, вылет частицы) идёт по реальному времени; если ничего не происходит, ничего не рисуется.
-import { fmt, math, ready } from './tex.js?v=202611010126';
+import { fmt, math, ready } from './tex.js?v=202611010129';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let current = null;
@@ -79,7 +79,21 @@ export async function mountFree(root, scene, { mode = 'cabinet' } = {}) {
     };
     if (r.anim) { busy = true; lock(true); rt.animate(r.anim, t, P, d); dirty = true; kick(); timer = setTimeout(apply, scene.animMs || 1000); } else apply();
   }));
-  root.addEventListener('keydown', () => {});
+  // Перетаскивание на сцене (если сцена умеет): предмет у линзы, переключатель и т. п.
+  if (scene.drag) {
+    let id = null;
+    const pos = (e) => { const r = box.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * SW, ((e.clientY - r.top) / r.height) * SH]; };
+    box.addEventListener('pointerdown', (e) => { const [x, y] = pos(e); if (!scene.drag.hit(P, d, x, y)) return; id = e.pointerId; box.setPointerCapture(id); box.classList.add('grab'); e.preventDefault(); });
+    box.addEventListener('pointermove', (e) => {
+      if (id !== e.pointerId) return;
+      const [x, y] = pos(e), set = scene.drag.to(P, x, y); Object.assign(P, set);
+      for (const k of Object.keys(set)) { const inp = $(`[data-p="${k}"]`); if (inp) inp.value = P[k]; }
+      changed();
+    });
+    const end = (e) => { if (id !== e.pointerId) return; id = null; box.classList.remove('grab'); };
+    box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+    box.addEventListener('pointermove', (e) => { if (id === null) box.style.cursor = (() => { const [x, y] = pos(e); return scene.drag.hit(P, d, x, y) ? 'grab' : ''; })(); });
+  }
 
   const ro = new ResizeObserver(() => { if (Math.abs(box.clientWidth - lastW) < 1) return; clearTimeout(rz); rz = setTimeout(layout, 90); }); ro.observe(box);
   const io = new IntersectionObserver(([en]) => { vis = en.isIntersecting; if (vis) kick(); }); io.observe(box);

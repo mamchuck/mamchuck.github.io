@@ -1,12 +1,13 @@
 // «Теория»: шпаргалки и физическая песочница в одном разделе кабинета (#/theory, #/theory/sim, #/theory/sim/<сцена>).
-import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202611010126';
-import { cardsInto } from './cards.js?v=202611010126';
+import { h, mount, $, I, pageHero, spinner } from './ui.js?v=202611010129';
+import { cardsInto } from './cards.js?v=202611010129';
 // Песочница подгружается только при открытии: движок, сцена и LaTeX не тормозят запуск кабинета
-const SCENES = { spring: () => import('../../sim/spring.js?v=202611010126').then((m) => m.spring), projectile: () => import('../../sim/projectile.js?v=202611010126').then((m) => m.projectile), kinematics: () => import('../../sim/kinematics.js?v=202611010126').then((m) => m.kinematics), pendulum: () => import('../../sim/pendulum.js?v=202611010126').then((m) => m.pendulum), archimedes: () => import('../../sim/archimedes.js?v=202611010126').then((m) => m.archimedes), atom: () => import('../../sim/atom.js?v=202611010126').then((m) => m.atom) };
-const loadFree = () => import('../../sim/free-ui.js?v=202611010126').then((m) => m.mountFree);
-const loadSim = () => import('../../sim/sim-ui.js?v=202611010126').then((m) => m.mountSim);
+const SCENES = { spring: () => import('../../sim/spring.js?v=202611010129').then((m) => m.spring), projectile: () => import('../../sim/projectile.js?v=202611010129').then((m) => m.projectile), kinematics: () => import('../../sim/kinematics.js?v=202611010129').then((m) => m.kinematics), pendulum: () => import('../../sim/pendulum.js?v=202611010129').then((m) => m.pendulum), archimedes: () => import('../../sim/archimedes.js?v=202611010129').then((m) => m.archimedes), atom: () => import('../../sim/atom.js?v=202611010129').then((m) => m.atom), lens: () => import('../../sim/lens.js?v=202611010129').then((m) => m.lens) };
+const loadFree = () => import('../../sim/free-ui.js?v=202611010129').then((m) => m.mountFree);
+const loadSim = () => import('../../sim/sim-ui.js?v=202611010129').then((m) => m.mountSim);
 // Каталог песочниц: готовые открываются, остальные помечены «скоро» (порядок — по плану)
 const CATALOG = [
+  { id: 'lens', topic: 'Оптика', title: 'Линза и изображение', lead: 'Передвинь предмет (его можно взять мышью) и смотри, как меняется изображение. Три главных луча строят его: параллельный оси проходит через фокус, луч через центр не преломляется, луч через передний фокус выходит параллельно оси.', text: 'Собирающая и рассеивающая линза, три главных луча, формула тонкой линзы.' },
   { id: 'atom', topic: 'Атом и ядро', title: 'Атом и ядро', lead: 'Собери атом из протонов, нейтронов и электронов и посмотри, как это записывается. Потом запусти радиоактивный распад: заряд и массовое число всегда сохраняются.', text: 'Состав атома и ядра, изотопы, ионы, α-, β- и γ-излучение.' },
   { id: 'archimedes', topic: 'Гидростатика', title: 'Плавание и сила Архимеда', lead: 'Отпусти тело над жидкостью. Пока оно погружается, сила Архимеда растёт. Если её хватает, чтобы уравновесить силу тяжести, тело плавает, а если нет, тонет. Меняй плотность тела, объём и жидкость (в ртути плавает даже сталь).', text: 'Сила тяжести, сила Архимеда и условие плавания тел.' },
   { id: 'spring', topic: 'Колебания и волны', title: 'Пружинный маятник', lead: 'Оттяни груз и отпусти. Графики идут друг под другом с общей осью времени: в крайнем положении видно, что равно нулю, а что максимально.', text: 'Груз на пружине: период, амплитуда, энергия и графики от времени.' },
