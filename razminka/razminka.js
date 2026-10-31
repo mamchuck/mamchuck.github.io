@@ -1,8 +1,8 @@
 // Тренировка навыков (/razminka/) — открытая страница. Интерфейс общий с кабинетом: drill-ui.js.
 // Вошедшему в кабинет ученику (сессия Supabase в этом же браузере) раунд засчитывается в XP, серию и прогресс.
-import { CONFIG } from '../app/js/config.js?v=202611010231';
-import { startFx } from '../diag/fx.js?v=202611010231';
-import { mountDrill } from './drill-ui.js?v=202611010231';
+import { CONFIG } from '../app/js/config.js?v=202611010236';
+import { startFx } from '../diag/fx.js?v=202611010236';
+import { mountDrill } from './drill-ui.js?v=202611010236';
 
 function session() {
   try {
