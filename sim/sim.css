@@ -264,3 +264,6 @@ a.sm-tile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, 
 .sm-hv-state[data-k="melt"] { color: #1864ab; box-shadow: inset 0 0 0 1.5px #339af0; } .sm-hv-state[data-k="boil"] { color: #c2410c; box-shadow: inset 0 0 0 1.5px #e8590c; } .sm-hv-state[data-k="steam"] { color: #495057; box-shadow: inset 0 0 0 1.5px #868e96; }
 .sm-hv-t { position: absolute; z-index: 5; left: 81.5%; top: 11%; transform: translateX(-50%); font: 700 22px/1 "KaTeX_Main", serif; color: #1b2330; pointer-events: none; white-space: nowrap; }
 @container (max-width: 520px) { .sm-hv-state { font-size: 13px; padding: 4px 11px; } .sm-hv-t { font-size: 18px; } }
+
+/* Сцена «Столкновения» */
+.sm-spark { position: absolute; z-index: 6; pointer-events: none; opacity: 0; will-change: transform, opacity; transform-origin: 50% 50%; }
