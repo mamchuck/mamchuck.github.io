@@ -1,7 +1,7 @@
 // Сцена «Столкновения и импульс»: две тележки на гладкой дороге. До удара они едут равномерно, в момент касания скорости меняются мгновенно.
 // Закон сохранения импульса m₁v₁ + m₂v₂ = m₁v₁′ + m₂v₂′ выполняется всегда; кинетическая энергия сохраняется только при упругом ударе.
 // Скорости после удара из коэффициента восстановления e: v₁′ = (m₁v₁ + m₂v₂ − m₂e(v₁ − v₂))/(m₁ + m₂), v₂′ = (m₁v₁ + m₂v₂ + m₁e(v₁ − v₂))/(m₁ + m₂).
-import { fmt, tex, arrow, hatch, sprite, rr } from './tex.js?v=202611010236';
+import { fmt, tex, arrow, hatch, sprite, rr } from './tex.js?v=202611021941';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 export const COLC = { c1: '#2563eb', c2: '#e8590c', tot: '#1b2330', v: '#1f9d55', p: '#7048e8' };
