@@ -11,6 +11,16 @@ const BOT = 'mamchuck_bot';
 const KEY = 'diag';
 const DEMO = new URLSearchParams(location.search).has('demo');
 const EGE_FIRST = new URLSearchParams(location.search).has('ege');   // пришли из тренажёра ЕГЭ — ЕГЭ первым
+// Метка площадки (?src=ig, vk, yt, tg…): помним 7 дней — человек может вернуться по ссылке без неё
+const SRC = (() => {
+  const q = (new URLSearchParams(location.search).get('src') || '').trim().toLowerCase();
+  try {
+    if (/^[a-z0-9_]{1,20}$/.test(q)) { localStorage.setItem('diag_src', JSON.stringify({ v: q, t: Date.now() })); return q; }
+    const s = JSON.parse(localStorage.getItem('diag_src'));
+    if (s && Date.now() - s.t < 7 * 864e5) return s.v;
+  } catch {}
+  return null;
+})();
 const root = document.getElementById('x');
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -67,7 +77,9 @@ function spotlight(els) {
 async function start(subject) {
   render('<div class="x-spin"></div>');
   try {
-    const s = await rpc('xray_start', { p_subject: subject });
+    // с меткой; если база ещё без миграции 052 — повтор без метки
+    const s = await rpc('xray_start', SRC ? { p_subject: subject, p_src: SRC } : { p_subject: subject })
+      .catch((e) => (SRC ? rpc('xray_start', { p_subject: subject }) : Promise.reject(e)));
     const st = { id: s.id, subject, tasks: s.tasks, answers: {}, i: 0 };
     store.set(st);
     taskView(st);
