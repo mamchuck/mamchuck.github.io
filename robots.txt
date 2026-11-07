@@ -3,4 +3,4 @@ Disallow: /app/
 Disallow: /cards/
 Allow: /
 
-Sitemap: https://mamchuck.github.io/sitemap.xml
+Sitemap: https://mamchuck.ru/sitemap.xml
