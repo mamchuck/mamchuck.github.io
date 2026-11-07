@@ -8,7 +8,7 @@
 // • Пространственный индекс (сетка 1024×1024): отрисовка, ластик и выделение смотрят только объекты рядом, а не все.
 // • При мелком масштабе штрихи рисуются упрощёнными (меньше точек), совсем мелкие пропускаются.
 // • Пока пишешь, каждый кадр перерисовывается только верхний прозрачный слой с одной линией.
-import { toast, confirmDialog } from '../app/js/ui.js?v=202611071251';
+import { toast, confirmDialog } from '../app/js/ui.js?v=202611071254';
 
 const CELL = 40, GRID = 1024, MIN_Z = 0.08, MAX_Z = 5, MARK_K = 3, MARK_A = 0.38;
 export const COLORS = [['#1b2330', 'Чёрный'], ['#2563eb', 'Синий'], ['#e5392f', 'Красный'], ['#1f9d55', 'Зелёный'], ['#f08a00', 'Оранжевый'], ['#8b3fd9', 'Фиолетовый'], ['#f5c400', 'Жёлтый'], ['#15aabf', 'Голубой']];
@@ -112,6 +112,22 @@ function drawStroke(g, d, z, cache = true) {
   if (d.p.length === 2) g.fill(P); else g.stroke(P);
   if (d.h) g.globalAlpha = 1;
 }
+// Клетка в кэше: каждая линия привязана к пикселям экрана — всегда ровно 1 CSS-пиксель, без размытия на любом масштабе.
+// k — пикселей холста на единицу мира, (ox, oy) — мировая точка левого верхнего угла холста, d — плотность пикселей
+function drawGridPx(g, x0, y0, x1, y1, k, ox, oy, d) {
+  const z = k / d, px = CELL * z;
+  if (px * 5 < 7) return;
+  const step = px < 9 ? CELL * 5 : CELL, lw = Math.max(1, Math.round(d)), off = lw % 2 ? 0.5 : 0;
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.lineWidth = lw;
+  for (const major of [false, true]) {
+    g.strokeStyle = major ? '#c2d5ec' : '#dde9f6'; g.beginPath();
+    const X0 = (x0 - ox) * k, X1 = (x1 - ox) * k, Y0 = (y0 - oy) * k, Y1 = (y1 - oy) * k;
+    for (let x = Math.floor(x0 / step) * step; x <= x1; x += step) if ((Math.round(x / CELL) % 5 === 0) === major) { const X = Math.round((x - ox) * k) + off; g.moveTo(X, Y0); g.lineTo(X, Y1); }
+    for (let y = Math.floor(y0 / step) * step; y <= y1; y += step) if ((Math.round(y / CELL) % 5 === 0) === major) { const Y = Math.round((y - oy) * k) + off; g.moveTo(X0, Y); g.lineTo(X1, Y); }
+    g.stroke();
+  }
+  g.restore();
+}
 function drawGrid(g, x0, y0, x1, y1, z) {
   const px = CELL * z;
   if (px * 5 < 7) return;
@@ -195,7 +211,7 @@ export async function mountBoard(root, { api, studentId, canWrite, isTutor }) {
     return view.x >= C.x0 && view.y >= C.y0 && view.x + vw() / view.z <= C.x0 + C.w / C.z && view.y + vh() / view.z <= C.y0 + C.h / C.z;
   }
   function paintArea(g, r) {                                        // сетка + объекты области r (мировые координаты)
-    drawGrid(g, r[0], r[1], r[2], r[3], C.z);
+    drawGridPx(g, r[0], r[1], r[2], r[3], C.dpr * C.z, C.x0, C.y0, C.dpr);
     const list = index.query(r), tiny = 0.6 / C.z;                 // объект меньше ~полпикселя — не рисуем
     for (const it of list) if (it.kind === 'img' && !it.hidden) drawImg(g, it);
     for (const hl of [1, 0]) for (const it of list) {

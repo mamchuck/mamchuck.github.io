@@ -1,11 +1,11 @@
 // Страница доски на весь экран: вход (кто открыл и чья доска), плавающие панели инструментов.
 // Ссылка: /board/?s=<id ученика>. Ученик и родитель могут открыть /board/ без параметра — доска своего ученика.
-import { CONFIG } from '../app/js/config.js?v=202611071251';
-import { esc } from '../app/js/ui.js?v=202611071251';
-import { mountBoard, COLORS, WIDTHS } from './engine.js?v=202611071251';
+import { CONFIG } from '../app/js/config.js?v=202611071254';
+import { esc } from '../app/js/ui.js?v=202611071254';
+import { mountBoard, COLORS, WIDTHS } from './engine.js?v=202611071254';
 
 const root = document.getElementById('bd2');
-const api = CONFIG.supabaseUrl ? (await import('../app/js/api.js?v=202611071251')).createApi(CONFIG) : (await import('../app/js/demo.js?v=202611071251')).createDemoApi();
+const api = CONFIG.supabaseUrl ? (await import('../app/js/api.js?v=202611071254')).createApi(CONFIG) : (await import('../app/js/demo.js?v=202611071254')).createDemoApi();
 const SID = /^[0-9a-z-]{1,64}$/i;                                // id ученика (uuid; в демо — короткий): только безопасные символы
 
 const IC = {
