@@ -5,7 +5,7 @@
 .n-page .l-hero h1 { text-wrap: balance; }
 
 /* Появление блоков при прокрутке (без JS всё видно сразу) */
-.n-js .n-reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+.n-js .n-reveal { opacity: 0; transform: translateY(10px); transition: opacity .35s ease-out, transform .35s ease-out; }
 .n-js .n-reveal.in { opacity: 1; transform: none; }
 
 /* Для кого */
@@ -37,7 +37,7 @@
 .n-tab { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line);
   background: var(--surface); color: var(--text-2); font: inherit; font-weight: 600; cursor: pointer; transition: all var(--dur) var(--ease); }
 .n-tab:hover { color: var(--accent-strong); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-.n-tab.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent); }
+.n-tab.on { background: var(--cta); border-color: var(--cta); color: #fff; box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent); }
 .n-panel { display: grid; grid-template-columns: .9fr 1.1fr; gap: 32px; align-items: center; padding: 32px !important; }
 .n-panel { min-height: 320px; }
 .n-panel[hidden] { display: none; }
@@ -114,7 +114,7 @@
 /* Финал */
 .n-final-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; }
 .n-final-cta .btn { margin-top: 0; }
-.n-btn-line { color: #fff; border: 1.5px solid rgba(255, 255, 255, .55); border-radius: 18px; min-height: 60px; padding: 0 26px; font-weight: 700; font-size: 17px;
+.n-btn-line { color: #fff; border: 1.5px solid rgba(255, 255, 255, .6); border-radius: 14px; min-height: 60px; padding: 0 26px; font-weight: 700; font-size: 17px;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .n-btn-line:hover { background: rgba(255, 255, 255, .12); transform: translateY(-2px); }
 
@@ -155,7 +155,7 @@ html:has(.n-page) { overflow-x: clip; }
 .n-mock { border-radius: var(--r-md); }
 .n-map-grid i, .n-hw-row, .n-tab { border-radius: var(--r-sm); }
 .n-page .l-final { border-radius: var(--r-xl); }
-.n-page .btn-lg { border-radius: 16px; }
+.n-page .btn-lg { border-radius: 14px; }
 
 /* Полосы-подложки во всю ширину экрана: ритм страницы */
 .n-band { position: relative; isolation: isolate; }
@@ -209,3 +209,22 @@ html:has(.n-page) { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) { .n-d1, .n-d2 { animation: none; } }
 .l-sticky { transition: transform .4s var(--ease), opacity .4s var(--ease); }
 .l-sticky.n-off { transform: translateY(140%); opacity: 0; pointer-events: none; }
+
+/* Быстрый выбор предмета под кнопками первого экрана */
+.n-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -6px 0 20px; font-size: 14px; color: var(--text-2); }
+.n-pick a { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 600;
+  transition: border-color .2s var(--ease), color .2s var(--ease), transform .2s var(--ease); }
+.n-pick a:hover { border-color: var(--cta); color: var(--accent-strong); transform: translateY(-1px); }
+
+/* Банк задач: иконки вместо эмодзи */
+.n-page .l-exam-ico svg { width: 30px; height: 30px; color: var(--accent); }
+.n-page .l-dd-ico svg { width: 20px; height: 20px; color: var(--accent); }
+.n-page .l-bank { margin-top: 0; }
+@media (max-width: 640px) { .n-pick { margin-top: -4px; } .n-pick span { width: 100%; } }
+
+/* Шапка: пункты не переносятся; на планшете — короче */
+.n-page .l-head nav a { white-space: nowrap; }
+@media (max-width: 1023px) {
+  .n-page .l-head nav { gap: 18px; }
+  .n-page .l-head nav a[href="#how"], .n-page .n-wide { display: none; }
+}

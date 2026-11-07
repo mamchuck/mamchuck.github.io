@@ -275,6 +275,13 @@ function showQr(text) {
   }
   const st = store.get();
   if (st?.tasks?.length && st.i < st.tasks.length) return taskView(st);
+  // ?s=m|f|p — предмет выбран на главной: сразу первая задача (параметр убираем, чтобы перезагрузка не начинала заново)
+  const pre = { m: 'Математика', f: 'Физика', p: EGE }[new URLSearchParams(location.search).get('s')];
+  if (pre) {
+    const q = new URLSearchParams(location.search); q.delete('s');
+    history.replaceState(null, '', location.pathname + (q.size ? `?${q}` : '') + location.hash);
+    return start(pre);
+  }
   pickView();
 })();
 
