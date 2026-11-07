@@ -28,9 +28,16 @@ if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: re
   document.querySelectorAll('.n-reveal').forEach((el) => io.observe(el));
 }
 
-// Нижняя кнопка на телефоне появляется, только когда главная кнопка первого экрана ушла за экран (без дубля)
-const sticky = document.querySelector('.l-sticky'), heroCta = document.querySelector('.l-hero .l-cta-main');
-if (sticky && heroCta && 'IntersectionObserver' in window) {
+// Нижняя кнопка «Пройти диагностику» (телефон и компьютер) появляется, когда главная кнопка первого экрана ушла за экран,
+// и прячется у финального блока, где своя такая же кнопка — без дублей
+const sticky = document.querySelector('.l-sticky');
+const spots = [document.querySelector('.l-hero .l-cta-main'), document.querySelector('.l-final')].filter(Boolean);
+if (sticky && spots.length && 'IntersectionObserver' in window) {
+  const seen = new Set(spots);
   sticky.classList.add('n-off');
-  new IntersectionObserver(([e]) => sticky.classList.toggle('n-off', e.isIntersecting)).observe(heroCta);
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
+    sticky.classList.toggle('n-off', seen.size > 0);
+  });
+  spots.forEach((el) => io.observe(el));
 }

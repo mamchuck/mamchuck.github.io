@@ -228,3 +228,15 @@ html:has(.n-page) { overflow-x: clip; }
   .n-page .l-head nav { gap: 18px; }
   .n-page .l-head nav a[href="#how"], .n-page .n-wide { display: none; }
 }
+
+/* Компьютер и планшет: та же кнопка — «таблетка» по центру снизу */
+@media (min-width: 641px) {
+  .n-page .l-sticky { display: flex; position: fixed; left: 50%; translate: -50% 0; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 20;
+    width: auto; min-height: 56px; padding: 0 12px 0 26px; font-size: 16px;
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--cta) 45%, transparent), 0 2px 8px rgba(0, 0, 0, .2); }
+}
+@media (max-width: 640px) {
+  .n-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; align-items: stretch; }
+  .n-pick span { grid-column: 1 / -1; }
+  .n-pick a { display: grid; place-items: center; padding: 9px 6px; border-radius: 14px; font-size: 13px; line-height: 1.25; }
+}

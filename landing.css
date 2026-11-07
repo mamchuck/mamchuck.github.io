@@ -320,3 +320,11 @@
 .l-cta-white { border-radius: 14px; }
 .l-final { background: linear-gradient(135deg, var(--cta) 0%, var(--cta-deep) 60%, var(--accent-dark) 100%); }
 .l-final p { opacity: .92; }
+
+/* Телефон: надпись на кнопке ровно по центру, стрелка прижата вправо — симметрично */
+@media (max-width: 640px) {
+  .l-cta-main, .l-cta-white { justify-content: center; padding: 0 58px; text-align: center; }
+  .l-cta-white { position: relative; }
+  .l-cta-text { flex: none; }
+  .l-cta-main .l-arrow, .l-cta-white .l-arrow { position: absolute; right: 12px; top: 50%; translate: 0 -50%; }
+}
