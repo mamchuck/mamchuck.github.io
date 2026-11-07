@@ -1,3 +1,9 @@
+// Метка площадки: запоминаем на 7 дней в том же формате, что читает диагностика (diag/diag.js)
+try {
+  const q = (new URLSearchParams(location.search).get('src') || '').trim().toLowerCase();
+  if (/^[a-z0-9_]{1,20}$/.test(q)) localStorage.setItem('diag_src', JSON.stringify({ v: q, t: Date.now() }));
+} catch { /* приватный режим: метка просто не сохранится */ }
+
 // Карточка-пример на главной: плавный 3D-наклон за курсором и подсветка под курсором.
 const card = document.querySelector('.l-preview');
 if (card && matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {

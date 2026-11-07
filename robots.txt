@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /app/
 Disallow: /cards/
+Disallow: /v2.html
 Allow: /
 
 Sitemap: https://mamchuck.ru/sitemap.xml

@@ -282,3 +282,14 @@
   box-shadow: 0 1px 0 color-mix(in srgb, #fff 40%, transparent) inset, 0 10px 30px rgba(15, 40, 70, .10); }
 .l-head.l-float .btn { border-radius: 14px; }
 @media (max-width: 560px) { .l-head.l-float { top: 8px; margin-top: 8px; padding: 8px 8px 8px 14px; border-radius: 18px; } }
+
+/* Согласие на cookies (только если включена Метрика) */
+.n-cookie { position: fixed; left: 16px; bottom: 16px; z-index: 40; max-width: 420px; display: grid; gap: 12px; padding: 16px 18px;
+  border-radius: 16px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(15, 40, 70, .25); font-size: 14px; color: var(--text-2); }
+.n-cookie a { color: var(--accent); text-decoration: underline; }
+.n-cookie div { display: flex; gap: 8px; }
+.n-cookie .btn { flex: 1; min-height: 40px; }
+@media (max-width: 640px) { .n-cookie { left: 12px; right: 12px; bottom: 84px; max-width: none; } }
+
+/* Подвал на телефоне: ссылки переносятся, длинные строки не вылезают за экран */
+@media (max-width: 640px) { .l-foot { align-items: stretch; } .l-foot nav { flex-wrap: wrap; gap: 10px 18px; } .l-legal { min-width: 0; overflow-wrap: anywhere; } }

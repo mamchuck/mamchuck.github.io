@@ -1,7 +1,7 @@
 // «Диагностика ОГЭ и ЕГЭ»: 10 задач без регистрации → прогноз (оценка ОГЭ / тестовые баллы ЕГЭ) → разбор в Telegram.
 // Проверка ответов — только в базе (xray_submit), ответы на страницу не приходят.
-import { CONFIG } from '../app/js/config.js?v=202611021941';
-import { startFx } from './fx.js?v=202611021941';
+import { CONFIG } from '../app/js/config.js?v=202611071149';
+import { startFx } from './fx.js?v=202611071149';
 
 const fx = startFx();                         // шейдерный фон (без WebGL — просто пропускается)
 const EGE = 'Профильная математика';
@@ -82,6 +82,7 @@ async function start(subject) {
       .catch((e) => (SRC ? rpc('xray_start', { p_subject: subject }) : Promise.reject(e)));
     const st = { id: s.id, subject, tasks: s.tasks, answers: {}, i: 0 };
     store.set(st);
+    window.ymGoal?.('diag_start');                         // цель в Метрике (metrika.js), если она включена
     taskView(st);
   } catch (e) { errorView(e.message); }
 }
@@ -121,6 +122,7 @@ async function finish(st) {
     const r = await rpc('xray_submit', { p_id: st.id, p_answers: st.answers });
     store.set(null);
     history.replaceState(null, '', `#r=${r.id}`);
+    window.ymGoal?.('diag_finish');
     resultView(r);
   } catch (e) { store.set(st); errorView(e.message, () => finish(st)); }
 }
@@ -176,7 +178,7 @@ function resultView(r) {
         <li><b>План по неделям</b> до экзамена: что решать и в каком порядке</li>
         <li><b>3 задачи</b> на ${bad.length ? 'самую слабую тему' : 'закрепление'} — с ответами</li>
       </ul>
-      <a class="x-tg-btn" href="${startLink}" target="_blank" rel="noopener" data-tg>${TG_ICON}<span>Забрать план в Telegram</span></a>
+      <a class="x-tg-btn" href="${startLink}" target="_blank" rel="noopener" data-tg data-goal="diag_bot">${TG_ICON}<span>Забрать план в Telegram</span></a>
       <p class="x-tg-free">Бесплатно · придёт за 5 секунд</p>
       <ol class="x-tg-how">
         <li>Откроется бот <b>@${BOT}</b> — нажми <b>«Запустить»</b></li>
@@ -197,7 +199,7 @@ function resultView(r) {
       <button class="link-btn small" data-again>Пройти ещё раз</button>
       <button class="link-btn small" data-share>Поделиться результатом</button>
     </div>
-    <a class="x-tg-btn x-sticky" href="${startLink}" target="_blank" rel="noopener" data-tg>${TG_ICON}<span>Забрать план в Telegram</span></a>`);
+    <a class="x-tg-btn x-sticky" href="${startLink}" target="_blank" rel="noopener" data-tg data-goal="diag_bot">${TG_ICON}<span>Забрать план в Telegram</span></a>`);
 
   // Кольцо «набегает» до результата, фон вспыхивает цветом результата
   animateRing(root.querySelector('.x-ring'));
