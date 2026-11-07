@@ -2,17 +2,16 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202611071224';
-import { TUTOR } from './config.js?v=202611071224';
-import { trainerFamily } from './trainer.js?v=202611071224';
-import { mockView } from './mock.js?v=202611071224';
-import { mountTelegramBanner } from './telegram.js?v=202611071224';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202611071224';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202611071224';
-import { loadDaily, questCard, reviewCard } from './daily.js?v=202611071224';
-import { cardsPage } from './cards.js?v=202611071224';
-import { theoryPage } from './theory.js?v=202611071224';
-import { mountBoard } from './board.js?v=202611071224';
+} from './ui.js?v=202611071251';
+import { TUTOR } from './config.js?v=202611071251';
+import { trainerFamily } from './trainer.js?v=202611071251';
+import { mockView } from './mock.js?v=202611071251';
+import { mountTelegramBanner } from './telegram.js?v=202611071251';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202611071251';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202611071251';
+import { loadDaily, questCard, reviewCard } from './daily.js?v=202611071251';
+import { cardsPage } from './cards.js?v=202611071251';
+import { theoryPage } from './theory.js?v=202611071251';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -211,8 +210,9 @@ async function hwDetail(view, [id], ctx) {
 async function boardPage(view, _p, ctx) {
   const sid = ctx.studentId;
   if (!sid) return noChild(view, ctx);
-  view.innerHTML = '<div class="bd-wrap"></div>';
-  await mountBoard(view.firstElementChild, { api: ctx.api, studentId: sid, canWrite: isStudent(ctx), isTutor: false });
+  // Доска — отдельная страница на весь экран. replace: «назад» с доски ведёт туда, откуда пришли, а не снова на доску
+  view.innerHTML = '<div class="loading-block"><span class="spin"></span></div>';
+  location.replace(`../board/?s=${sid}`);
 }
 
 async function lessons(view, _p, ctx) {

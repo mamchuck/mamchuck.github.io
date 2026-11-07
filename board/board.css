@@ -1,0 +1,92 @@
+/* Доска на весь экран: белый лист и плавающие панели. Лист всегда светлый, как бумага (и в тёмной теме) */
+html, body.bd2 { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; background: #fff; }
+body.bd2 { position: fixed; inset: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  --p-bg: rgba(255, 255, 255, .94); --p-line: #e2e8f0; --p-text: #1b2330; --p-muted: #64748b; --p-on: #e8f1fb; --p-accent: #1f78c4;
+  --safe-t: env(safe-area-inset-top); --safe-b: env(safe-area-inset-bottom); --safe-l: env(safe-area-inset-left); --safe-r: env(safe-area-inset-right);
+  color: var(--p-text); }
+#bd2 { position: absolute; inset: 0; }
+
+/* Поле */
+.bd2-canvas { position: absolute; inset: 0; overflow: hidden; background: #fff; touch-action: none; }
+.bd2-canvas canvas { position: absolute; left: 0; top: 0; display: block; touch-action: none; }
+.bd2-base { transform-origin: 0 0; will-change: transform; pointer-events: none; }
+.bd2-ink { width: 100%; height: 100%; }
+.bd2-stage[data-tool="pen"] .bd2-ink, .bd2-stage[data-tool="marker"] .bd2-ink { cursor: crosshair; }
+.bd2-stage[data-tool="eraser"] .bd2-ink { cursor: none; }
+.bd2-stage[data-tool="select"] .bd2-ink { cursor: default; }
+.bd2-stage[data-tool="hand"] .bd2-ink, .bd2-stage.space .bd2-ink { cursor: grab; }
+.bd2-stage.panning .bd2-ink { cursor: grabbing; }
+
+/* Плавающие панели */
+.bd2-top, .bd2-tools, .bd2-pop, .bd2-selbar, .bd2-ro { position: absolute; z-index: 5; background: var(--p-bg); border: 1px solid var(--p-line);
+  border-radius: 16px; box-shadow: 0 8px 30px rgba(15, 30, 50, .12), 0 1px 3px rgba(15, 30, 50, .08);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.bd2-top { top: calc(12px + var(--safe-t)); display: flex; align-items: center; gap: 2px; padding: 4px; }
+.bd2-l { left: calc(12px + var(--safe-l)); max-width: 46vw; }
+.bd2-r { right: calc(12px + var(--safe-r)); }
+.bd2-title { padding: 0 10px 0 4px; font-weight: 650; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bd2-tools { left: calc(12px + var(--safe-l)); top: 50%; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; }
+.bd2-sep { width: 24px; height: 1px; margin: 4px 0; background: var(--p-line); }
+
+.bd2-b { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--p-text);
+  cursor: pointer; transition: background .15s, color .15s; }
+.bd2-b svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.bd2-b:hover { background: #f1f5f9; }
+.bd2-b.on { background: var(--p-on); color: var(--p-accent); }
+.bd2-b:disabled { opacity: .35; cursor: default; background: none; }
+.bd2-b:focus-visible, .bd2-zoom:focus-visible { outline: 2px solid var(--p-accent); outline-offset: 1px; }
+.bd2-zoom { min-width: 54px; height: 42px; border: 0; border-radius: 12px; background: none; color: var(--p-text); font: 600 13px/1 inherit; cursor: pointer; font-variant-numeric: tabular-nums; }
+.bd2-zoom:hover { background: #f1f5f9; }
+.bd2-color span { width: 24px; height: 24px; border-radius: 50%; background: var(--c, #2563eb); box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--p-line); }
+
+/* Цвет и толщина */
+.bd2-pop { left: calc(72px + var(--safe-l)); top: 50%; translate: 0 -50%; display: grid; gap: 12px; padding: 12px; }
+.bd2-pop[hidden] { display: none; }
+.bd2-colors { display: grid; grid-template-columns: repeat(4, 34px); gap: 8px; }
+.bd2-dot { width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 3px solid transparent; background: var(--c); cursor: pointer;
+  box-shadow: inset 0 0 0 2px #fff; }
+.bd2-dot.on { border-color: var(--c); box-shadow: inset 0 0 0 3px #fff; }
+.bd2-widths { display: flex; gap: 6px; }
+.bd2-w { flex: 1; display: grid; place-items: center; height: 38px; border: 1px solid transparent; border-radius: 10px; background: #f8fafc; cursor: pointer; padding: 0; }
+.bd2-w i { display: block; width: 22px; border-radius: 99px; background: var(--p-muted); }
+.bd2-w.on { border-color: var(--p-accent); background: var(--p-on); }
+.bd2-w.on i { background: var(--p-accent); }
+.bd2-finger { display: none; align-items: center; gap: 8px; font-size: 14px; color: var(--p-muted); }
+@media (pointer: coarse) { .bd2-finger { display: flex; } }
+
+/* Выделение */
+.bd2-selbar { left: 50%; translate: -50% 0; top: calc(12px + var(--safe-t)); display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; font-size: 14px; font-weight: 600; }
+.bd2-selbar[hidden] { display: none; }
+.bd2-selbar .btn { min-height: 34px; gap: 6px; }
+.bd2-selbar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Статус */
+.bd2-note { padding: 0 8px; font-size: 13px; font-weight: 600; color: #7a5410; white-space: nowrap; }
+.bd2-note:empty { display: none; }
+.bd2-note[data-s="ok"] { color: #1f7a45; }
+.bd2-conn { width: 9px; height: 9px; margin: 0 8px 0 4px; border-radius: 50%; background: #94a3b8; flex: none; }
+.bd2-conn.ok { background: #1f9d55; box-shadow: 0 0 0 3px rgba(31, 157, 85, .18); }
+.bd2-ro { left: 50%; translate: -50% 0; bottom: calc(14px + var(--safe-b)); padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--p-muted); }
+
+.bd2-msg { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 24px; text-align: center; color: var(--p-text); background: #f3f7fb; }
+.bd2-msg b { font-size: 20px; }
+.bd2-msg p { margin: 0; color: var(--p-muted); }
+
+/* Телефон и узкие экраны: инструменты внизу в одну строку, сверху — компактно */
+@media (max-width: 700px) {
+  .bd2-tools { left: 50%; top: auto; bottom: calc(10px + var(--safe-b)); translate: -50% 0; flex-direction: row; max-width: calc(100vw - 16px); overflow-x: auto; scrollbar-width: none; }
+  .bd2-tools::-webkit-scrollbar { display: none; }
+  .bd2-sep { width: 1px; height: 24px; margin: 0 3px; }
+  .bd2-b { width: 40px; height: 40px; flex: none; }
+  .bd2-pop { left: 50%; top: auto; bottom: calc(66px + var(--safe-b)); translate: -50% 0; }
+  .bd2-top { top: calc(8px + var(--safe-t)); }
+  .bd2-l { left: calc(8px + var(--safe-l)); }
+  .bd2-r { right: calc(8px + var(--safe-r)); }
+  .bd2-wide, .bd2-r [data-a="out"], .bd2-r [data-a="in"] { display: none; }
+  .bd2-title { max-width: 30vw; font-size: 14px; }
+  .bd2-selbar { top: auto; bottom: calc(66px + var(--safe-b)); }
+  .bd2-note:not([data-s="warn"]) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .bd2-b, .bd2-zoom { transition: none; } }
+/* На телефоне доску двигают двумя пальцами — кнопка «рука» не нужна, место отдаём инструментам */
+@media (max-width: 700px) and (pointer: coarse) { .bd2-tools [data-t="hand"] { display: none; } }

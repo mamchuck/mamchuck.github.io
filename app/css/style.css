@@ -1288,3 +1288,10 @@ a.dq-review:hover { transform: translateY(-2px); }
 /* Вкладки с прокруткой обрезали свечение активной кнопки по прямоугольнику контейнера: даём свечению место и делаем его мягче */
 .tabs { padding: 10px 14px 18px; margin: -14px -14px 2px; }
 .tabs a.on { box-shadow: 0 3px 12px rgba(43, 138, 216, .22); }
+
+/* Доска в карточке ученика: кнопка открыть на весь экран (сама доска — board/) */
+.bd-launch { display: grid; grid-template-columns: auto 1fr; gap: 16px 18px; align-items: center; padding: 24px; }
+.bd-launch-ico { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); color: var(--accent-strong); }
+.bd-launch-ico svg { width: 28px; height: 28px; }
+.bd-launch h2 { margin: 0 0 4px; font-size: 20px; }
+.bd-launch-cta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }

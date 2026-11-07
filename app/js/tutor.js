@@ -2,20 +2,19 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202611071224';
+} from './ui.js?v=202611071251';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202611071224';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202611071224';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202611071224';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202611071224';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202611071224';
-import { loadDrill, drillBlock } from './drill.js?v=202611071224';
-import { cardsPage } from './cards.js?v=202611071224';
-import { studyPage } from './study.js?v=202611071224';
-import { theoryPage } from './theory.js?v=202611071224';
-import { mountBoard } from './board.js?v=202611071224';
-import { leadsPage } from './leads.js?v=202611071224';
+} from './library.js?v=202611071251';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202611071251';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202611071251';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202611071251';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202611071251';
+import { loadDrill, drillBlock } from './drill.js?v=202611071251';
+import { cardsPage } from './cards.js?v=202611071251';
+import { studyPage } from './study.js?v=202611071251';
+import { theoryPage } from './theory.js?v=202611071251';
+import { leadsPage } from './leads.js?v=202611071251';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -631,8 +630,13 @@ async function studentPage(view, [id, tab = ''], ctx) {
   }
 
   if (tab === 'board') {
-    done(h`<div class="bd-wrap" id="bd-root"></div>`);
-    await mountBoard($('#bd-root', view), { api, studentId: id, canWrite: true, isTutor: true });
+    // Доска открывается отдельной страницей на весь экран (board/): там же, где и у ученика
+    const url = `../board/?s=${id}`;
+    done(h`<section class="card bd-launch">
+      <div class="bd-launch-ico">${I.board}</div>
+      <div><h2>Доска</h2><p class="muted">Открывается на весь экран — у вас и у ученика одно и то же поле. Всё сохраняется само.</p></div>
+      <div class="bd-launch-cta"><a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">Открыть доску</a><a class="btn btn-ghost" href="${url}">В этой вкладке</a></div>
+    </section>`);
     return;
   }
 
