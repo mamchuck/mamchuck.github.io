@@ -1,14 +1,5 @@
-// Новая главная: появление блоков, вкладки «Платформа», недели до экзамена. Метку площадки сохраняет landing.js
+// Новая главная: появление блоков и вкладки «Платформа». Метку площадки сохраняет landing.js
 
-// Недели до основного периода. Официальное расписание 2027 года ещё не утверждено, поэтому ориентир — 20 мая
-// (так начинался основной период в прошлые годы); после этой даты считаем до следующего года
-const weeksEl = document.getElementById('n-weeks');
-if (weeksEl) {
-  const now = new Date();
-  let target = new Date(now.getFullYear(), 4, 20);
-  if (now > target) target = new Date(now.getFullYear() + 1, 4, 20);
-  weeksEl.textContent = Math.max(1, Math.ceil((target - now) / (7 * 864e5)));
-}
 
 // Вкладки: клик, стрелки влево/вправо, Home/End
 const tabs = [...document.querySelectorAll('.n-tab')];
@@ -35,4 +26,11 @@ if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: re
   document.documentElement.classList.add('n-js');
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
   document.querySelectorAll('.n-reveal').forEach((el) => io.observe(el));
+}
+
+// Нижняя кнопка на телефоне появляется, только когда главная кнопка первого экрана ушла за экран (без дубля)
+const sticky = document.querySelector('.l-sticky'), heroCta = document.querySelector('.l-hero .l-cta-main');
+if (sticky && heroCta && 'IntersectionObserver' in window) {
+  sticky.classList.add('n-off');
+  new IntersectionObserver(([e]) => sticky.classList.toggle('n-off', e.isIntersecting)).observe(heroCta);
 }

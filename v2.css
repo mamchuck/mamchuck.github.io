@@ -8,16 +8,6 @@
 .n-js .n-reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
 .n-js .n-reveal.in { opacity: 1; transform: none; }
 
-/* Сколько недель до экзамена */
-.n-exam { display: flex; align-items: center; gap: 24px; padding: 22px 26px; margin: 0 0 8px;
-  background: linear-gradient(120deg, var(--accent-softer), var(--surface) 60%); }
-.n-exam-num { display: grid; place-items: center; flex: none; width: 96px; height: 96px; border-radius: 24px; background: var(--accent); color: #fff;
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 35%, transparent); }
-.n-exam-num b { font-size: 38px; line-height: 1; font-weight: 800; letter-spacing: -.03em; }
-.n-exam-num span { font-size: 12px; opacity: .85; margin-top: -14px; }
-.n-exam-text { display: grid; gap: 6px; }
-.n-exam-text b { font-size: 18px; letter-spacing: -.01em; }
-
 /* Для кого */
 .n-aud { gap: 14px !important; padding: 28px !important; }
 .n-aud > b { font-size: 21px !important; letter-spacing: -.02em; }
@@ -128,8 +118,8 @@
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .n-btn-line:hover { background: rgba(255, 255, 255, .12); transform: translateY(-2px); }
 
-@media (max-width: 900px) {
-  .n-steps { grid-template-columns: 1fr; gap: 0; }
+@media (max-width: 1023px) {
+  .n-steps { grid-template-columns: 1fr; gap: 0; max-width: 640px; }
   .n-steps::before { top: 28px; bottom: 28px; left: 27px; right: auto; width: 2px; height: auto; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 20%, var(--line))); }
   .n-steps li { flex-direction: row; align-items: flex-start; text-align: left; gap: 16px; padding-bottom: 20px; }
   .n-panel { grid-template-columns: 1fr; gap: 20px; padding: 22px !important; }
@@ -139,12 +129,6 @@
 }
 @media (max-width: 640px) {
   .n-page .l-sec { padding: 44px 0; }
-  .n-exam { flex-direction: row; gap: 16px; padding: 18px; }
-  .n-exam-num { width: 72px; height: 72px; border-radius: 20px; }
-  .n-exam-num b { font-size: 28px; }
-  .n-exam-num span { margin-top: -10px; }
-  .n-exam-text b { font-size: 16px; }
-  .n-exam-text p { font-size: 13px; }
   .n-tabs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 6px; scrollbar-width: none; }
   .n-tabs::-webkit-scrollbar { display: none; }
   .n-tab { flex: none; }
@@ -157,3 +141,71 @@
   .n-js .n-reveal { opacity: 1; transform: none; transition: none; }
   .n-panel:not([hidden]), .n-panel:not([hidden]) .n-ink { animation: none; }
 }
+
+/* ---------- Геометрия: одна шкала скруглений и отступов для всей страницы ---------- */
+.n-page { --r-xl: 28px; --r-lg: 22px; --r-md: 16px; --r-sm: 12px;
+  padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
+html:has(.n-page) { overflow-x: clip; }
+.n-page .card { border-radius: var(--r-lg); }
+.n-page .l-sec { padding: 88px 0; gap: 12px; }
+.n-page .l-sec > h2 { max-width: 760px; margin-bottom: 18px; }
+.n-page .l-sec > .l-lead { margin: -6px 0 10px; max-width: 640px; }
+.n-page .l-card { padding: 26px; }
+.n-panel, .n-about { border-radius: var(--r-xl) !important; }
+.n-mock { border-radius: var(--r-md); }
+.n-map-grid i, .n-hw-row, .n-tab { border-radius: var(--r-sm); }
+.n-page .l-final { border-radius: var(--r-xl); }
+.n-page .btn-lg { border-radius: 16px; }
+
+/* Полосы-подложки во всю ширину экрана: ритм страницы */
+.n-band { position: relative; isolation: isolate; }
+.n-band::before { content: ""; position: absolute; z-index: -1; inset: 0 calc(50% - 50vw);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 6%, transparent) 18%, color-mix(in srgb, var(--accent) 6%, transparent) 82%, transparent); }
+
+/* Первый экран: тетрадная клетка и контуры фигур за текстом */
+.n-hero { position: relative; isolation: isolate; }
+.n-deco { position: absolute; z-index: -1; inset: -40px calc(50% - 50vw) -20px; pointer-events: none; overflow: hidden;
+  background-image: linear-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px),
+                    linear-gradient(90deg, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 70% 40%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse 70% 70% at 70% 40%, #000 20%, transparent 75%); }
+.n-deco svg { position: absolute; right: 0; top: 0; width: min(900px, 100%); height: 100%; }
+.n-deco svg * { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+.n-deco .n-d3 { stroke-dasharray: 6 8; }
+.n-d1, .n-d2 { animation: n-float 12s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.n-d2 { animation-duration: 15s; animation-direction: reverse; }
+@keyframes n-float { 50% { transform: translateY(-10px) rotate(6deg); } }
+
+/* Отчёт в Telegram: строки как в боте */
+.n-bubble p { margin: 0; }
+.n-bubble p span { color: var(--text); font-weight: 600; }
+.n-bubble .n-sub { padding-left: 18px; }
+
+/* Цены: одинаковая высота и цифры на одной линии */
+#price .l-grid3 { align-items: stretch; }
+#price .l-card > b { min-height: 1.4em; }
+#price .l-price { margin: 4px 0 2px; }
+
+/* Планшет */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .n-page .l-sec { padding: 64px 0; }
+  .n-page .l-grid2 { grid-template-columns: 1fr 1fr; }
+  #price .l-grid3 { grid-template-columns: 1fr 1fr; }
+  #price .l-format-hi { grid-column: 1 / -1; }
+  .n-free { grid-template-columns: repeat(2, 1fr); }
+  .n-panel { grid-template-columns: 1fr; }
+}
+/* Телефон */
+@media (max-width: 640px) {
+  .n-page { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .n-page .l-sec { padding: 52px 0; }
+  .n-page .l-card { padding: 20px; }
+  .n-panel, .n-about { border-radius: var(--r-lg) !important; }
+  .n-deco { -webkit-mask-image: radial-gradient(ellipse 90% 50% at 60% 20%, #000 10%, transparent 70%); mask-image: radial-gradient(ellipse 90% 50% at 60% 20%, #000 10%, transparent 70%); }
+  .n-deco svg { opacity: .7; }
+}
+/* Большие экраны: чуть больше воздуха */
+@media (min-width: 1280px) { .n-page .l-sec { padding: 104px 0; } }
+@media (prefers-reduced-motion: reduce) { .n-d1, .n-d2 { animation: none; } }
+.l-sticky { transition: transform .4s var(--ease), opacity .4s var(--ease); }
+.l-sticky.n-off { transform: translateY(140%); opacity: 0; pointer-events: none; }
