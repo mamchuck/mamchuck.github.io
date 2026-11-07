@@ -1,6 +1,6 @@
 // Сцена «Атом и ядро»: конструктор атома (протоны Z, нейтроны N, заряд иона q) и радиоактивные превращения (α-, β⁻-, β⁺-распад, γ-излучение).
 // Всё считается точно по законам сохранения заряда и массового числа; электроны на оболочках раскладываются по правилу Маделунга.
-import { fmt, tex, math as mathHtml, sprite } from './tex.js?v=202611071149';
+import { fmt, tex, math as mathHtml, sprite } from './tex.js?v=202611071224';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 const SW = 520, SH = 400, CX = 260, CY = 200, ZMAX = 94, NMAX = 146;

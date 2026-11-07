@@ -6,7 +6,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Подготовка к ОГЭ и ЕГЭ по математике и физике онлайн | mamchuck</title>
-  <meta name="description" content="Бесплатная диагностика ОГЭ и ЕГЭ за 12 минут: прогноз оценки или баллов, сильные и слабые задания, план подготовки. Занятия онлайн из любого города.">
+  <meta name="description" content="Подготовка к ОГЭ и ЕГЭ по математике и физике онлайн. Бесплатная диагностика за 12 минут и бесплатное пробное занятие, план по слабым заданиям, отчёт родителям каждую неделю.">
   <meta name="yandex-verification" content="164c3cf0af7e490d">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="mamchuck">
@@ -14,7 +14,7 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta property="og:title" content="Узнай, на что ты сдашь ОГЭ — уже сегодня">
+  <meta property="og:title" content="Подготовка к ОГЭ и ЕГЭ, где виден каждый шаг">
   <meta property="og:description" content="Бесплатная диагностика за 12 минут: прогноз оценки, слабые задания и план до экзамена.">
   <meta name="theme-color" content="#f3f7fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0c131c" media="(prefers-color-scheme: dark)">
@@ -24,37 +24,71 @@
     if (/^#\/|access_token=|type=recovery/.test(location.hash)) location.replace('app/' + location.hash);
     try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
   </script>
-  <link rel="stylesheet" href="app/css/style.css?v=202611071149">
-  <link rel="stylesheet" href="landing.css?v=202611071620">
+  <link rel="preload" href="fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="app/css/style.css?v=202611071224">
+  <link rel="stylesheet" href="landing.css?v=202611071224">
+  <link rel="stylesheet" href="v2.css?v=202611071224">
 </head>
-<body class="landing">
+<body class="landing n-page">
+  <!-- Линейные иконки: один набор на страницу -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+      <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 12l3-3 2 2 4-4"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></symbol>
+      <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+      <symbol id="i-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></symbol>
+      <symbol id="i-ruler" viewBox="0 0 24 24"><path d="m3 17 14-14 4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/></symbol>
+      <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    </defs>
+  </svg>
+
   <header class="l-head">
     <a href="./" class="brand" aria-label="mamchuck — на главную"><span class="logo logo-outline" aria-hidden="true"><span>M<sup>2</sup></span></span><span class="brand-name">mamchuck</span></a>
-    <nav><a href="diag/" class="l-nav-hi"><i aria-hidden="true"></i>Диагностика</a><div class="l-dd"><a href="#bank" class="l-nav-bank">Банк задач ОГЭ и ЕГЭ<svg class="l-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <nav><div class="l-dd"><a href="#bank" class="l-nav-bank">Банк задач<span class="n-wide"> ОГЭ и ЕГЭ</span><svg class="l-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       <div class="l-dd-panel">
-        <a href="oge/matematika/"><span class="l-dd-ico">📐</span><span><b>ОГЭ · Математика</b><small>задания 1–25</small></span></a>
-        <a href="oge/fizika/"><span class="l-dd-ico">⚛️</span><span><b>ОГЭ · Физика</b><small>задания 1–22</small></span></a>
-        <a href="ege/profil/"><span class="l-dd-ico">📈</span><span><b>ЕГЭ · Профильная математика</b><small>задания 1–20</small></span></a>
-        <a href="razminka/" class="l-dd-skill"><span class="l-dd-ico">⚡</span><span><b>Тренировка навыков</b><small>счёт и формулы за 60 секунд</small></span></a>
-      </div></div><a href="#lessons">Занятия</a><a href="#formats">Форматы</a><a href="#faq">Вопросы</a></nav>
+        <a href="oge/matematika/"><span class="l-dd-ico"><svg><use href="#i-ruler"/></svg></span><span><b>ОГЭ · Математика</b><small>задания 1–25</small></span></a>
+        <a href="oge/fizika/"><span class="l-dd-ico"><svg><use href="#i-atom"/></svg></span><span><b>ОГЭ · Физика</b><small>задания 1–22</small></span></a>
+        <a href="ege/profil/"><span class="l-dd-ico"><svg><use href="#i-trend"/></svg></span><span><b>ЕГЭ · Профильная математика</b><small>задания 1–20</small></span></a>
+        <a href="razminka/" class="l-dd-skill"><span class="l-dd-ico"><svg><use href="#i-bolt"/></svg></span><span><b>Тренировка навыков</b><small>счёт и формулы за 60 секунд</small></span></a>
+      </div></div><a href="#how">Как проходит</a><a href="#platform">Платформа</a><a href="#price">Цены</a><a href="#faq">Вопросы</a></nav>
     <a href="app/" class="btn btn-ghost">Войти</a>
   </header>
 
   <main>
-    <!-- Первый экран: обещание + пример результата -->
-    <section class="l-hero">
+    <!-- 1. Первый экран -->
+    <section class="l-hero n-hero">
+      <div class="n-deco" aria-hidden="true">
+        <svg viewBox="0 0 600 420" preserveAspectRatio="xMidYMid slice">
+          <circle class="n-d1" cx="470" cy="96" r="54"/>
+          <path class="n-d2" d="M60 360 140 228 220 360z"/>
+          <path class="n-d3" d="M300 400c40-150 110-220 160-220s120 70 140 140"/>
+          <path class="n-d4" d="M520 300h36M538 282v36M36 120h28M50 106v28"/>
+        </svg>
+      </div>
       <div class="l-hero-text">
-        <span class="l-chip">● Бесплатно · без регистрации</span>
-        <h1>Узнай, на что ты сдашь ОГЭ и ЕГЭ, <span class="l-accent">уже сегодня</span></h1>
-        <p class="l-lead">10 задач, 12 минут. Покажу прогноз — оценку ОГЭ или баллы ЕГЭ, — сильные и слабые задания и что подтянуть в первую очередь.</p>
+        <span class="l-chip">● Онлайн · математика и физика · ОГЭ и ЕГЭ</span>
+        <h1>Подготовка к ОГЭ и ЕГЭ, <span class="l-accent">где виден каждый шаг</span></h1>
+        <p class="l-lead">Начните с бесплатной диагностики: за 12 минут покажу прогноз оценки или баллов и что подтянуть в первую очередь. Дальше — план, занятия онлайн и прогресс, который видят и ученик, и родитель.</p>
         <div class="l-cta">
-          <a href="diag/" class="btn btn-lg l-cta-main"><span class="l-cta-text">Пройти диагностику бесплатно</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-          <a href="https://t.me/mamchuck_bot" class="btn btn-ghost btn-lg">Задать вопрос</a>
+          <a href="diag/" class="btn btn-lg l-cta-main" data-goal="diag_open"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+          <a href="https://t.me/mamchuck_bot" class="btn btn-ghost btn-lg" data-goal="trial_click">Бесплатное пробное</a>
+        </div>
+        <div class="n-pick" aria-label="Сразу к диагностике по предмету"><span>Или сразу:</span>
+          <a href="diag/?s=m" data-goal="diag_open">Математика ОГЭ</a><a href="diag/?s=f" data-goal="diag_open">Физика ОГЭ</a><a href="diag/?s=p" data-goal="diag_open">Профиль ЕГЭ</a>
         </div>
         <ul class="l-trust">
-          <li>Результат сразу на экране</li>
-          <li>Задачи по структуре ФИПИ</li>
-          <li>ОГЭ: математика и физика · ЕГЭ: профиль</li>
+          <li>Без регистрации</li>
+          <li>Пробное занятие — бесплатно</li>
+          <li>Отчёт родителям каждую неделю</li>
         </ul>
       </div>
 
@@ -70,86 +104,206 @@
       </div>
     </section>
 
+
     <!-- Банк задач: главный бесплатный инструмент -->
-    <section id="bank" class="l-bank">
+    <section id="bank" class="l-bank n-reveal">
       <div class="l-bank-head">
         <span class="l-chip">● Бесплатно · без регистрации</span>
         <h2>Банк задач <span class="l-bank-grad">ОГЭ и ЕГЭ</span></h2>
         <p class="l-lead">Почти 10 000 задач по номерам экзамена: ответ проверяется сразу, после — подробное решение. Вторая часть — с эталонным оформлением по критериям.</p>
       </div>
       <div class="l-bank-grid">
-        <a class="l-exam" href="oge/matematika/" data-n="25"><span class="l-exam-tag">ОГЭ · 9 класс</span><span class="l-exam-ico">📐</span>
+        <a class="l-exam" href="oge/matematika/" data-goal="bank_open" data-n="25"><span class="l-exam-tag">ОГЭ · 9 класс</span><span class="l-exam-ico"><svg><use href="#i-ruler"/></svg></span>
           <b>Математика</b><span class="l-exam-sub">Задания 1–25: практические задачи с планами и картами, алгебра, геометрия и вторая часть</span><span class="l-exam-go">Решать задачи →</span></a>
-        <a class="l-exam" href="oge/fizika/" data-n="22"><span class="l-exam-tag">ОГЭ · 9 класс</span><span class="l-exam-ico">⚛️</span>
+        <a class="l-exam" href="oge/fizika/" data-goal="bank_open" data-n="22"><span class="l-exam-tag">ОГЭ · 9 класс</span><span class="l-exam-ico"><svg><use href="#i-atom"/></svg></span>
           <b>Физика</b><span class="l-exam-sub">Задания 1–22: механика, тепло, электричество, оптика и расчётные задачи</span><span class="l-exam-go">Решать задачи →</span></a>
-        <a class="l-exam l-exam-ege" href="ege/profil/" data-n="20"><span class="l-exam-tag">ЕГЭ · 11 класс</span><span class="l-exam-ico">📈</span>
+        <a class="l-exam l-exam-ege" href="ege/profil/" data-goal="bank_open" data-n="20"><span class="l-exam-tag">ЕГЭ · 11 класс</span><span class="l-exam-ico"><svg><use href="#i-trend"/></svg></span>
           <b>Профильная математика</b><span class="l-exam-sub">Задания 1–20: от планиметрии и производной до параметров и теории чисел</span><span class="l-exam-go">Решать задачи →</span></a>
       </div>
-      <a class="l-bank-skill" href="razminka/"><span class="l-dd-ico">⚡</span><span><b>Тренировка навыков</b> — счёт, дроби, тригонометрия и формулы физики на скорость, 60 секунд</span><span class="l-exam-go">Начать →</span></a>
+      <a class="l-bank-skill" href="razminka/"><span class="l-dd-ico"><svg><use href="#i-bolt"/></svg></span><span><b>Тренировка навыков</b> — счёт, дроби, тригонометрия и формулы физики на скорость, 60 секунд</span><span class="l-exam-go">Начать →</span></a>
     </section>
 
-    <!-- Боль → понимание -->
-    <section class="l-sec">
-      <p class="l-eyebrow">Знакомо?</p>
-      <h2>Готовишься, а уверенности нет</h2>
-      <div class="l-grid3">
-        <div class="card l-card"><span class="l-emoji">😕</span><b>Решаешь дома — а на пробнике тройка</b><p class="muted">Баллы теряются на одних и тех же ошибках, и их не видно со стороны.</p></div>
-        <div class="card l-card"><span class="l-emoji">🌀</span><b>Непонятно, что повторять</b><p class="muted">25 заданий, куча тем — и время уходит на то, что ты и так умеешь.</p></div>
-        <div class="card l-card"><span class="l-emoji">⏳</span><b>До экзамена всё меньше времени</b><p class="muted">Хочется план: что делать на этой неделе, чтобы точно успеть.</p></div>
-      </div>
-    </section>
-
-    <!-- Как работает диагностика -->
-    <section id="diag" class="l-sec">
-      <p class="l-eyebrow">Диагностика</p>
-      <h2>Три шага до понятного плана</h2>
-      <div class="l-grid3">
-        <div class="card l-card"><span class="l-step">1</span><b>Выбери предмет</b><p class="muted">ОГЭ по математике или физике, ЕГЭ по профильной математике.</p></div>
-        <div class="card l-card"><span class="l-step">2</span><b>Реши 10 задач</b><p class="muted">От простых к сложным. Не знаешь — жми «Не знаю»: так прогноз точнее.</p></div>
-        <div class="card l-card"><span class="l-step">3</span><b>Получи результат</b><p class="muted">Прогноз оценки и слабые задания — сразу. Подробный разбор и план — в Telegram.</p></div>
-      </div>
-      <a href="diag/" class="btn btn-lg l-cta-main l-center"><span class="l-cta-text">Пройти диагностику бесплатно</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-    </section>
-
-    <!-- Как проходят занятия -->
-    <section id="lessons" class="l-sec">
-      <p class="l-eyebrow">Занятия</p>
-      <h2>Подготовка, где виден каждый шаг</h2>
+    <!-- 2. Для кого -->
+    <section class="l-sec n-reveal">
+      <p class="l-eyebrow">Для кого</p>
+      <h2>Понятно и ученику, и родителю</h2>
       <div class="l-grid2">
-        <div class="card l-card l-feature"><span class="l-ico">📊</span><div><b>Прогресс по каждому заданию</b><p class="muted">Карта номеров ОГЭ: что уже закрыто, а что ещё нет.</p></div></div>
-        <div class="card l-card l-feature"><span class="l-ico">🎯</span><div><b>Тренажёры <a href="oge/">ОГЭ</a> и <a href="ege/">ЕГЭ</a></b><p class="muted">Почти 10 000 задач по номерам с проверкой и решениями — бесплатно, без регистрации.</p></div></div>
-        <div class="card l-card l-feature"><span class="l-ico">📝</span><div><b>Домашние задания в кабинете</b><p class="muted">Задание, файлы, сдача и проверка — в одном месте, без потерянных фото в чатах.</p></div></div>
-        <div class="card l-card l-feature"><span class="l-ico">👨‍👩‍👧</span><div><b>Родители в курсе</b><p class="muted">Короткий отчёт после урока и напоминания в Telegram.</p></div></div>
+        <div class="card l-card n-aud">
+          <span class="n-aud-tag">Родителям</span>
+          <b>Вы знаете, за что платите</b>
+          <ul class="n-list">
+            <li><svg><use href="#i-bell"/></svg>Каждое воскресенье — отчёт за неделю в Telegram: занятия, домашка, оценки, что получается и что подтянуть</li>
+            <li><svg><use href="#i-chart"/></svg>Прогресс по каждому заданию экзамена — что уже получается, а что нет</li>
+            <li><svg><use href="#i-wallet"/></svg>Оплата переводом с чеком, перенос без оплаты, если предупредить за 24 часа</li>
+          </ul>
+        </div>
+        <div class="card l-card n-aud">
+          <span class="n-aud-tag n-aud-tag-2">Ученикам</span>
+          <b>Ты знаешь, что делать на этой неделе</b>
+          <ul class="n-list">
+            <li><svg><use href="#i-target"/></svg>План по твоим слабым заданиям, а не «повторить всё»</li>
+            <li><svg><use href="#i-book"/></svg>Почти 10 000 задач по номерам с проверкой и разбором</li>
+            <li><svg><use href="#i-tablet"/></svg>Общая доска: пишем вместе с компьютера, планшета или телефона</li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <!-- Форматы -->
-    <section id="formats" class="l-sec">
-      <p class="l-eyebrow">Форматы</p>
-      <h2>Онлайн из любого города</h2>
+    <!-- 3. Как проходит подготовка -->
+    <section id="how" class="l-sec n-band n-reveal">
+      <p class="l-eyebrow">Как проходит</p>
+      <h2>Пять шагов от «не знаю, с чего начать» до экзамена</h2>
+      <ol class="n-steps">
+        <li><span class="n-step-ico"><svg><use href="#i-target"/></svg></span><div><b>Диагностика</b><p class="muted">12 минут, 10 задач. Прогноз оценки или баллов и слабые задания — сразу на экране.</p></div></li>
+        <li><span class="n-step-ico"><svg><use href="#i-chat"/></svg></span><div><b>Пробное занятие</b><p class="muted">30 минут бесплатно: разбираем диагностику и составляем план до экзамена.</p></div></li>
+        <li><span class="n-step-ico"><svg><use href="#i-board"/></svg></span><div><b>Занятия</b><p class="muted">60 минут онлайн по видеосвязи с общей доской. Домашнее задание — в кабинете, а не в чате.</p></div></li>
+        <li><span class="n-step-ico"><svg><use href="#i-chart"/></svg></span><div><b>Контроль</b><p class="muted">Прогресс по номерам, пробные экзамены в кабинете и отчёт родителям каждую неделю.</p></div></li>
+        <li><span class="n-step-ico"><svg><use href="#i-flag"/></svg></span><div><b>Экзамен</b><p class="muted">Приходишь со стратегией: какие задания решать, в каком порядке и сколько времени на каждое.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- 4. Платформа вживую -->
+    <section id="platform" class="l-sec n-reveal">
+      <p class="l-eyebrow">Платформа</p>
+      <h2>Всё в одном кабинете — не в десяти чатах</h2>
+      <div class="n-show">
+        <div class="n-tabs" role="tablist" aria-label="Возможности кабинета">
+          <button role="tab" class="n-tab on" aria-selected="true" aria-controls="n-p1" id="n-t1"><svg><use href="#i-chart"/></svg>Прогресс</button>
+          <button role="tab" class="n-tab" aria-selected="false" aria-controls="n-p2" id="n-t2" tabindex="-1"><svg><use href="#i-board"/></svg>Доска</button>
+          <button role="tab" class="n-tab" aria-selected="false" aria-controls="n-p3" id="n-t3" tabindex="-1"><svg><use href="#i-bell"/></svg>Отчёт родителю</button>
+          <button role="tab" class="n-tab" aria-selected="false" aria-controls="n-p4" id="n-t4" tabindex="-1"><svg><use href="#i-book"/></svg>Домашка</button>
+        </div>
+
+        <div class="n-panel card" role="tabpanel" id="n-p1" aria-labelledby="n-t1">
+          <div class="n-panel-text">
+            <b>Видно, что уже получается, а что «горит»</b>
+            <p class="muted">Каждое задание экзамена — своя клетка. Вы в любой момент видите, какие задания ребёнок уже закрыл, а над какими ещё работаем. Без звонков и допросов.</p>
+          </div>
+          <div class="n-mock n-map" aria-label="Пример: карта заданий ОГЭ по математике">
+            <div class="n-mock-head"><span>ОГЭ · Математика</span><span class="n-mock-tag">пример</span></div>
+            <div class="n-map-grid">
+              <i class="g">1</i><i class="g">2</i><i class="g">3</i><i class="y">4</i><i class="g">5</i>
+              <i class="g">6</i><i class="g">7</i><i class="g">8</i><i class="y">9</i><i class="g">10</i>
+              <i class="g">11</i><i class="g">12</i><i class="r">13</i><i class="y">14</i><i class="g">15</i>
+              <i class="g">16</i><i class="y">17</i><i class="g">18</i><i class="g">19</i><i class="y">20</i>
+              <i class="r">21</i><i>22</i><i class="r">23</i><i>24</i><i>25</i>
+            </div>
+            <div class="n-map-legend"><span><i class="g"></i>получается</span><span><i class="y"></i>в работе</span><span><i class="r"></i>подтянуть</span><span><i></i>впереди</span></div>
+          </div>
+        </div>
+
+        <div class="n-panel card" role="tabpanel" id="n-p2" aria-labelledby="n-t2" hidden>
+          <div class="n-panel-text">
+            <b>Можно спросить, не стесняясь</b>
+            <p class="muted">Даже если ребёнок стесняется переспросить вслух, он пишет на доске вместе со мной — с компьютера, планшета со стилусом или телефона. Всё сохраняется: к записям можно вернуться перед контрольной.</p>
+          </div>
+          <div class="n-mock n-board" aria-label="Пример: решение задачи на доске">
+            <div class="n-mock-head"><span>Доска</span><span class="n-board-dots"><i style="--c:#1b2330"></i><i style="--c:#2563eb"></i><i style="--c:#e5392f"></i><i style="--c:#1f9d55"></i></span></div>
+            <svg class="n-board-svg" viewBox="0 0 360 200" role="img" aria-label="Формула скорости и график">
+              <defs><pattern id="n-grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#dde9f6" stroke-width="1"/></pattern></defs>
+              <rect width="360" height="200" fill="#fff"/><rect width="360" height="200" fill="url(#n-grid)"/>
+              <text x="22" y="46" class="n-hand" fill="#1b2330">v = v₀ + at</text>
+              <text x="22" y="84" class="n-hand" fill="#2563eb">v = 2 + 3 · 4 = 14 м/с</text>
+              <path class="n-ink" d="M148 96c40 7 92 7 124-3" stroke="#e5392f"/>
+              <path class="n-ink" d="M210 180V110M210 180h120" stroke="#1b2330"/>
+              <path class="n-ink" d="M210 168 320 118" stroke="#1f9d55"/>
+              <text x="296" y="108" class="n-hand-s" fill="#1f9d55">v(t)</text>
+              <text x="320" y="196" class="n-hand-s" fill="#1b2330">t</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="n-panel card" role="tabpanel" id="n-p3" aria-labelledby="n-t3" hidden>
+          <div class="n-panel-text">
+            <b>Вы знаете, как прошла неделя</b>
+            <p class="muted">В воскресенье вечером — короткий отчёт в Telegram: сколько было занятий, сдана ли домашка, что получается и что подтянуть. Не нужно спрашивать «ну как учёба?» — вы уже знаете.</p>
+          </div>
+          <div class="n-mock n-tg" aria-label="Пример отчёта родителю в Telegram">
+            <div class="n-mock-head"><span>mamchuck · бот</span><span class="n-mock-tag">пример</span></div>
+            <div class="n-bubble">
+              <b>📊 Итоги недели · Математика</b>
+              <p>📚 Занятия: <span>2</span></p>
+              <p>✍️ Домашние: сдано <span>2 из 2</span></p>
+              <p>⭐ Оценки за домашние: <span>5, 4</span></p>
+              <p>🎯 Тренажёр: <span>38 задач, верно 31</span></p>
+              <p class="n-sub">💪 Получается: <span>№ 6, 8, 10</span></p>
+              <p class="n-sub">🔧 Подтянуть: <span>№ 13</span></p>
+              <p>📅 Дальше: <span>вт 17:00, чт 17:00</span></p>
+              <small>вс 20:00 ✓✓</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="n-panel card" role="tabpanel" id="n-p4" aria-labelledby="n-t4" hidden>
+          <div class="n-panel-text">
+            <b>Домашка не теряется в переписке</b>
+            <p class="muted">Задание, файлы, сдача и проверка — в одном месте. Сроки видны заранее, и вы видите, сдано ли задание вовремя.</p>
+          </div>
+          <div class="n-mock n-hw" aria-label="Пример списка домашних заданий">
+            <div class="n-mock-head"><span>Домашние задания</span><span class="n-mock-tag">пример</span></div>
+            <div class="n-hw-row"><svg><use href="#i-check"/></svg><span><b>Задание 9 · уравнения</b><small>проверено · 6 из 6</small></span><em class="ok">готово</em></div>
+            <div class="n-hw-row"><svg><use href="#i-book"/></svg><span><b>Задание 15 · треугольники</b><small>сдано · ждёт проверки</small></span><em class="wait">на проверке</em></div>
+            <div class="n-hw-row"><svg><use href="#i-flag"/></svg><span><b>Пробный экзамен, часть 1</b><small>до пятницы</small></span><em class="todo">новое</em></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Кто ведёт занятия. Фото добавим позже: сейчас аватар с инициалами -->
+    <section id="about" class="l-sec n-reveal">
+      <div class="n-about card">
+        <div class="n-avatar" aria-hidden="true">ИМ</div>
+        <div class="n-about-text">
+          <p class="l-eyebrow">Кто ведёт занятия</p>
+          <h2>Илья Мамчук</h2>
+          <p class="n-about-lead">Готовлю к ОГЭ и ЕГЭ по математике и физике онлайн.</p>
+          <ul class="n-list">
+            <li><svg><use href="#i-ruler"/></svg>Учусь на инженера — математика и физика для меня рабочие инструменты, а не только школьный предмет</li>
+            <li><svg><use href="#i-atom"/></svg>Сам сделал эту платформу: кабинет, тренажёры и песочницу по физике, чтобы объяснять наглядно</li>
+            <li><svg><use href="#i-trend"/></svg>Сначала разбираемся, где теряются баллы, потом закрываем это по плану</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Цены: совпадают с офертой (оплата переводом, чек, перенос за 24 часа) -->
+    <section id="price" class="l-sec n-reveal">
+      <p class="l-eyebrow">Цены</p>
+      <h2>Честно и без скрытых доплат</h2>
       <div class="l-grid3">
-        <div class="card l-card l-format l-format-hi"><span class="l-badge">Начни с этого</span><b>Пробное занятие</b><p class="l-price">Бесплатно</p><p class="muted">30 минут: разбираем диагностику и составляем план.</p><a class="btn btn-primary" href="https://t.me/mamchuck_bot">Записаться</a></div>
-        <div class="card l-card l-format"><b>Онлайн</b><p class="l-price">60 минут</p><p class="muted">Общая доска, запись урока и материалы в кабинете.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot">Узнать цену</a></div>
-        <div class="card l-card l-format"><b>Тренажёры и кабинет</b><p class="l-price">Бесплатно</p><p class="muted">Почти 10 000 задач с решениями, домашние задания и прогресс — ученикам без доплат.</p><a class="btn btn-soft" href="#bank">Открыть банк задач</a></div>
+        <div class="card l-card l-format l-format-hi"><span class="l-badge">Начните с этого</span><b>Пробное занятие</b><p class="l-price">0 ₽</p><p class="muted">30 минут: разбираем диагностику и составляем план до экзамена.</p><a class="btn btn-primary" href="https://t.me/mamchuck_bot" data-goal="trial_click">Записаться</a></div>
+        <div class="card l-card l-format"><b>ОГЭ</b><p class="l-price">1 400 ₽ <small>/ 60 мин</small></p><p class="muted">Математика или физика, 9 класс. Онлайн, доска, кабинет и отчёты родителям.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot" data-goal="bot_click">Записаться</a></div>
+        <div class="card l-card l-format"><b>ЕГЭ</b><p class="l-price">1 900 ₽ <small>/ 60 мин</small></p><p class="muted">Профильная математика или физика, 11 класс. Всё то же, плюс вторая часть по критериям.</p><a class="btn btn-soft" href="https://t.me/mamchuck_bot" data-goal="bot_click">Записаться</a></div>
       </div>
+      <p class="n-price-note muted">Оплата переводом за занятие или сразу за месяц (4 или 8 занятий), с чеком. Перенос или отмена без оплаты — если предупредить за 24 часа. На сайте оплата не производится. Подробно — в <a href="legal/offer/">договоре-оферте</a>.</p>
     </section>
 
-    <!-- Вопросы -->
-    <section id="faq" class="l-sec">
+
+    <!-- 8. Вопросы родителей: ответы сверены с офертой -->
+    <section id="faq" class="l-sec n-reveal">
       <p class="l-eyebrow">Вопросы</p>
-      <h2>Коротко о главном</h2>
+      <h2>Что обычно спрашивают родители</h2>
       <div class="l-faq">
-        <details class="card l-card"><summary>Диагностика правда бесплатная?</summary><p class="muted">Да. Без регистрации, результат сразу на экране. Подробный разбор приходит в Telegram — тоже бесплатно.</p></details>
-        <details class="card l-card"><summary>Насколько точный прогноз?</summary><p class="muted">Это ориентир по 10 задачам первой части. Он хорошо показывает слабые места, но не заменяет полный пробник.</p></details>
+        <details class="card l-card"><summary>Сколько занятий в неделю нужно?</summary><p class="muted">Обычно одно-два. Точнее скажу после диагностики и пробного: это зависит от стартового уровня и того, сколько времени осталось до экзамена.</p></details>
+        <details class="card l-card"><summary>Как проходит онлайн-занятие?</summary><p class="muted">По видеосвязи, с общей доской в кабинете: пишем вместе с компьютера или планшета. После урока — домашнее задание в кабинете, а в конце недели — отчёт родителю.</p></details>
+        <details class="card l-card"><summary>Как я узнаю о прогрессе?</summary><p class="muted">Каждое воскресенье приходит отчёт за неделю в Telegram: занятия, домашние задания, оценки, успехи в тренажёре и расписание. В кабинете в любой момент видно прогресс по каждому заданию экзамена и результаты пробных экзаменов.</p></details>
+        <details class="card l-card"><summary>Как оплачивать?</summary><p class="muted">Переводом — за занятие или сразу за несколько. Вы получаете чек. Стоимость уже оплаченных занятий не меняется. На сайте оплата не производится.</p></details>
+        <details class="card l-card"><summary>Можно перенести занятие?</summary><p class="muted">Да, без оплаты — если предупредить не позднее чем за 24 часа. При более позднем предупреждении занятие считается проведённым.</p></details>
+        <details class="card l-card"><summary>А если не подойдёт?</summary><p class="muted">Пробное бесплатное — по нему видно, подходит ли формат. Отказаться можно в любой момент: деньги за оплаченные, но не проведённые занятия возвращаются в течение 10 дней.</p></details>
+        <details class="card l-card"><summary>Гарантируете оценку или баллы?</summary><p class="muted">Нет, и честно скажу: никто не может. Результат зависит от посещаемости, домашних заданий и самостоятельной работы. Я отвечаю за план, регулярную обратную связь и понятный прогресс.</p></details>
+        <details class="card l-card"><summary>Диагностика правда бесплатная?</summary><p class="muted">Да. Без регистрации, результат сразу на экране. Подробный разбор приходит в Telegram — тоже бесплатно. Это ориентир по 10 задачам первой части, он хорошо показывает слабые места, но не заменяет полный пробник.</p></details>
         <details class="card l-card"><summary>С какого класса начинать?</summary><p class="muted">Идеально — за год до экзамена. Если времени меньше, диагностика покажет, что успеть в первую очередь.</p></details>
-        <details class="card l-card"><summary>Онлайн правда так же эффективно?</summary><p class="muted">Да: общая доска, запись урока, все задания и прогресс — в личном кабинете.</p></details>
       </div>
     </section>
 
-    <section class="l-final">
-      <h2>12 минут — и понятно, что делать дальше</h2>
-      <p>Без регистрации. Можно с телефона.</p>
-      <a href="diag/" class="btn btn-lg l-btn-white l-cta-white"><span class="l-cta-text">Пройти диагностику бесплатно</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+    <!-- 9. Финальный призыв -->
+    <section class="l-final n-reveal">
+      <h2>Начните с 12 минут</h2>
+      <p>Диагностика без регистрации, можно с телефона. Потом — бесплатное пробное и план.</p>
+      <div class="n-final-cta">
+        <a href="diag/" class="btn btn-lg l-btn-white l-cta-white" data-goal="diag_open"><span class="l-cta-text">Пройти диагностику</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+        <a href="https://t.me/mamchuck_bot" class="btn btn-lg n-btn-line" data-goal="trial_click">Записаться на пробное</a>
+      </div>
     </section>
   </main>
 
@@ -163,8 +317,9 @@
     </div>
   </footer>
 
-  <a href="diag/" class="l-sticky btn l-cta-main"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
-  <script src="landing.js?v=202611071300" defer></script>
-  <script src="metrika.js?v=202611071530" defer></script>
+  <a href="diag/" class="l-sticky btn l-cta-main" data-goal="diag_open"><span class="l-cta-text">Пройти диагностику</span><span class="l-cta-pill">12 мин</span><span class="l-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+  <script src="landing.js?v=202611071224" defer></script>
+  <script src="v2.js?v=202611071224" defer></script>
+  <script src="metrika.js?v=202611071224" defer></script>
 </body>
 </html>
