@@ -2,19 +2,20 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202611071254';
+} from './ui.js?v=202611091412';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202611071254';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202611071254';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202611071254';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202611071254';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202611071254';
-import { loadDrill, drillBlock } from './drill.js?v=202611071254';
-import { cardsPage } from './cards.js?v=202611071254';
-import { studyPage } from './study.js?v=202611071254';
-import { theoryPage } from './theory.js?v=202611071254';
-import { leadsPage } from './leads.js?v=202611071254';
+} from './library.js?v=202611091412';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202611091412';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202611091412';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202611091412';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202611091412';
+import { loadDrill, drillBlock } from './drill.js?v=202611091412';
+import { mockProgress, mockTutorView } from './mock.js?v=202611091412';
+import { cardsPage } from './cards.js?v=202611091412';
+import { studyPage } from './study.js?v=202611091412';
+import { theoryPage } from './theory.js?v=202611091412';
+import { leadsPage } from './leads.js?v=202611091412';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -608,11 +609,13 @@ async function studentPage(view, [id, tab = ''], ctx) {
   }
 
   if (tab === 'progress') {
-    const [rows, game, drill] = await Promise.all([api.select('topic_progress', { eq: { student_id: id }, order: 'topic' }), loadGame(api, id), loadDrill(api, id)]);
+    const [rows, game, drill, mocks] = await Promise.all([api.select('topic_progress', { eq: { student_id: id }, order: 'topic' }), loadGame(api, id), loadDrill(api, id),
+      mockProgress(api, id).catch(() => '')]);
     const subjects = [...new Set([...s.subjects, ...rows.map((r) => r.subject)])];
     const claims = await tutorClaims(api, id, game);
     done(h`
       ${claims}
+      ${mocks}
       ${game ? gameBlock(game, { afterGoal: drillBlock(drill) }) : drillBlock(drill)}
       <div class="section-head"><h2>Прогресс по темам</h2><button class="btn btn-primary btn-sm" id="add">${I.plus} Тема</button></div>
       ${rows.length ? subjects.filter((sub) => rows.some((r) => r.subject === sub)).map((sub) => h`
@@ -865,4 +868,4 @@ async function reviewPage(view, _p, ctx) {
   }));
 }
 
-export const tutorRoutes = { study: studyPage, theory: theoryPage, cards: cardsPage, leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };
+export const tutorRoutes = { mock: mockTutorView, study: studyPage, theory: theoryPage, cards: cardsPage, leads: leadsPage, trainer: trainerTutor, library: libraryPage, '': dashboard, students: studentsPage, student: studentPage, schedule: schedulePage, review: reviewPage };

@@ -1,8 +1,8 @@
 // «Пробный экзамен»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
 // Вариант собирает сервер (mock_create): по задаче на номер, сначала нерешённые. Ответы проверяет trainer_check,
 // но до завершения пробника итог не показывается.
-import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202611071254';
-import { img, lazyImages } from './trainer.js?v=202611071254';
+import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202611091412';
+import { img, lazyImages } from './trainer.js?v=202611091412';
 
 const INFO = {
   'Математика': { n: 25, min: 235, max: 31, grade: [[22, 5], [15, 4], [8, 3], [0, 2]] },
@@ -177,7 +177,7 @@ function statusOf(t, a) {
   return a.points >= t.max_points ? 'ok' : a.points > 0 ? 'part' : 'bad';
 }
 
-async function result(view, ctx, set, tasks, by) {
+async function result(view, ctx, set, tasks, by, { back = '#/mock', backText = 'Пробник', tutor = false } = {}) {
   const { api } = ctx;
   const list = set.task_ids.map((id) => tasks[id]).filter(Boolean);
   const r = score(set, tasks, by);
@@ -199,7 +199,7 @@ async function result(view, ctx, set, tasks, by) {
   const yours = (a) => (!a ? '—' : a.answer === '(фото)' ? 'фото решения' : a.answer || '—');
 
   mount(view, h`
-    <a href="#/mock" class="back">${I.back} Пробник</a>
+    <a href="${back}" class="back">${I.back} ${backText}</a>
     <section class="card mock-total">
       <span class="mock-grade big g${r.grade}">${r.pending ? '≥' : ''}${r.grade}</span>
       <div><h1>${r.pts} из ${r.max} баллов</h1>
@@ -214,8 +214,8 @@ async function result(view, ctx, set, tasks, by) {
       ${parts.map(([n, p, m]) => h`<div class="stat"><span>${n}</span><b>${p} / ${m}</b></div>`)}
     </div>
     ${lost.length && lost.length < list.length ? h`<div class="section-head"><h2>Что подтянуть</h2></div>
-      <div class="chips">${lost.map((n) => h`<a class="btn btn-soft btn-sm" href="#/trainer/num/${encodeURIComponent(set.subject)}/${n}">№${n}</a>`)}</div>
-      <p class="hint">Нажми на номер — откроется тренировка по нему.</p>` : ''}
+      <div class="chips">${lost.map((n) => tutor ? h`<span class="btn btn-soft btn-sm">№${n}</span>` : h`<a class="btn btn-soft btn-sm" href="#/trainer/num/${encodeURIComponent(set.subject)}/${n}">№${n}</a>`)}</div>
+      ${tutor ? '' : h`<p class="hint">Нажми на номер — откроется тренировка по нему.</p>`}` : ''}
     <div class="section-head mock-review-head"><h2>Разбор по заданиям</h2>
       <div class="seg seg-inline" role="tablist">
         <button type="button" class="on" data-f="all">Все · ${list.length}</button>
@@ -238,13 +238,13 @@ async function result(view, ctx, set, tasks, by) {
         ${t.body ? h`<div class="task-body">${t.body}</div>` : ''}
         ${t.image_path ? h`<div class="tf-img" data-img="${t.image_path}"><div class="tf-img-ph"></div></div>` : ''}
         <div class="mock-ans">
-          <div class="mock-ans-cell your st-${s}"><small>Твой ответ</small><b>${yours(a)}</b></div>
+          <div class="mock-ans-cell your st-${s}"><small>${tutor ? 'Ответ ученика' : 'Твой ответ'}</small><b>${yours(a)}</b></div>
           <div class="mock-ans-cell right"><small>Правильный ответ</small><b>${x ? x.answer || '—' : '—'}</b></div>
         </div>
         ${a?.feedback ? h`<div class="answer">💬 ${a.feedback}</div>` : ''}
         ${x ? (ok ? h`<details class="mock-sol"><summary>Посмотреть решение</summary>${sol}</details>`
     : h`<div class="mock-sol open"><div class="mock-sol-title">Решение</div>${sol}</div>`) : ''}
-        ${['bad', 'part', 'none'].includes(s) ? h`<a class="link-btn mock-train" href="#/trainer/num/${encodeURIComponent(set.subject)}/${t.num}">Потренировать № ${t.num} →</a>` : ''}
+        ${!tutor && ['bad', 'part', 'none'].includes(s) ? h`<a class="link-btn mock-train" href="#/trainer/num/${encodeURIComponent(set.subject)}/${t.num}">Потренировать № ${t.num} →</a>` : ''}
       </article>`;
     })}</div>`);
   lazyImages(view, api);
@@ -270,4 +270,56 @@ export async function mockView(view, params, ctx) {
   const { attempts, tasks } = await load(ctx.api, ctx.studentId);
   const by = lastAttempts(attempts, id);
   return isOver(set) || !isStudent(ctx) ? result(view, ctx, set, tasks, by) : run(view, ctx, set, tasks, by);
+}
+
+// ---------- Для преподавателя: разбор пробника любого ученика (#/mock/<id> в кабинете преподавателя) ----------
+export async function mockTutorView(view, params, ctx) {
+  const id = params[0];
+  const [set] = id ? await ctx.api.select('oge_sets', { eq: { id } }) : [];
+  if (!set || set.kind !== 'mock') return mount(view, h`<a href="#/students" class="back">${I.back} Ученики</a>${empty('Пробник не найден', I.target)}`);
+  const { attempts, tasks } = await load(ctx.api, set.student_id);
+  return result(view, ctx, set, tasks, lastAttempts(attempts, id), { back: `#/student/${set.student_id}/progress`, backText: 'Прогресс ученика', tutor: true });
+}
+
+// ---------- Для преподавателя: все пробники ученика во вкладке «Прогресс» ----------
+// По каждому предмету: итог последнего и динамика, таблица «пробник × номер задания» с баллами в клетках,
+// внизу — сколько раз номер решён верно. Строка открывает полный разбор пробника.
+const dm = (d) => new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+export async function mockProgress(api, sid) {
+  const { sets, attempts, tasks } = await load(api, sid);
+  const head = h`<div class="section-head"><h2>Пробники</h2></div>`;
+  if (!sets.length) return h`${head}<section class="card"><p class="muted">Ученик ещё не писал пробник. Он запускается у ученика в кабинете: «Пробный экзамен».</p></section>`;
+  return h`${head}${Object.keys(INFO).filter((subj) => sets.some((x) => x.subject === subj)).map((subj) => {
+    const all = sets.filter((x) => x.subject === subj), done = all.filter(isOver), running = all.length - done.length;
+    const N = INFO[subj].n, nums = Array.from({ length: N }, (_, i) => i + 1);
+    const rows = done.slice(0, 8).map((set) => {
+      const by = lastAttempts(attempts, set.id), sc = score(set, tasks, by), cell = {};
+      for (const tid of set.task_ids) { const t = tasks[tid]; if (t) cell[t.num] = { t, a: by[tid], st: statusOf(t, by[tid]) }; }
+      return { set, sc, cell };
+    });
+    if (!rows.length) return h`<section class="card mk"><h3>${subj}</h3><p class="muted">Пробник идёт прямо сейчас — результат появится после завершения.</p></section>`;
+    const last = rows[0], prev = rows[1], delta = prev ? last.sc.pts - prev.sc.pts : null;
+    const trend = done.slice(0, 10).reverse().map((set) => ({ set, sc: score(set, tasks, lastAttempts(attempts, set.id)) }));
+    const okN = (n) => rows.filter((r) => r.cell[n]?.st === 'ok').length, hasN = (n) => rows.filter((r) => r.cell[n]).length;
+    const val = (c) => (!c ? '' : c.st === 'none' ? '—' : c.st === 'wait' ? '?' : c.a.points);
+    return h`<section class="card mk">
+      <header class="mk-head">
+        <div><h3>${subj} · ОГЭ</h3><p class="muted small">${plural(done.length, 'пробник', 'пробника', 'пробников')}${running ? ' · ещё один идёт сейчас' : ''} · последний ${fmtDT(last.set.created_at)}</p></div>
+        <div class="mk-last"><span class="mock-grade g${last.sc.grade}">${last.sc.pending ? '≥' : ''}${last.sc.grade}</span>
+          <b>${last.sc.pts}<small>/${last.sc.max}</small></b>
+          ${delta != null ? h`<span class="mk-delta ${delta > 0 ? 'up' : delta < 0 ? 'down' : ''}">${delta > 0 ? '+' : ''}${delta}</span>` : ''}</div>
+      </header>
+      ${trend.length > 1 ? h`<div class="mk-trend" aria-label="Баллы за пробники по порядку">${trend.map(({ set, sc }) => h`
+        <a class="mk-bar g${sc.grade}" href="#/mock/${set.id}" style="--h:${Math.max(6, Math.round((100 * sc.pts) / (sc.max || 1)))}%" title="${dm(set.created_at)}: ${sc.pts} из ${sc.max}, оценка ${sc.grade}"><b>${sc.pts}</b><i></i><small>${dm(set.created_at)}</small></a>`)}</div>` : ''}
+      <div class="mk-wrap"><table class="mk-table">
+        <thead><tr><th>Пробник</th><th class="mk-sum">Итог</th>${nums.map((n) => h`<th>${n}</th>`)}</tr></thead>
+        <tbody>${rows.map(({ set, sc, cell }) => h`<tr>
+          <th><a href="#/mock/${set.id}">${dm(set.created_at)}</a></th>
+          <td class="mk-sum"><a href="#/mock/${set.id}">${sc.pts}/${sc.max}</a> <span class="mock-grade g${sc.grade}">${sc.pending ? '≥' : ''}${sc.grade}</span></td>
+          ${nums.map((n) => { const c = cell[n]; return h`<td class="st-${c ? c.st : 'na'}" title="${c ? `№${n}${c.t.topic ? ` · ${c.t.topic}` : ''}: ${c.a?.points ?? 0} из ${c.t.max_points}` : ''}">${val(c)}</td>`; })}</tr>`)}</tbody>
+        ${rows.length > 1 ? h`<tfoot><tr><th>Верно</th><td></td>${nums.map((n) => { const k = okN(n), m = hasN(n); return h`<td class="${!m ? '' : k === m ? 'st-ok' : k === 0 ? 'st-bad' : 'st-part'}">${m ? `${k}/${m}` : ''}</td>`; })}</tr></tfoot>` : ''}
+      </table></div>
+      <p class="hint">В клетке — баллы за номер; «—» без ответа, «?» ждёт проверки. Нажмите на дату — откроется разбор пробника.</p>
+    </section>`;
+  })}`;
 }
