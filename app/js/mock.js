@@ -1,8 +1,8 @@
 // «Пробный экзамен»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
 // Вариант собирает сервер (mock_create): по задаче на номер, сначала нерешённые. Ответы проверяет trainer_check,
 // но до завершения пробника итог не показывается.
-import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202611091412';
-import { img, lazyImages } from './trainer.js?v=202611091412';
+import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202611091414';
+import { img, lazyImages } from './trainer.js?v=202611091414';
 
 const INFO = {
   'Математика': { n: 25, min: 235, max: 31, grade: [[22, 5], [15, 4], [8, 3], [0, 2]] },
@@ -302,24 +302,24 @@ export async function mockProgress(api, sid) {
     const trend = done.slice(0, 10).reverse().map((set) => ({ set, sc: score(set, tasks, lastAttempts(attempts, set.id)) }));
     const okN = (n) => rows.filter((r) => r.cell[n]?.st === 'ok').length, hasN = (n) => rows.filter((r) => r.cell[n]).length;
     const val = (c) => (!c ? '' : c.st === 'none' ? '—' : c.st === 'wait' ? '?' : c.a.points);
+    const row = ({ set, sc, cell }, more) => h`<tr${more ? ' class="mk-more" hidden' : ''}>
+          <th><a href="#/mock/${set.id}">${dm(set.created_at)}</a></th>
+          <td class="mk-sum"><a href="#/mock/${set.id}">${sc.pts}</a><span class="mock-grade g${sc.grade}">${sc.pending ? '≥' : ''}${sc.grade}</span></td>
+          ${nums.map((n) => { const c = cell[n]; return h`<td class="st-${c ? c.st : 'na'}" title="${c ? `№${n}${c.t.topic ? ` · ${c.t.topic}` : ''}: ${c.a?.points ?? 0} из ${c.t.max_points}` : ''}">${val(c)}</td>`; })}</tr>`;
     return h`<section class="card mk">
       <header class="mk-head">
-        <div><h3>${subj} · ОГЭ</h3><p class="muted small">${plural(done.length, 'пробник', 'пробника', 'пробников')}${running ? ' · ещё один идёт сейчас' : ''} · последний ${fmtDT(last.set.created_at)}</p></div>
+        <div class="mk-title"><h3>${subj}</h3><span class="muted small">${plural(done.length, 'пробник', 'пробника', 'пробников')}${running ? ' · один идёт сейчас' : ''}</span></div>
+        ${trend.length > 1 ? h`<div class="mk-trend" aria-label="Баллы за пробники по порядку">${trend.map(({ set, sc }) => h`<a class="mk-bar g${sc.grade}" href="#/mock/${set.id}" style="--h:${Math.max(8, Math.round((100 * sc.pts) / (sc.max || 1)))}%" title="${dm(set.created_at)}: ${sc.pts} из ${sc.max}, оценка ${sc.grade}"></a>`)}</div>` : ''}
         <div class="mk-last"><span class="mock-grade g${last.sc.grade}">${last.sc.pending ? '≥' : ''}${last.sc.grade}</span>
           <b>${last.sc.pts}<small>/${last.sc.max}</small></b>
           ${delta != null ? h`<span class="mk-delta ${delta > 0 ? 'up' : delta < 0 ? 'down' : ''}">${delta > 0 ? '+' : ''}${delta}</span>` : ''}</div>
       </header>
-      ${trend.length > 1 ? h`<div class="mk-trend" aria-label="Баллы за пробники по порядку">${trend.map(({ set, sc }) => h`
-        <a class="mk-bar g${sc.grade}" href="#/mock/${set.id}" style="--h:${Math.max(6, Math.round((100 * sc.pts) / (sc.max || 1)))}%" title="${dm(set.created_at)}: ${sc.pts} из ${sc.max}, оценка ${sc.grade}"><b>${sc.pts}</b><i></i><small>${dm(set.created_at)}</small></a>`)}</div>` : ''}
       <div class="mk-wrap"><table class="mk-table">
-        <thead><tr><th>Пробник</th><th class="mk-sum">Итог</th>${nums.map((n) => h`<th>${n}</th>`)}</tr></thead>
-        <tbody>${rows.map(({ set, sc, cell }) => h`<tr>
-          <th><a href="#/mock/${set.id}">${dm(set.created_at)}</a></th>
-          <td class="mk-sum"><a href="#/mock/${set.id}">${sc.pts}/${sc.max}</a> <span class="mock-grade g${sc.grade}">${sc.pending ? '≥' : ''}${sc.grade}</span></td>
-          ${nums.map((n) => { const c = cell[n]; return h`<td class="st-${c ? c.st : 'na'}" title="${c ? `№${n}${c.t.topic ? ` · ${c.t.topic}` : ''}: ${c.a?.points ?? 0} из ${c.t.max_points}` : ''}">${val(c)}</td>`; })}</tr>`)}</tbody>
-        ${rows.length > 1 ? h`<tfoot><tr><th>Верно</th><td></td>${nums.map((n) => { const k = okN(n), m = hasN(n); return h`<td class="${!m ? '' : k === m ? 'st-ok' : k === 0 ? 'st-bad' : 'st-part'}">${m ? `${k}/${m}` : ''}</td>`; })}</tr></tfoot>` : ''}
+        <thead><tr><th></th><th class="mk-sum">Σ</th>${nums.map((n) => h`<th>${n}</th>`)}</tr></thead>
+        <tbody>${rows.map((r, k) => row(r, k >= 3))}</tbody>
+        ${rows.length > 1 ? h`<tfoot><tr><th>верно</th><td></td>${nums.map((n) => { const k = okN(n), m = hasN(n); return h`<td class="${!m ? '' : k === m ? 'st-ok' : k === 0 ? 'st-bad' : 'st-part'}">${m ? `${k}/${m}` : ''}</td>`; })}</tr></tfoot>` : ''}
       </table></div>
-      <p class="hint">В клетке — баллы за номер; «—» без ответа, «?» ждёт проверки. Нажмите на дату — откроется разбор пробника.</p>
+      ${rows.length > 3 ? h`<button type="button" class="link-btn mk-toggle" data-mk-more>Ещё ${rows.length - 3} · все пробники</button>` : ''}
     </section>`;
   })}`;
 }

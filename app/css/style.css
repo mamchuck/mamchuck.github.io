@@ -1296,38 +1296,36 @@ a.dq-review:hover { transform: translateY(-2px); }
 .bd-launch h2 { margin: 0 0 4px; font-size: 20px; }
 .bd-launch-cta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
 
-/* Пробники во вкладке «Прогресс» у преподавателя: итог, динамика, таблица «пробник × номер» */
-.mk { display: grid; gap: 16px; }
-.mk-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-.mk-head h3 { margin: 0 0 2px; }
-.mk-last { display: flex; align-items: center; gap: 10px; }
-.mk-last b { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
-.mk-last b small { font-size: 15px; color: var(--text-3); font-weight: 600; }
-.mk-delta { padding: 3px 9px; border-radius: 99px; font-size: 13px; font-weight: 700; background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text-2); }
+/* Пробники во вкладке «Прогресс» у преподавателя: компактно — итог и мини-динамика в заголовке, таблица «пробник × номер» */
+.mk { display: grid; gap: 10px; padding: 16px 18px; }
+.mk-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.mk-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-right: auto; }
+.mk-title h3 { margin: 0; font-size: 16px; }
+.mk-last { display: flex; align-items: center; gap: 8px; }
+.mk-last .mock-grade { min-width: 32px; height: 32px; font-size: 16px; border-radius: 10px; }
+.mk-last b { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+.mk-last b small { font-size: 13px; color: var(--text-3); font-weight: 600; }
+.mk-delta { padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 700; background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text-2); }
 .mk-delta.up { background: var(--ok-soft); color: var(--ok); }
 .mk-delta.down { background: var(--bad-soft); color: var(--bad); }
-.mk-trend { display: flex; align-items: flex-end; gap: 8px; height: 118px; padding: 4px 2px 0; }
-.mk-bar { flex: 1; max-width: 56px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; color: var(--text-2); }
-.mk-bar i { width: 100%; height: var(--h); min-height: 6px; border-radius: 8px 8px 4px 4px; background: var(--accent-soft); transition: filter .2s; }
-.mk-bar b { font-size: 12px; font-weight: 700; color: var(--text); }
-.mk-bar small { font-size: 11px; color: var(--text-3); }
-.mk-bar:hover i { filter: brightness(.94); }
-.mk-bar.g5 i { background: var(--ok); } .mk-bar.g4 i { background: var(--accent); } .mk-bar.g3 i { background: var(--warn); } .mk-bar.g2 i { background: var(--bad); }
-.mk-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px 4px; -webkit-overflow-scrolling: touch; }
-.mk-table { border-collapse: separate; border-spacing: 3px; font-size: 13px; font-variant-numeric: tabular-nums; }
-.mk-table th, .mk-table td { min-width: 30px; height: 32px; padding: 0 4px; text-align: center; border-radius: 8px; white-space: nowrap; }
-.mk-table thead th { color: var(--text-3); font-weight: 600; font-size: 12px; height: 22px; }
-.mk-table tbody th, .mk-table tfoot th { position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; padding-right: 10px; font-weight: 600; }
-.mk-table thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; }
+.mk-trend { display: flex; align-items: flex-end; gap: 3px; height: 30px; }
+.mk-bar { width: 8px; height: var(--h); min-height: 3px; border-radius: 3px; background: var(--accent); opacity: .85; }
+.mk-bar:hover { opacity: 1; }
+.mk-bar.g5 { background: var(--ok); } .mk-bar.g3 { background: var(--warn); } .mk-bar.g2 { background: var(--bad); }
+.mk-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mk-table { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.mk-table th, .mk-table td { min-width: 23px; height: 23px; padding: 0 3px; text-align: center; border-radius: 6px; white-space: nowrap; }
+.mk-table thead th { color: var(--text-3); font-weight: 600; font-size: 11px; height: 16px; }
+.mk-table tbody th, .mk-table tfoot th, .mk-table thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; padding: 0 6px 0 0; font-weight: 600; }
 .mk-table tbody th a, .mk-sum a { color: var(--accent-strong); }
 .mk-table td { font-weight: 700; background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text-3); }
 .mk-table td.st-ok { background: var(--ok-soft); color: var(--ok); }
-.mk-table td.st-part { background: var(--warn-soft); color: var(--warn); }
-.mk-table td.st-wait { background: var(--warn-soft); color: var(--warn); }
+.mk-table td.st-part, .mk-table td.st-wait { background: var(--warn-soft); color: var(--warn); }
 .mk-table td.st-bad { background: var(--bad-soft); color: var(--bad); }
 .mk-table td.st-na { background: none; }
-.mk-table td.mk-sum { background: none; color: var(--text); padding: 0 10px 0 4px; text-align: left; }
+.mk-table td.mk-sum { background: none; color: var(--text); padding: 0 6px 0 0; text-align: left; }
+.mk-table td.mk-sum .mock-grade { min-width: 20px; height: 20px; font-size: 12px; border-radius: 6px; margin-left: 4px; }
 .mk-table thead th.mk-sum { text-align: left; }
-.mk-table td.mk-sum .mock-grade { min-width: 28px; height: 26px; font-size: 14px; border-radius: 8px; margin-left: 4px; }
-.mk-table tfoot td { font-size: 11px; height: 26px; }
-.mk-table tfoot th { font-size: 12px; color: var(--text-3); }
+.mk-table tfoot td { font-size: 10px; font-weight: 600; height: 19px; }
+.mk-table tfoot th { font-size: 11px; color: var(--text-3); font-weight: 500; }
+.mk-toggle { justify-self: start; font-size: 13px; }

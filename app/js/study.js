@@ -1,11 +1,11 @@
 // «Повторение» (только для преподавателя): план повторения теории с материалами по темам. Бот раз в 4 дня присылает очередную тему,
 // а здесь лежит полный материал: определения, законы, ловушки, задачи с решениями, вопросы для самопроверки и источники.
-import { h, mount, $, $$, I, esc, raw, toast, pageHero, spinner, empty } from './ui.js?v=202611091412';
+import { h, mount, $, $$, I, esc, raw, toast, pageHero, spinner, empty } from './ui.js?v=202611091414';
 
 const BASE = '../study/';
 const SEC_ICON = { 'Механика': '🚀', 'Тепловые явления': '🔥', 'Электричество': '⚡', 'Магнетизм': '🧲', 'Оптика': '🔦', 'Атом и ядро': '⚛️', 'Методология': '📐' };
 let tex = null;
-const loadTex = async () => { tex ||= await import('../../sim/tex.js?v=202611091412'); await tex.ready(); return tex; };
+const loadTex = async () => { tex ||= await import('../../sim/tex.js?v=202611091414'); await tex.ready(); return tex; };
 
 // Текст с формулами: $...$ — LaTeX; переносы строк — абзацы; **жирный**
 function rich(s) {
