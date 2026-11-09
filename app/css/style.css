@@ -1329,3 +1329,5 @@ a.dq-review:hover { transform: translateY(-2px); }
 .mk-table tfoot td { font-size: 10px; font-weight: 600; height: 19px; }
 .mk-table tfoot th { font-size: 11px; color: var(--text-3); font-weight: 500; }
 .mk-toggle { justify-self: start; font-size: 13px; }
+.mk-empty { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.mk-empty p { margin: 0; flex: 1 1 280px; }

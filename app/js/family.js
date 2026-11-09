@@ -2,16 +2,16 @@
 import {
   h, mount, $, $$, I, toast, fmtDT, fmtD, fmtDay, plural, empty, hwStatus, levelLabel, safeFileName,
   pageHero, authorBar,
-} from './ui.js?v=202611091414';
-import { TUTOR } from './config.js?v=202611091414';
-import { trainerFamily } from './trainer.js?v=202611091414';
-import { mockView } from './mock.js?v=202611091414';
-import { mountTelegramBanner } from './telegram.js?v=202611091414';
-import { loadGame, gameBlock, bindGame } from './game.js?v=202611091414';
-import { drillPage, loadDrill, drillBlock } from './drill.js?v=202611091414';
-import { loadDaily, questCard, reviewCard } from './daily.js?v=202611091414';
-import { cardsPage } from './cards.js?v=202611091414';
-import { theoryPage } from './theory.js?v=202611091414';
+} from './ui.js?v=202611091430';
+import { TUTOR } from './config.js?v=202611091430';
+import { trainerFamily } from './trainer.js?v=202611091430';
+import { mockView, mockProgress, bindMockProgress } from './mock.js?v=202611091430';
+import { mountTelegramBanner } from './telegram.js?v=202611091430';
+import { loadGame, gameBlock, bindGame } from './game.js?v=202611091430';
+import { drillPage, loadDrill, drillBlock } from './drill.js?v=202611091430';
+import { loadDaily, questCard, reviewCard } from './daily.js?v=202611091430';
+import { cardsPage } from './cards.js?v=202611091430';
+import { theoryPage } from './theory.js?v=202611091430';
 
 export const familyNav = (role) => (role === 'parent' ? [
   { path: '', label: 'Главная', icon: I.home },
@@ -275,11 +275,13 @@ async function materials(view, _p, ctx) {
 async function progress(view, _p, ctx) {
   const sid = ctx.studentId;
   if (!sid) return noChild(view, ctx);
-  const [rows, game, drill] = await Promise.all([
-    ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' }), loadGame(ctx.api, sid), loadDrill(ctx.api, sid)]);
+  const [rows, game, drill, mocks] = await Promise.all([
+    ctx.api.select('topic_progress', { eq: { student_id: sid }, order: 'topic' }), loadGame(ctx.api, sid), loadDrill(ctx.api, sid),
+    mockProgress(ctx.api, sid, { who: isStudent(ctx) ? 'student' : 'parent' }).catch(() => '')]);
   const subjects = [...new Set(rows.map((r) => r.subject))];
   mount(view, h`
     ${pageHero({ eyebrow: 'Прогресс', title: isStudent(ctx) ? 'Твой путь к ' : 'Путь к ', accent: 'ОГЭ' })}
+    ${mocks}
     ${game ? gameBlock(game, { canClaim: isStudent(ctx), studentId: sid, afterGoal: drillBlock(drill, { canPlay: isStudent(ctx) }) }) : drillBlock(drill, { canPlay: isStudent(ctx) })}
     ${rows.length ? h`<div class="section-head"><h2>Темы от преподавателя</h2></div>` : ''}
     ${rows.length ? h`<div class="stats">${subjects.map((s) => {
@@ -291,7 +293,8 @@ async function progress(view, _p, ctx) {
         <span class="p-topic">${r.topic}</span>
         <span class="bar" role="progressbar" aria-valuenow="${r.level}" aria-valuemin="0" aria-valuemax="100"><i style="width:${r.level}%"></i></span>
         <span class="p-level">${levelLabel(r.level)}</span></div>`)}</div></section>`)}`
-    : game || drill ? '' : empty('Преподаватель ещё не отметил темы', I.chart)}`);
+    : game || drill || mocks ? '' : empty('Преподаватель ещё не отметил темы', I.chart)}`);
+  bindMockProgress(view);
   bindGame(view, ctx, () => progress(view, _p, ctx));
 }
 

@@ -1,7 +1,7 @@
 // Сцена «Равноускоренное движение»: тележка с начальной скоростью v₀ и постоянным ускорением a на прямой.
 // Решение точное: x = x₀ + v₀t + at²/2, v = v₀ + at. Метки показывают положение тележки через каждую секунду (как стробоскопический снимок):
 // при равноускоренном движении расстояния между соседними метками растут (или убывают) поровну.
-import { fmt, tex, arrow, hatch, sprite, rr } from './tex.js?v=202611091414';
+import { fmt, tex, arrow, hatch, sprite, rr } from './tex.js?v=202611091430';
 
 const el = (cls, tag = 'div') => { const e = document.createElement(tag); e.className = cls; return e; };
 export const COLK = { x: '#1b2330', v: '#1f9d55', a: '#2563eb', s: '#7048e8' };

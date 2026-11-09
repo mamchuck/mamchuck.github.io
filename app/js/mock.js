@@ -1,8 +1,8 @@
 // «Пробный экзамен»: полный вариант по предмету ученика, таймер как на экзамене, итог и оценка после завершения.
 // Вариант собирает сервер (mock_create): по задаче на номер, сначала нерешённые. Ответы проверяет trainer_check,
 // но до завершения пробника итог не показывается.
-import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202611091414';
-import { img, lazyImages } from './trainer.js?v=202611091414';
+import { h, mount, $, $$, I, toast, confirmDialog, fmtDT, plural, empty, SUBJECTS, safeFileName, pageHero } from './ui.js?v=202611091430';
+import { img, lazyImages } from './trainer.js?v=202611091430';
 
 const INFO = {
   'Математика': { n: 25, min: 235, max: 31, grade: [[22, 5], [15, 4], [8, 3], [0, 2]] },
@@ -269,7 +269,8 @@ export async function mockView(view, params, ctx) {
   if (isOver(set) && !set.finished_at && isStudent(ctx)) { try { await ctx.api.rpc('mock_finish', { p_set: id }); } catch {} }
   const { attempts, tasks } = await load(ctx.api, ctx.studentId);
   const by = lastAttempts(attempts, id);
-  return isOver(set) || !isStudent(ctx) ? result(view, ctx, set, tasks, by) : run(view, ctx, set, tasks, by);
+  if (!isStudent(ctx)) return result(view, ctx, set, tasks, by, { back: '#/progress', backText: 'Прогресс', tutor: true });
+  return isOver(set) ? result(view, ctx, set, tasks, by) : run(view, ctx, set, tasks, by);
 }
 
 // ---------- Для преподавателя: разбор пробника любого ученика (#/mock/<id> в кабинете преподавателя) ----------
@@ -285,10 +286,14 @@ export async function mockTutorView(view, params, ctx) {
 // По каждому предмету: итог последнего и динамика, таблица «пробник × номер задания» с баллами в клетках,
 // внизу — сколько раз номер решён верно. Строка открывает полный разбор пробника.
 const dm = (d) => new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-export async function mockProgress(api, sid) {
+// who: 'tutor' | 'student' | 'parent' — от этого зависит только текст, когда пробников ещё нет
+export async function mockProgress(api, sid, { who = 'tutor' } = {}) {
   const { sets, attempts, tasks } = await load(api, sid);
   const head = h`<div class="section-head"><h2>Пробники</h2></div>`;
-  if (!sets.length) return h`${head}<section class="card"><p class="muted">Ученик ещё не писал пробник. Он запускается у ученика в кабинете: «Пробный экзамен».</p></section>`;
+  if (!sets.length) {
+    if (who === 'student') return h`${head}<section class="card mk-empty"><p class="muted">Ты ещё не писал пробник. Полный вариант с таймером, как на экзамене, — и сразу видно, сколько баллов по каждому номеру.</p><a class="btn btn-primary btn-sm" href="#/mock">Написать пробник</a></section>`;
+    return h`${head}<section class="card"><p class="muted">${who === 'parent' ? 'Ребёнок ещё не писал пробник. Когда напишет, здесь появятся баллы по каждому номеру.' : 'Ученик ещё не писал пробник. Он запускается у ученика в кабинете: «Пробный экзамен».'}</p></section>`;
+  }
   return h`${head}${Object.keys(INFO).filter((subj) => sets.some((x) => x.subject === subj)).map((subj) => {
     const all = sets.filter((x) => x.subject === subj), done = all.filter(isOver), running = all.length - done.length;
     const N = INFO[subj].n, nums = Array.from({ length: N }, (_, i) => i + 1);
@@ -322,4 +327,12 @@ export async function mockProgress(api, sid) {
       ${rows.length > 3 ? h`<button type="button" class="link-btn mk-toggle" data-mk-more>Ещё ${rows.length - 3} · все пробники</button>` : ''}
     </section>`;
   })}`;
+}
+
+// «Ещё N · все пробники» — раскрыть остальные строки
+export function bindMockProgress(view) {
+  view.querySelectorAll('[data-mk-more]').forEach((b) => b.addEventListener('click', () => {
+    b.closest('.mk').querySelectorAll('.mk-more').forEach((r) => { r.hidden = false; });
+    b.hidden = true;
+  }));
 }

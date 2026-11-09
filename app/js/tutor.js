@@ -2,20 +2,20 @@
 import {
   h, mount, $, $$, I, toast, modal, confirmDialog, fmtDT, fmtD, fmtDay, dayKey, toLocalInput,
   plural, empty, hwStatus, LEVELS, levelLabel, SUBJECTS, pageHero,
-} from './ui.js?v=202611091414';
+} from './ui.js?v=202611091430';
 import {
   libraryPage, uploadForStudent, attachItems, pickFromLibrary, libraryField, libraryFieldHtml, openFile,
-} from './library.js?v=202611091414';
-import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202611091414';
-import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202611091414';
-import { mountTelegramBanner, linksFor } from './telegram.js?v=202611091414';
-import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202611091414';
-import { loadDrill, drillBlock } from './drill.js?v=202611091414';
-import { mockProgress, mockTutorView } from './mock.js?v=202611091414';
-import { cardsPage } from './cards.js?v=202611091414';
-import { studyPage } from './study.js?v=202611091414';
-import { theoryPage } from './theory.js?v=202611091414';
-import { leadsPage } from './leads.js?v=202611091414';
+} from './library.js?v=202611091430';
+import { backupOverdue, lastBackup, bindBackup } from './backup.js?v=202611091430';
+import { trainerTutor, trainerReviewBlock } from './trainer.js?v=202611091430';
+import { mountTelegramBanner, linksFor } from './telegram.js?v=202611091430';
+import { loadGame, gameBlock, tutorClaims, bindTutorClaims } from './game.js?v=202611091430';
+import { loadDrill, drillBlock } from './drill.js?v=202611091430';
+import { mockProgress, mockTutorView, bindMockProgress } from './mock.js?v=202611091430';
+import { cardsPage } from './cards.js?v=202611091430';
+import { studyPage } from './study.js?v=202611091430';
+import { theoryPage } from './theory.js?v=202611091430';
+import { leadsPage } from './leads.js?v=202611091430';
 
 export const tutorNav = [
   { path: '', label: 'Главная', icon: I.home },
@@ -629,7 +629,7 @@ async function studentPage(view, [id, tab = ''], ctx) {
     const R = byId(rows);
     $('#add', view).addEventListener('click', () => progressForm(ctx, s));
     bindTutorClaims(view, ctx);
-    $$('[data-mk-more]', view).forEach((b) => b.addEventListener('click', () => { b.closest('.mk').querySelectorAll('.mk-more').forEach((r) => { r.hidden = false; }); b.hidden = true; }));
+    bindMockProgress(view);
     $$('[data-pedit]', view).forEach((b) => b.addEventListener('click', () => progressForm(ctx, s, R[b.dataset.pedit])));
   }
 
